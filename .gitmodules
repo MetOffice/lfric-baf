@@ -1,0 +1,3 @@
+[submodule "fab"]
+	path = fab
+	url = git@github.com:MetOffice/fab.git
