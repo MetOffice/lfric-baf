@@ -68,7 +68,8 @@ class BafBase:
                                    verbose=True,
                                    n_procs=16,
                                    mpi=self._args.mpi,
-                                   openmp=self._args.openmp
+                                   openmp=self._args.openmp,
+                                   two_stage=True,
                                    )
         self._preprocessor_flags = []
         self._compiler_flags = []
