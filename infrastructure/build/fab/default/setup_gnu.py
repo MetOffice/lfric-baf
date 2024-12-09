@@ -26,9 +26,6 @@ def setup_gnu(build_config: BuildConfig):
              ]
     gfortran.add_flags(flags)
 
-    # This will implicitly affect all gfortran based linkers, e.g.
-    # linker-mpif90-gfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-gfortran")
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
     # Fab's shell tool (doesn't really matter which shell we get, so just
@@ -38,6 +35,9 @@ def setup_gnu(build_config: BuildConfig):
     nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
                          capture_output=True).strip().split()
 
+    # This will implicitly affect all gfortran based linkers, e.g.
+    # linker-mpif90-gfortran will use these flags as well.
+    linker = tr.get_tool(Category.LINKER, "linker-gfortran")
     linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
