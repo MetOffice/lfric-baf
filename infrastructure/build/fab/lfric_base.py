@@ -200,24 +200,19 @@ class LFRicBase(BafBase):
         grab_folder(self.config, src=self.lfric_core_root / dir,
                     dst_label='psyclone_config')
 
-        # Get the implementation of the PSyData API for profiling when using
-        # TAU. wget requires internet, which gitlab runner does not have.
-        # So I temporarily store the tau_psy.f90 in this repo under
-        # `infrastructure/source/psydata``. During the install stage, this
-        # folder will be copied to lfric_core checkout.
-        # tau_psy.f90 will therefore be grabbed when `infrastructure/source``
-        # is grabbed.
-        # compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
-        # linker = self.config.tool_box[Category.LINKER]
-        # if "tau_f90.sh" in [compiler.exec_name, linker.exec_name]:
-        #     _dst = self.config.source_root / 'psydata'
-        #     if not _dst.is_dir():
-        #         _dst.mkdir(parents=True)
-        #     wget = Tool("wget", "wget")
-        #     wget.run(additional_parameters=['-N',
-        #                   'https://raw.githubusercontent.com/stfc/PSyclone/'
-        #                   'master/lib/profiling/tau/tau_psy.f90'],
-        #                   cwd=_dst)
+        compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
+        linker = self.config.tool_box.get_tool(Category.LINKER,
+                                               mpi=self.config.mpi)
+        if (self.args.vernier or
+                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+            # Profiling. Grab the required psydata directory as well:
+            if self.args.vernier:
+                dir = "vernier"
+            else:
+                dir = "tau"
+            grab_folder(self.config, src=self.lfric_core_root /
+                        "infrastructure" / "build" / "psyclone" / "psydata"
+                        / dir, dst_label='psydata')
 
     def find_source_files(self, path_filters=None):
         self.configurator()
