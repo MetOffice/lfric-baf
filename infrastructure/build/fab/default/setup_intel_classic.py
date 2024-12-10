@@ -81,7 +81,7 @@ def setup_intel_classic(build_config: BuildConfig):
     # This will implicitly affect all ifort based linkers, e.g.
     # linker-mpif90-ifort will use these flags as well.
     linker = tr.get_tool(Category.LINKER, "linker-ifort")
-    linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
+    linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])
