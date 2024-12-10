@@ -6,8 +6,10 @@ Intel classic based compilers in the ToolRepository (ifort, icc).
 This function gets called from the default site-specific config file
 '''
 
+from typing import cast
+
 from fab.build_config import BuildConfig
-from fab.tools import Category, ToolRepository
+from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
 def setup_intel_classic(build_config: BuildConfig):
@@ -25,6 +27,7 @@ def setup_intel_classic(build_config: BuildConfig):
         # that the intel compiler actually works.
         return
 
+    ifort = cast(Compiler, ifort)
     # The flag groups are mainly from infrastructure/build/fortran
     # /ifort.mk
     no_optimisation_flags = ['-O0']
@@ -81,6 +84,7 @@ def setup_intel_classic(build_config: BuildConfig):
     # This will implicitly affect all ifort based linkers, e.g.
     # linker-mpif90-ifort will use these flags as well.
     linker = tr.get_tool(Category.LINKER, "linker-ifort")
+    linker = cast(Linker, linker)
     linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
