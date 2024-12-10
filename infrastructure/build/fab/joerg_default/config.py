@@ -1,14 +1,19 @@
 #! /usr/bin/env python3
 
-from fab.tools import Category, ToolRepository
+'''This module contains a setup for Joerg's laptop :)
+'''
+
+import argparse
+from typing import cast
+
+from fab.tools import Category, Linker, ToolRepository
 
 from default.config import Config as DefaultConfig
 
 
 class Config(DefaultConfig):
-    '''We need additional include flags for gfortran. Define this
-    by overwriting setup_gnu.
-    Also make gnu the default compiler.
+    '''This config class sets specific flags for Joerg's laptop :)
+    It makes gnu the default suite, and adds support for Vernier.
     '''
 
     def __init__(self):
@@ -16,25 +21,20 @@ class Config(DefaultConfig):
         tr = ToolRepository()
         tr.set_default_compiler_suite("gnu")
 
-    def setup_gnu(self, build_config):
-        '''Define default compiler flags for GNU.
+    def handle_command_line_options(self, args: argparse.Namespace):
+        '''Called with the user's command line options. It checks if
+        Vernier profiling is requested, and if so, adds the required
+        include and linking flags.
         '''
 
-        super().setup_gnu(build_config)
-        gfortran = ToolRepository().get_tool(Category.FORTRAN_COMPILER,
-                                             "gfortran")
-        gfortran.add_flags(
-            [
-                # The lib directory contains mpi.mod
-                '-I', ('/home/joerg/work/spack/var/spack/environments/'
-                       'lfric-v0/.spack-env/view/lib'),
-                # mod_wait.mod
-                '-I', ('/home/joerg/work/spack/var/spack/environments/'
-                       'lfric-v0/.spack-env/view/include'),
-                '-DITSUPERWORKS'
-            ])
-        for linker_name in ["linker-gfortran", "linker-mpif90-gfortran"]:
-            gfortran = ToolRepository().get_tool(Category.LINKER, linker_name)
-            gfortran.add_post_lib_flags(
-                ['-L', ('/home/joerg/work/spack/var/spack/'
-                        'environments/lfric-v0/.spack-env/view/lib')])
+        super().handle_command_line_options(args)
+        if args.vernier:
+            tr = ToolRepository()
+            gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
+            gfortran.add_flags(
+                ['-I', '/home/joerg/work/vernier/local/include'])
+            linker = tr.get_tool(Category.LINKER, "linker-gfortran")
+            linker = cast(Linker, linker)
+            linker.add_lib_flags(
+                "vernier", ["-L", "/home/joerg/work/vernier/local/lib",
+                            "-lvernier_f",  "-lvernier_c",  "-lvernier"])

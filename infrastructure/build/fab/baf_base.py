@@ -57,6 +57,9 @@ class BafBase:
         self._tool_box = ToolBox()
         parser = self.define_command_line_options()
         self.handle_command_line_options(parser)
+        # Now allow further site-customisations depending on
+        # the command line arguments
+        self._site_config.handle_command_line_options(self._args)
 
         if root_symbol:
             self._root_symbol = root_symbol
@@ -102,6 +105,13 @@ class BafBase:
         :rtype: :py:class:`fab.BuildConfig`
         '''
         return self._config
+
+    @property
+    def args(self):
+        ''':returns: the arg parse objects containing the user's
+            command line information.
+        '''
+        return self._args
 
     def define_site_platform_target(self):
         '''This method defines the attributes site, platform (and

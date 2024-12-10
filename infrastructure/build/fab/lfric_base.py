@@ -106,9 +106,11 @@ class LFRicBase(BafBase):
             '--rose_picker', '-rp', type=str, default="v2.0.0",
             help="Version of rose_picker. Use 'system' to use an installed "
                  "version.")
+        parser.add_argument("--vernier", action="store_true", default=False,
+                            help="Support profiling with Vernier.")
         parser.add_argument(
             '--profile', '-pro', type=str, default="fast-debug",
-            help="Profie mode for compilation, choose from \
+            help="Profile mode for compilation, choose from \
                 'fast-debug'(default), 'full-debug', 'production'")
         parser.add_argument(
             '--precision', '-pre', type=str, default=None,
@@ -174,7 +176,10 @@ class LFRicBase(BafBase):
 
         :returns: list of flags for the linker.
         '''
-        return ['yaxt', 'xios', 'netcdf', 'hdf5'] + super().get_linker_flags()
+        libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
+        if self._args.vernier:
+            libs.append("vernier")
+        return libs + super().get_linker_flags()
 
     def grab_files(self):
         dirs = ['infrastructure/source/',
@@ -282,22 +287,32 @@ class LFRicBase(BafBase):
 
     def psyclone(self):
         psyclone_cli_args = self.get_psyclone_config()
-        compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
-        linker = self.config.tool_box.get_tool(Category.LINKER,
-                                               mpi=self.config.mpi)
-        if "tau_f90.sh" in [compiler.exec_name, linker.exec_name]:
-            psyclone_cli_args.extend(self.get_psyclone_profiling_option())
+        psyclone_cli_args.extend(self.get_additional_psyclone_options())
 
         psyclone(self.config, kernel_roots=[self.config.build_output],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args)
 
-    def get_psyclone_config(self):
+    def get_psyclone_config(self) -> List[str]:
+        ''':returns: the command line options to pick the right
+            PSyclone config file.
+        '''
         return ["--config", self._psyclone_config]
 
-    def get_psyclone_profiling_option(self):
-        return ["--profile", "kernels"]
+    def get_additional_psyclone_options(self) -> List[str]:
+        ''':returns: Additional PSyclone command line options. This
+        basic version checks if profiling using Tay or Vernier
+        is enabled, and if so, adds the kernel profiling flags
+        to PSyclone.
+        '''
+        compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
+        linker = self.config.tool_box.get_tool(Category.LINKER,
+                                               mpi=self.config.mpi)
+        if (self.args.vernier or
+                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+            return ["--profile", "kernels"]
+        return []
 
     def get_transformation_script(self, fpath, config):
         ''':returns: the transformation script to be used by PSyclone.
