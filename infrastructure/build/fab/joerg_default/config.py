@@ -32,9 +32,9 @@ class Config(DefaultConfig):
             tr = ToolRepository()
             gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
             gfortran.add_flags(
-                ['-I', '/home/joerg/work/vernier/local/include'])
+                ['-I', '/home/joerg/work/Vernier/local/include'])
             linker = tr.get_tool(Category.LINKER, "linker-gfortran")
             linker = cast(Linker, linker)
             linker.add_lib_flags(
-                "vernier", ["-L", "/home/joerg/work/vernier/local/lib",
+                "vernier", ["-L", "/home/joerg/work/Vernier/local/lib",
                             "-lvernier_f",  "-lvernier_c",  "-lvernier"])
