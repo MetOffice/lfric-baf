@@ -49,7 +49,7 @@ class LFRicBase(BafBase):
         # We need to find the apps directory (it will be required when
         # finding source files in the build scripts). We shouldn't assume
         # that it is 'next' to the core directory, nor should we assume
-        # that the name is 'apps'. In order to avoid reliance of any
+        # that the name is 'apps'. In order to avoid reliance on any
         # environment variable, we analyse the call tree to find the first
         # call that is not in our parent directory (in case that we ever
         # add another layer of base class).
@@ -202,7 +202,8 @@ class LFRicBase(BafBase):
 
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
-                                               mpi=self.config.mpi)
+                                               mpi=self.config.mpi,
+                                               openmp=self.config.openmp)
         if (self.args.vernier or
                 "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             # Profiling. Grab the required psydata directory as well:
