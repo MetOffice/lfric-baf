@@ -64,7 +64,17 @@ class FabLFRicAtmExtract(FabLFRicAtm):
         ''':returns: the transformation script to be used by PSyclone.
         :rtype: Path
         '''
-        return config.source_root / 'optimisation' / 'extract' / 'global.py'
+        relative_path = None
+        for base_path in [config.source_root, config.build_output]:
+            try:
+                relative_path = fpath.relative_to(base_path)
+            except ValueError:
+                pass
+
+        if 'stph_main_alg_mod.x90' in str(relative_path): #or 'algorithm/skeb_main_alg_mod.x90' or 'algorithm/spt_main_alg_mod.x90':
+            return config.source_root / 'optimisation' / 'extract' / 'global.py'
+
+        return ""
 
 
 # -----------------------------------------------------------------------------
