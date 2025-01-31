@@ -14,6 +14,7 @@ import shutil
 
 from fab.artefacts import ArtefactSet
 from fab.steps import run_mp, step
+from fab.steps.grab.folder import grab_folder
 from fab.util import file_checksum, log_or_dot, TimerLogger
 
 from fab_gungho_model import FabGungho
@@ -36,7 +37,7 @@ class FabGunghoExtract(FabGungho):
         else:
             log_or_dot(logger,
                        f'Removing private using fparser remove_private')
-            from remove_private import remove_private
+            from make_public import remove_private
             from psyclone.line_length import FortLineLength
             fll = FortLineLength()
             tree = remove_private(str(fpath))
@@ -57,6 +58,12 @@ class FabGunghoExtract(FabGungho):
         # Add the cached data to the prebuilds, so that the cleanup
         # at the end of the run will not delete these files.
         state.add_current_prebuilds(results)
+
+    def grab_files(self):
+        super().grab_files()
+        grab_folder(self.config, src=self.lfric_core_root /
+                    "infrastructure" / "build" / "psyclone" / "psydata"
+                    / "extract", dst_label='psydata')
 
     def psyclone(self):
         self.remove_private()
