@@ -14,18 +14,6 @@ from fab.tools import (Category, Compiler, CompilerWrapper, Tool,
 from default.config import Config as DefaultConfig
 
 
-class Shell(Tool):
-    '''A simple wrapper that runs a shell script.
-    :name: the path to the script to run.
-    '''
-    def __init__(self, name: str):
-        super().__init__(name=name, exec_name=name,
-                         category=Category.MISC)
-
-    def check_available(self):
-        return True
-
-
 class Tauf90(CompilerWrapper):
     '''Class for the Tau profiling Fortran compiler wrapper.
     It will be using the name "tau-COMPILER_NAME", but will call tau_f90.sh.
@@ -84,15 +72,16 @@ class Config(DefaultConfig):
             compiler = tr.get_tool(Category.C_COMPILER, cc)
             tr.add_tool(Taucc(compiler))
 
-        # ATM a linker is not using a compiler wrapper, and so
-        # linker-mpif90-gfortran does not inherit from linker-gfortran.
-        # For now set the flags in both linkers:
-        bash = Shell("bash")
+        # ATM we don't use a shell when running a tool, and as such
+        # we can't directly use "$()" as parameter. So query these values using
+        # Fab's shell tool (doesn't really matter which shell we get, so just
+        # ask for the default):
+        shell = tr.get_default(Category.SHELL)
         # We must remove the trailing new line, and create a list:
-        nc_flibs = bash.run(additional_parameters=["-c", "nf-config --flibs"],
-                            capture_output=True).strip().split()
+        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
+                             capture_output=True).strip().split()
         linker = tr.get_tool(Category.LINKER, "linker-tau-ifort")
-        linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
+        linker.add_lib_flags("netcdf", nc_flibs)
         linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
         linker.add_lib_flags("xios", ["-lxios"])
         linker.add_lib_flags("hdf5", ["-lhdf5"])
