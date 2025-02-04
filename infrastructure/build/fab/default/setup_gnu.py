@@ -6,8 +6,9 @@ GNU based compilers in the ToolRepository.
 This function gets called from the default site-specific config file
 '''
 
+from typing import cast
 from fab.build_config import BuildConfig
-from fab.tools import Category, ToolRepository
+from fab.tools import Category, Linker, ToolRepository
 
 
 def setup_gnu(build_config: BuildConfig):
@@ -38,6 +39,7 @@ def setup_gnu(build_config: BuildConfig):
     # This will implicitly affect all gfortran based linkers, e.g.
     # linker-mpif90-gfortran will use these flags as well.
     linker = tr.get_tool(Category.LINKER, "linker-gfortran")
+    linker = cast(Linker, linker)
     linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
