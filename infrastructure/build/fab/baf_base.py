@@ -189,6 +189,9 @@ class BafBase:
             '--suite', '-v', type=str, default=None,
             help="Sets the default suite for compiler and linker")
         parser.add_argument(
+            '--available-compilers', default=False, action="store_true",
+            help="Displays the list of available compilers and linkers")
+        parser.add_argument(
             '--fc', '-fc', type=str, default="$FC",
             help="Name of the Fortran compiler to use")
         parser.add_argument(
@@ -231,6 +234,25 @@ class BafBase:
         self._args = parser.parse_args(sys.argv[1:])
 
         tr = ToolRepository()
+        if self._args.available_compilers:
+            all_available = []
+            # We don't print the values immediately, since `is_available` runs
+            # tests which with debugging enabled adds a lot of debug output.
+            # Instead write the combined list at the end and then exit.
+            for compiler in tr[Category.C_COMPILER]:
+                if compiler.is_available:
+                    all_available.append(compiler)
+            for compiler in tr[Category.FORTRAN_COMPILER]:
+                if compiler.is_available:
+                    all_available.append(compiler)
+            for linker in tr[Category.LINKER]:
+                if linker.is_available:
+                    all_available.append(linker)
+            print("\n----- Available compiler and linkers -----")
+            for tool in all_available:
+                print(tool)
+            sys.exit()
+
         if self._args.suite:
             tr.set_default_compiler_suite(self._args.suite)
 
