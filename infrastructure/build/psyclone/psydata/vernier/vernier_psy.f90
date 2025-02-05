@@ -134,12 +134,16 @@ contains
   !> Enable Vernier.
   subroutine profile_PSyDataStart()
     implicit none
+    ! Not supported by Vernier, see
+    ! https://github.com/MetOffice/Vernier/issues/153
   end subroutine profile_PSyDataStart
 
   ! ---------------------------------------------------------------------------
   !> Disable Vernier.
   subroutine profile_PSyDataStop()
     implicit none
+    ! Not supported by Vernier, see
+    ! https://github.com/MetOffice/Vernier/issues/153
   end subroutine profile_PSyDataStop
 
 end module profile_psy_data_mod
