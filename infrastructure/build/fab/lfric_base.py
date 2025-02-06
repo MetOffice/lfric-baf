@@ -103,7 +103,7 @@ class LFRicBase(BafBase):
         parser = super().define_command_line_options()
 
         parser.add_argument(
-            '--rose_picker', '-rp', type=str, default="v2.0.0",
+            '--rose_picker', '-rp', type=str, default="system",
             help="Version of rose_picker. Use 'system' to use an installed "
                  "version.")
         parser.add_argument("--vernier", action="store_true", default=False,

@@ -85,11 +85,11 @@ def get_rose_picker(tag: Optional[str] = "v2.0.0"):
         # gpl-utils-* directories in the Fab workspace directories do not
         # have the normal directory layout.
         logger.info(f"Installing rose_picker tag '{tag}'.")
-        fcm.checkout(
-            src=f'file:///g/data/ki32/mosrs/lfric/GPL-utilities/tags/{tag}',
-            dst=gpl_utils)
-#        fcm.checkout(src=f'fcm:lfric_gpl_utils.x/tags/{tag}',
-#                     dst=gpl_utils)
+        # fcm.checkout(
+        #     src=f'file:///g/data/ki32/mosrs/lfric/GPL-utilities/tags/{tag}',
+        #     dst=gpl_utils)
+        fcm.checkout(src=f'fcm:lfric_gpl_utils.x/tags/{tag}',
+                     dst=gpl_utils)
 
         # We need to create a new instance, since `is_available` is
         # cached (I.e. it's always false in the previous instance)
