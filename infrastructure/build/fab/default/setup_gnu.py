@@ -6,16 +6,20 @@ GNU based compilers in the ToolRepository.
 This function gets called from the default site-specific config file
 '''
 
+import argparse
+
 from typing import cast
 from fab.build_config import BuildConfig
 from fab.tools import Category, Linker, ToolRepository
 
 
-def setup_gnu(build_config: BuildConfig):
+def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
+    # pylint: disable=unused-argument
     '''Defines the default flags for all GNU compilers.
 
     :para build_config: the build config from which required parameters
         can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()

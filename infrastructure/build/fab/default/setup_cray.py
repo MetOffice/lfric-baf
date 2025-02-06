@@ -6,21 +6,21 @@ compilers in the ToolRepository.
 This function gets called from the default site-specific config file
 '''
 
+import argparse
 from typing import cast
 
 from fab.build_config import BuildConfig
 from fab.tools import Category, Linker, ToolRepository
 
 
-def setup_cray(build_config: BuildConfig, offload: str = ""):
+def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
+    # pylint: disable=unused-argument
     '''Defines the default flags for ftn.
 
     :param build_config: the build config from which required parameters
         can be taken.
-    :param offload: offload mode, must be one of "", "openacc", "openmp"
+    :param args: all command line options
     '''
-
-    offload = offload.lower()
 
     tr = ToolRepository()
     ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ftn")
@@ -31,15 +31,29 @@ def setup_cray(build_config: BuildConfig, offload: str = ""):
              "-en",                    # Fortran standard
              "-ef",                    # use lowercase module names! Important!
              "-hnocaf",                # Required for linking with C++
-    ]
+             ]
 
-    # TODO: do we need a flag for linking with C++?
     lib_flags = ["-lcraystdc++"]
-    if offload == "openacc":
-        flags.extend(["-h acc"])
-    elif offload == "openmp":
-        # TODO
-        pass
+
+    # Handle accelerator options:
+    if args.openacc or args.openmp:
+        host = args.host.lower()
+    else:
+        # Neither openacc nor openmp specified
+        host = ""
+
+    if args.openacc:
+        if host == "gpu":
+            flags.extend(["-h acc"])
+        else:
+            # CPU
+            flags.extend(["-h acc"])
+    elif args.openmp:
+        if host == "gpu":
+            flags.extend([])
+        else:
+            # OpenMP on CPU, that's already handled by Fab
+            pass
 
     ftn.add_flags(flags)
     # ATM we don't use a shell when running a tool, and as such

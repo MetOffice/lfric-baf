@@ -6,15 +6,20 @@ Intel llvm based compilers in the ToolRepository (ifx, icx).
 This function gets called from the default site-specific config file
 '''
 
+import argparse
+from typing import cast
+
 from fab.build_config import BuildConfig
-from fab.tools import Category, ToolRepository
+from fab.tools import Category, Linker, ToolRepository
 
 
-def setup_intel_llvm(build_config: BuildConfig):
+def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
+    # pylint: disable=unused-argument, too-many-locals
     '''Defines the default flags for all Intel llvm compilers.
 
     :para build_config: the build config from which required parameters
         can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()
@@ -29,7 +34,6 @@ def setup_intel_llvm(build_config: BuildConfig):
     # is a (usually safe) warning, the long externals then causes the
     # build to abort. So for now we cannot use `-warn errors`
     warnings_flags = ['-warn', 'all', '-gen-interfaces', 'nosource']
-    unit_warnings_flags = ['-warn', 'all', '-gen-interfaces', 'nosource']
     init_flags = ['-ftrapuv']
 
     fortran_standard_flags = ['-stand', 'f08']
@@ -66,6 +70,7 @@ def setup_intel_llvm(build_config: BuildConfig):
                          capture_output=True).strip().split()
 
     linker = tr.get_tool(Category.LINKER, "linker-ifx")
+    linker = cast(Linker, linker)    # Make mypy happy
     linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])

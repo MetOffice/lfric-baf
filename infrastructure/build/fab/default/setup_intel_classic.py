@@ -6,17 +6,20 @@ Intel classic based compilers in the ToolRepository (ifort, icc).
 This function gets called from the default site-specific config file
 '''
 
+import argparse
 from typing import cast
 
 from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_classic(build_config: BuildConfig):
+def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
+    # pylint: disable=unused-argument, too-many-locals
     '''Defines the default flags for all Intel classic compilers.
 
     :para build_config: the build config from which required parameters
         can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()
@@ -37,7 +40,6 @@ def setup_intel_classic(build_config: BuildConfig):
     # is a (usually safe) warning, the long externals then causes the
     # build to abort. So for now we cannot use `-warn errors`
     warnings_flags = ['-warn', 'all', '-gen-interfaces', 'nosource']
-    unit_warnings_flags = ['-warn', 'all', '-gen-interfaces', 'nosource']
     init_flags = ['-ftrapuv']
 
     # ifort.mk: bad interaction between array shape checking and

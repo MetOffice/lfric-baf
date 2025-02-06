@@ -210,11 +210,14 @@ class BafBase:
             '--openmp', '-openmp', default=True, action="store_true",
             help="Enable OpenMP")
         parser.add_argument(
-            '--offload', '-offload', default="", type=str,
-            help="Determine offload: either 'openacc' or 'openmp'.")
-        parser.add_argument(
             '--no-openmp', '-no-openmp', action="store_false",
             dest="openmp", help="Disable OpenMP")
+        parser.add_argument(
+            '--openacc', '-openacc', default=True, action="store_true",
+            help="Enable OpenACC")
+        parser.add_argument(
+            '--host', '-host', default="cpu", type=str,
+            help="Determine the OpenACC or OpenMP: either 'cpu' or 'gpu'.")
         parser.add_argument("--site", "-s", type=str,
                             default="$SITE or 'default'",
                             help="Name of the site to use.")

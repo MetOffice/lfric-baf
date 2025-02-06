@@ -6,21 +6,21 @@ compilers in the ToolRepository.
 This function gets called from the default site-specific config file
 '''
 
+import argparse
 from typing import cast
 
 from fab.build_config import BuildConfig
 from fab.tools import Category, Linker, ToolRepository
 
 
-def setup_nvidia(build_config: BuildConfig, offload: str = ""):
+def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
+    # pylint: disable=unused-argument
     '''Defines the default flags for nvfortran.
 
     :param build_config: the build config from which required parameters
         can be taken.
-    :param offload: offload mode, must be one of "", "openacc", "openmp"
+    :param args: all command line options
     '''
-
-    offload = offload.lower()
 
     tr = ToolRepository()
     nvfortran = tr.get_tool(Category.FORTRAN_COMPILER, "nvfortran")
@@ -28,14 +28,31 @@ def setup_nvidia(build_config: BuildConfig, offload: str = ""):
              '-g', '-traceback',
              '-r8',                # Default 8 bytes reals
              ]
-    lib_flags = ["-c++libs"]
     nvfortran.add_flags(flags)
-    if offload == "openacc":
-        flags.extend(["-acc=gpu", "-gpu=managed", "-mp=multicore"])
-        lib_flags.append("-cuda")
-    elif offload == "openmp":
-        flags.extend(["-mp=gpu", "-gpu=managed"])
-        lib_flags.append("-cuda")
+
+    lib_flags = ["-c++libs"]
+
+    # Handle accelerator options:
+    if args.openacc or args.openmp:
+        host = args.host.lower()
+    else:
+        # Neither openacc nor openmp specified
+        host = ""
+
+    if args.openacc:
+        if host == "gpu":
+            flags.extend(["-acc=gpu", "-gpu=managed"])
+            lib_flags.extend(["-aclibs", "-cuda"])
+        else:
+            # CPU
+            flags.extend(["-acc=cpu"])
+    elif args.openmp:
+        if host == "gpu":
+            flags.extend(["-mp=gpu", "-gpu=managed"])
+            lib_flags.append("-cuda")
+        else:
+            # OpenMP on CPU, that's already handled by Fab
+            pass
 
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
