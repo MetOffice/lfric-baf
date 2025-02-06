@@ -210,6 +210,9 @@ class BafBase:
             '--openmp', '-openmp', default=True, action="store_true",
             help="Enable OpenMP")
         parser.add_argument(
+            '--offload', '-offload', default="", type=str,
+            help="Determine offload: either 'openacc' or 'openmp'.")
+        parser.add_argument(
             '--no-openmp', '-no-openmp', action="store_false",
             dest="openmp", help="Disable OpenMP")
         parser.add_argument("--site", "-s", type=str,
@@ -232,6 +235,9 @@ class BafBase:
         '''
         # pylint: disable=too-many-branches
         self._args = parser.parse_args(sys.argv[1:])
+        if self.args.offload.lower() not in ["", "openacc", "openmp"]:
+            raise RuntimeError(f"Invalid offload directive "
+                               f"'{self.args.offload}'.")
 
         tr = ToolRepository()
         if self._args.available_compilers:

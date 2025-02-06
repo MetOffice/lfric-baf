@@ -6,6 +6,7 @@
 
 from default.setup_gnu import setup_gnu
 from default.setup_intel_classic import setup_intel_classic
+from default.setup_nvidia import setup_nvidia
 
 
 class Config:
@@ -14,6 +15,9 @@ class Config:
     scripts to allow site-specific customisations.
     '''
 
+    def __init__(self):
+        self._args = None
+
     def update_toolbox(self, build_config):
         '''Set the default compiler flags for the various compiler
         that are supported.
@@ -21,12 +25,14 @@ class Config:
 
         self.setup_classic_intel(build_config)
         self.setup_gnu(build_config)
+        self.setup_nvidia(build_config)
 
     def handle_command_line_options(self, args):
         '''Additional callback function executed once all command line
         options have been added. This is for example used to add
         Vernier profiling flags, which are site-specific.
         '''
+        self._args = args
 
     def setup_classic_intel(self, build_config):
         '''For now call an external function, since it is expected that
@@ -41,3 +47,10 @@ class Config:
         compiler modes).
         '''
         setup_gnu(build_config)
+
+    def setup_nvidia(self, build_config):
+        '''For now call an external function, since it is expected that
+        this configuration can be very lengthy (once we support
+        compiler modes).
+        '''
+        setup_nvidia(build_config, offload=self._args.offload)
