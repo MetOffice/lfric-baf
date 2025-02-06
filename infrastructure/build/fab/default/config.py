@@ -6,6 +6,7 @@
 
 from default.setup_gnu import setup_gnu
 from default.setup_intel_classic import setup_intel_classic
+from default.setup_intel_llvm import setup_intel_llvm
 from default.setup_nvidia import setup_nvidia
 
 
@@ -23,7 +24,8 @@ class Config:
         that are supported.
         '''
 
-        self.setup_classic_intel(build_config)
+        self.setup_intel_classic(build_config)
+        self.setup_intel_llvm(build_config)
         self.setup_gnu(build_config)
         self.setup_nvidia(build_config)
 
@@ -34,12 +36,19 @@ class Config:
         '''
         self._args = args
 
-    def setup_classic_intel(self, build_config):
+    def setup_intel_classic(self, build_config):
         '''For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
         '''
         setup_intel_classic(build_config)
+
+    def setup_intel_llvm(self, build_config):
+        '''For now call an external function, since it is expected that
+        this configuration can be very lengthy (once we support
+        compiler modes).
+        '''
+        setup_intel_llvm(build_config)
 
     def setup_gnu(self, build_config):
         '''For now call an external function, since it is expected that
