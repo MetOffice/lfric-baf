@@ -75,3 +75,8 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
     linker.add_lib_flags("hdf5", ["-lhdf5"])
 
     linker.add_post_lib_flags(lib_flags)
+
+    # Using the GNU compiler on Crays for now needs the additional
+    # flag -fallow-argument-mismatch to compile mpi_mod.f90
+    ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-gfortran")
+    ftn.add_flags("-fallow-argument-mismatch")
