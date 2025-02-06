@@ -34,7 +34,7 @@ def setup_cray(build_config: BuildConfig, offload: str = ""):
     ]
 
     # TODO: do we need a flag for linking with C++?
-    lib_flags = []
+    lib_flags = ["cray-c++-rts"]
     if offload == "openacc":
         flags.extend(["-h acc"])
     elif offload == "openmp":
