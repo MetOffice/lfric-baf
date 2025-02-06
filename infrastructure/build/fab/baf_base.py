@@ -243,7 +243,7 @@ class BafBase:
         if self._args.available_compilers:
             all_available = []
             # We don't print the values immediately, since `is_available` runs
-            # tests which with debugging enabled adds a lot of debug output.
+            # tests with debugging enabled, which adds a lot of debug output.
             # Instead write the combined list at the end and then exit.
             for compiler in tr[Category.C_COMPILER]:
                 if compiler.is_available:
