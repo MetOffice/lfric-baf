@@ -22,8 +22,7 @@ def setup_gnu(build_config: BuildConfig):
     gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
     flags = ['-ffree-line-length-none', '-g',
              '-Werror=character-truncation', '-Werror=unused-value',
-             '-Werror=tabs', '-fdefault-real-8', '-fdefault-double-8',
-             '-Ditworks'
+             '-Werror=tabs', '-fdefault-real-8', '-fdefault-double-8'
              ]
     gfortran.add_flags(flags)
 
