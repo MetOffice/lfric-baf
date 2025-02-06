@@ -4,6 +4,7 @@
 '''This module contains the default Baf configuration class.
 '''
 
+from default.setup_cray import setup_cray
 from default.setup_gnu import setup_gnu
 from default.setup_intel_classic import setup_intel_classic
 from default.setup_intel_llvm import setup_intel_llvm
@@ -28,6 +29,7 @@ class Config:
         self.setup_intel_llvm(build_config)
         self.setup_gnu(build_config)
         self.setup_nvidia(build_config)
+        self.setup_cray(build_config)
 
     def handle_command_line_options(self, args):
         '''Additional callback function executed once all command line
@@ -35,6 +37,20 @@ class Config:
         Vernier profiling flags, which are site-specific.
         '''
         self._args = args
+
+    def setup_cray(self, build_config):
+        '''For now call an external function, since it is expected that
+        this configuration can be very lengthy (once we support
+        compiler modes).
+        '''
+        setup_cray(build_config, offload=self._args.offload)
+
+    def setup_gnu(self, build_config):
+        '''For now call an external function, since it is expected that
+        this configuration can be very lengthy (once we support
+        compiler modes).
+        '''
+        setup_gnu(build_config)
 
     def setup_intel_classic(self, build_config):
         '''For now call an external function, since it is expected that
@@ -49,13 +65,6 @@ class Config:
         compiler modes).
         '''
         setup_intel_llvm(build_config)
-
-    def setup_gnu(self, build_config):
-        '''For now call an external function, since it is expected that
-        this configuration can be very lengthy (once we support
-        compiler modes).
-        '''
-        setup_gnu(build_config)
 
     def setup_nvidia(self, build_config):
         '''For now call an external function, since it is expected that
