@@ -23,7 +23,7 @@ def setup_cray(build_config: BuildConfig, offload: str = ""):
     offload = offload.lower()
 
     tr = ToolRepository()
-    ftn = tr.get_tool(Category.FORTRAN_COMPILER, "cray-ftn")
+    ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ftn")
     flags = ["-g", "-G0", "-m", "0",
              "-M", "E664,E7208,E7212",
              "-R", "bcdps",            # bounds, array shape, collapse,
