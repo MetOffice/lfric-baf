@@ -304,7 +304,7 @@ class LFRicBase(BafBase):
 
     def get_additional_psyclone_options(self) -> List[str]:
         ''':returns: Additional PSyclone command line options. This
-        basic version checks if profiling using Tay or Vernier
+        basic version checks if profiling using Tau or Vernier
         is enabled, and if so, adds the kernel profiling flags
         to PSyclone.
         '''
