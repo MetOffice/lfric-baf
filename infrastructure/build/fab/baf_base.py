@@ -238,9 +238,9 @@ class BafBase:
         '''
         # pylint: disable=too-many-branches
         self._args = parser.parse_args(sys.argv[1:])
-        if self.args.offload.lower() not in ["", "openacc", "openmp"]:
-            raise RuntimeError(f"Invalid offload directive "
-                               f"'{self.args.offload}'.")
+        if self.args.host.lower() not in ["", "cpu", "gpu"]:
+            raise RuntimeError(f"Invalid host directive "
+                               f"'{self.args.host}'.")
 
         tr = ToolRepository()
         if self._args.available_compilers:
