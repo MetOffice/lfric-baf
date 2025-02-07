@@ -24,6 +24,12 @@ class Config:
     def __init__(self):
         self._args = None
 
+    @property
+    def args(self):
+        ''':returns: the command line options specified by the user.
+        '''
+        return self._args
+
     def update_toolbox(self, build_config: BuildConfig):
         '''Set the default compiler flags for the various compiler
         that are supported.
@@ -48,32 +54,32 @@ class Config:
         this configuration can be very lengthy (once we support
         compiler modes).
         '''
-        setup_cray(build_config, self._args)
+        setup_cray(build_config, self.args)
 
     def setup_gnu(self, build_config: BuildConfig):
         '''For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
         '''
-        setup_gnu(build_config, self._args)
+        setup_gnu(build_config, self.args)
 
     def setup_intel_classic(self, build_config):
         '''For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
         '''
-        setup_intel_classic(build_config, self._args)
+        setup_intel_classic(build_config, self.args)
 
     def setup_intel_llvm(self, build_config: BuildConfig):
         '''For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
         '''
-        setup_intel_llvm(build_config, self._args)
+        setup_intel_llvm(build_config, self.args)
 
     def setup_nvidia(self, build_config: BuildConfig):
         '''For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
         '''
-        setup_nvidia(build_config, self._args)
+        setup_nvidia(build_config, self.args)
