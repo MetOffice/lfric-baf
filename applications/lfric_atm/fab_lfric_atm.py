@@ -123,7 +123,7 @@ class FabLFRicAtm(LFRicBase):
                                       '-I$source/shumlib/common/src',
                                       '-I$relative'],),
                       AddFlags(match="$source/science/*",
-                               flags=['-DLFRIC']),
+                               flags=['-DLFRIC'])]
         super().preprocess_fortran(path_flags=path_flags)
 
     def compile_fortran(self):
