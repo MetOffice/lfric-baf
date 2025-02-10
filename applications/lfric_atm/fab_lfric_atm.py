@@ -124,8 +124,6 @@ class FabLFRicAtm(LFRicBase):
                                       '-I$relative'],),
                       AddFlags(match="$source/science/*",
                                flags=['-DLFRIC']),
-                      AddFlags(match="$source/science/socrates/aux/*",
-                               flags=['-I$source/science/socrates/aux'])]
         super().preprocess_fortran(path_flags=path_flags)
 
     def compile_fortran(self):
@@ -140,7 +138,9 @@ class FabLFRicAtm(LFRicBase):
         path_flags = [AddFlags(
             '$output/science/um/atmosphere/large_scale_precipitation/*',
             [no_omp]),
-            AddFlags(match="$output/science/*", flags=[real8]),]
+            AddFlags(match="$output/science/*", flags=[real8]),
+            AddFlags(match="$output/science/socrates/aux/*",
+                     flags=['-I$source/science/socrates/aux']),]
         # TODO: A remove flag functionality based on profile option
         # and precision is needed
         if self._args.profile == 'full-debug':
