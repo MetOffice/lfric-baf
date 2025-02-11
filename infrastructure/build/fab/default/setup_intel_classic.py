@@ -80,8 +80,12 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
     # ask for the default):
     shell = tr.get_default(Category.SHELL)
     # We must remove the trailing new line, and create a list:
-    nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                         capture_output=True).strip().split()
+    try:
+        # We must remove the trailing new line, and create a list:
+        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
+                             capture_output=True).strip().split()
+    except RuntimeError:
+        nc_flibs = []
 
     # This will implicitly affect all ifort based linkers, e.g.
     # linker-mpif90-ifort will use these flags as well.

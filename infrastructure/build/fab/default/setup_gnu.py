@@ -39,6 +39,13 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
     nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
                          capture_output=True).strip().split()
 
+    try:
+        # We must remove the trailing new line, and create a list:
+        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
+                             capture_output=True).strip().split()
+    except RuntimeError:
+        nc_flibs = []
+
     # This will implicitly affect all gfortran based linkers, e.g.
     # linker-mpif90-gfortran will use these flags as well.
     linker = tr.get_tool(Category.LINKER, "linker-gfortran")

@@ -65,9 +65,12 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
     # Fab's shell tool (doesn't really matter which shell we get, so just
     # ask for the default):
     shell = tr.get_default(Category.SHELL)
-    # We must remove the trailing new line, and create a list:
-    nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                         capture_output=True).strip().split()
+    try:
+        # We must remove the trailing new line, and create a list:
+        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
+                             capture_output=True).strip().split()
+    except RuntimeError:
+        nc_flibs = []
 
     linker = tr.get_tool(Category.LINKER, "linker-ifx")
     linker = cast(Linker, linker)    # Make mypy happy
