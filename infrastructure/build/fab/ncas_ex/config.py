@@ -28,7 +28,7 @@ class Config(DefaultConfig):
         '''
         super().setup_cray(build_config)
         tr = ToolRepository()
-        ftn = tr.get_tool(Category.FORTRAN_COMPILER, "gnu")
+        ftn = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
         # Any gfortran on Cray's EX need this flag in order to
         # compiler mpi_mod:
         ftn.add_flags(["-fallow-argument-mismatch"])
