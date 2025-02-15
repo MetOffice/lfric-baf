@@ -24,11 +24,20 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
-    flags = ['-ffree-line-length-none', '-g',
-             '-Werror=character-truncation', '-Werror=unused-value',
-             '-Werror=tabs', '-fdefault-real-8', '-fdefault-double-8'
-             ]
-    gfortran.add_flags(flags)
+    pf = gfortran.profile_flags
+    # pf.define_profile("default")
+    pf.add_flags("default", ['-ffree-line-length-none',
+                             '-g',
+                             '-Werror=character-truncation',
+                             '-Werror=unused-value',
+                             '-Werror=tabs',
+                             '-fdefault-real-8',
+                             '-fdefault-double-8',
+                             ])
+    pf.define_profile("debug", "default")
+    pf.add_flags("debug", ["-O0"])
+    pf.define_profile("optimised", "default")
+    pf.add_flags("optimised", ["-O2"])
 
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using

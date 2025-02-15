@@ -66,12 +66,14 @@ class BafBase:
         else:
             self._root_symbol = name
 
+        label = f"{name}-{self.args.profile}-$compiler"
         self._config = BuildConfig(tool_box=self._tool_box,
-                                   project_label=f'{name}-$compiler',
+                                   project_label=label,
                                    verbose=True,
                                    n_procs=16,
-                                   mpi=self._args.mpi,
-                                   openmp=self._args.openmp
+                                   mpi=self.args.mpi,
+                                   openmp=self.args.openmp,
+                                   profile=self.args.profile,
                                    )
         self._preprocessor_flags = []
         self._compiler_flags = []
@@ -218,12 +220,17 @@ class BafBase:
         parser.add_argument(
             '--host', '-host', default="cpu", type=str,
             help="Determine the OpenACC or OpenMP: either 'cpu' or 'gpu'.")
+
         parser.add_argument("--site", "-s", type=str,
                             default="$SITE or 'default'",
                             help="Name of the site to use.")
         parser.add_argument("--platform", "-p", type=str,
                             default="$PLATFORM or 'default'",
                             help="Name of the platform of the site to use.")
+        parser.add_argument(
+            "--mode", type=str, default="default",
+            help="Sets compiler profile (e.g. debug, optimised, ...)")
+
         return parser
 
     def handle_command_line_options(self, parser):
