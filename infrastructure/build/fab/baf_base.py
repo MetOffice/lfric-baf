@@ -229,8 +229,9 @@ class BafBase:
                             default="$PLATFORM or 'default'",
                             help="Name of the platform of the site to use.")
         parser.add_argument(
-            "--mode", type=str, default="default",
-            help="Sets compiler profile (e.g. debug, optimised, ...)")
+            '--profile', '-pro', type=str, default="fast-debug",
+            help="Sets the compiler profile, choose from \
+                'fast-debug'(default), 'full-debug', 'production'")
 
         return parser
 

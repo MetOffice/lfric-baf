@@ -25,19 +25,29 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
     tr = ToolRepository()
     gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
     pf = gfortran.profile_flags
+    # Already defined atm:
     # pf.define_profile("default")
-    pf.add_flags("default", ['-ffree-line-length-none',
-                             '-g',
+    pf.define_profile("full-debug", "default")
+    pf.define_profile("fast-debug", "default")
+    pf.define_profile("production", "default")
+    pf.define_profile("unit-tests", "default")
+
+    pf.add_flags("default", ['-ffree-line-length-none', '-Wall',
+                             '-g', "-Werror=conversion",
                              '-Werror=character-truncation',
                              '-Werror=unused-value',
                              '-Werror=tabs',
+                             '-std=f2008',
                              '-fdefault-real-8',
                              '-fdefault-double-8',
                              ])
-    pf.define_profile("debug", "default")
-    pf.add_flags("debug", ["-O0"])
-    pf.define_profile("optimised", "default")
-    pf.add_flags("optimised", ["-O2"])
+    runtime = ["-fcheck=all", "-ffpe-trap=invalid,zero,overflow"]
+    init = ["-finit-integer=31173",  "-finit-real=snan",
+            "-finit-logical=true", "-finit-character=85"]
+    pf.add_flags("full-debug", runtime + ["-O0"] + init)
+    pf.add_flags("unit-tests", runtime + ["-O0"] + init)
+    pf.add_flags("fast-debug", runtime + ["-Og"])
+    pf.add_flags("production", ["-Ofast"])
 
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
