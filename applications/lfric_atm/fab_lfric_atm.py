@@ -140,7 +140,7 @@ class FabLFRicAtm(LFRicBase):
             real8 = "-fdefault-real-8"
         path_flags = [AddFlags(
             '$output/science/um/atmosphere/large_scale_precipitation/*',
-            [no_omp]),
+            [no_omp, no_externals]),
             AddFlags(match="$output/science/*", flags=[real8]),
             AddFlags(match="$output/science/socrates/aux/*",
                      flags=['-I$source/science/socrates/aux', no_omp]),
