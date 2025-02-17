@@ -143,7 +143,7 @@ class FabLFRicAtm(LFRicBase):
             [no_omp]),
             AddFlags(match="$output/science/*", flags=[real8]),
             AddFlags(match="$output/science/socrates/aux/*",
-                     flags=['-I$source/science/socrates/aux']),
+                     flags=['-I$source/science/socrates/aux', no_omp]),
             AddFlags(match="*/socrates/*",flags=[no_externals])]
         # TODO: A remove flag functionality based on profile option
         # and precision is needed
