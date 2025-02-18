@@ -43,7 +43,9 @@ def configurator(config, lfric_core_source: Path,
         rose_meta_conf,
         '-directory', config_dir,
         '-include_dirs', lfric_apps_source,
-        '-include_dirs', lfric_core_source])
+        '-include_dirs', lfric_core_source,
+        '-include_dirs', lfric_core_source / 'rose-meta',
+        '-include_dirs', lfric_apps_source / 'rose-meta'])
     rose_meta = config_dir / 'rose-meta.json'
 
     # build_config_loaders
