@@ -25,7 +25,7 @@ from fab.tools import Category
 from fab.util import input_to_output_fpath
 
 from baf_base import BafBase
-from lfric_common import configurator, fparser_workaround_stop_concatenation
+from lfric_common import configurator
 from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
 
@@ -275,7 +275,6 @@ class LFRicBase(BafBase):
     def analyse(self):
         self.preprocess_x90()
         self.psyclone()
-        fparser_workaround_stop_concatenation(self.config)
         analyse(self.config, root_symbol=self._root_symbol,
                 ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
                                  'xios', 'mod_wait'])
