@@ -149,9 +149,10 @@ class FabLFRicAtm(LFRicBase):
             '$output/science/um/atmosphere/large_scale_precipitation/*',
             [no_omp]),
             AddFlags(match="$output/science/*", flags=[real8]),
-            AddFlags(match="$output/science/socrates/aux/*",
-                     flags=['-I$source/science/socrates/aux', no_omp]),
-            AddFlags(match="*/socrates/*",flags=[no_externals])]
+            AddFlags(match="$output/science/socrates/radiance_core/*",
+                     flags=[no_externals]),
+            AddFlags(match="$output/science/socrates/interface_core/*",
+                     flags=[no_externals])]
         # TODO: A remove flag functionality based on profile option
         # and precision is needed
         if self._args.profile == 'full-debug':
