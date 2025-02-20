@@ -68,22 +68,29 @@ class FabLFRicAtm(LFRicBase):
     def find_source_files(self):
         """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
 
-        extract = FcmExtract(self.lfric_apps_root / "build" / "extract" /
-                             "extract.cfg")
+        extract_cfg = [FcmExtract(self.lfric_apps_root / "build" / "extract" /
+                                  "extract.cfg"),
+                       FcmExtract(self.lfric_apps_root / "science" /
+                                  "socrates_interface" / "build" /
+                                  "extract.cfg"),
+                       FcmExtract(self.lfric_apps_root / "science" /
+                                  "jules_interface" / "build" /
+                                  "extract.cfg")]
 
         science_root = self.config.source_root / 'science'
         path_filters = []
-        for section, source_file_info in extract.items():
-            for (list_type, list_of_paths) in source_file_info:
-                if list_type == "exclude":
-                    path_filters.append(Exclude(science_root / section))
-                else:
-                    # Remove the 'src' which is the first part of the name
-                    new_paths = [i.relative_to(i.parents[-2])
-                                 for i in list_of_paths]
-                    for path in new_paths:
-                        path_filters.append(Include(science_root /
-                                                    section / path))
+        for extract in extract_cfg:
+            for section, source_file_info in extract.items():
+                for (list_type, list_of_paths) in source_file_info:
+                    if list_type == "exclude":
+                        path_filters.append(Exclude(science_root / section))
+                    else:
+                        # Remove the 'src' which is the first part of the name
+                        new_paths = [i.relative_to(i.parents[-2])
+                                     for i in list_of_paths]
+                        for path in new_paths:
+                            path_filters.append(Include(science_root /
+                                                        section / path))
         super().find_source_files(path_filters=path_filters)
 
     def get_rose_meta(self):
