@@ -69,13 +69,19 @@ class FabLFRicAtm(LFRicBase):
         """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
 
         extract_cfg = [FcmExtract(self.lfric_apps_root / "build" / "extract" /
-                                  "extract.cfg"),
-                       FcmExtract(self.lfric_apps_root / "science" /
-                                  "socrates_interface" / "build" /
-                                  "extract.cfg"),
-                       FcmExtract(self.lfric_apps_root / "science" /
-                                  "jules_interface" / "build" /
                                   "extract.cfg")]
+
+        socrates_extract_cfg = self.lfric_apps_root / "science" /
+                               "socrates_interface" / "build" /
+                               "extract.cfg"
+        if socrates_extract_cfg.exists():
+           extract_cfg.append(FcmExtract(socrates_extract_cfg))
+
+        jules_extract_cfg = self.lfric_apps_root / "science" /
+                            "jules_interface" / "build" /
+                            "extract.cfg"
+        if jules_extract_cfg.exists():
+           extract_cfg.append(FcmExtract(jules_extract_cfg))
 
         science_root = self.config.source_root / 'science'
         path_filters = []
