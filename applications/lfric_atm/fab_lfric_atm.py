@@ -71,15 +71,15 @@ class FabLFRicAtm(LFRicBase):
         extract_cfg = [FcmExtract(self.lfric_apps_root / "build" / "extract" /
                                   "extract.cfg")]
 
-        socrates_extract_cfg = self.lfric_apps_root / "science" /
+        socrates_extract_cfg = (self.lfric_apps_root / "science" /
                                "socrates_interface" / "build" /
-                               "extract.cfg"
+                               "extract.cfg")
         if socrates_extract_cfg.exists():
            extract_cfg.append(FcmExtract(socrates_extract_cfg))
 
-        jules_extract_cfg = self.lfric_apps_root / "science" /
+        jules_extract_cfg = (self.lfric_apps_root / "science" /
                             "jules_interface" / "build" /
-                            "extract.cfg"
+                            "extract.cfg")
         if jules_extract_cfg.exists():
            extract_cfg.append(FcmExtract(jules_extract_cfg))
 
