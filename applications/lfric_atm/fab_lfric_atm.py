@@ -145,20 +145,21 @@ class FabLFRicAtm(LFRicBase):
         if fc.suite == "intel-classic":
             no_omp = "-qno-openmp"
             real8 = "-r8"
-            no_externals = "-warn noexternals"
+            no_externals = ["-warn", "noexternals"]
             # Some SOCRATES functions do not currently declare interfaces
             # This avoids a warning-turned-error about missing interfaces
         else:
             no_omp = "-fno-openmp"
             real8 = "-fdefault-real-8"
+            no_externals = []
         path_flags = [AddFlags(
             '$output/science/um/atmosphere/large_scale_precipitation/*',
             [no_omp]),
             AddFlags(match="$output/science/*", flags=[real8]),
             AddFlags(match="$output/science/socrates/radiance_core/*",
-                     flags=[no_externals]),
+                     flags=no_externals),
             AddFlags(match="$output/science/socrates/interface_core/*",
-                     flags=[no_externals])]
+                     flags=no_externals)]
         # TODO: A remove flag functionality based on profile option
         # and precision is needed
         if self._args.profile == 'full-debug':
