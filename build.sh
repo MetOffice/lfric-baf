@@ -9,6 +9,14 @@ fi
 # base class accessible to all script.
 # It takes one parameters: the name of a (python) script
 ROOT_DIR=$( cd -- "$( dirname -- "$(readlink -f ${BASH_SOURCE[0]})" )" &> /dev/null && pwd )
+
+# Make sure that this script is indeed started from
+# lfric-core (and not e.g. from the baf directory)
+if [[ ! -d $ROOT_DIR/components ]]; then
+        echo "'$ROOT_DIR' does not seem to be an LFRic_core checkout, can't find components."
+        exit
+fi
+
 FAB_DIR=$ROOT_DIR/infrastructure/build/fab
 PSYCLONE_BUILD_DIR=$ROOT_DIR/infrastructure/build/psyclone
 
