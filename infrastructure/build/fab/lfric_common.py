@@ -43,7 +43,9 @@ def configurator(config, lfric_core_source: Path,
         rose_meta_conf,
         '-directory', config_dir,
         '-include_dirs', lfric_apps_source,
-        '-include_dirs', lfric_core_source])
+        '-include_dirs', lfric_core_source,
+        '-include_dirs', lfric_core_source / 'rose-meta',
+        '-include_dirs', lfric_apps_source / 'rose-meta'])
     rose_meta = config_dir / 'rose-meta.json'
 
     # build_config_loaders
@@ -75,32 +77,3 @@ def configurator(config, lfric_core_source: Path,
                                    '-output', feign_config_mod_fpath])
 
     find_source_files(config, source_root=config_dir)
-
-
-@step
-def fparser_workaround_stop_concatenation(config):
-    """
-    fparser can't handle string concat in a stop statement. This step is
-    a workaround.
-
-    https://github.com/stfc/fparser/issues/330
-
-    """
-    feign_path = None
-    for file_path in config.artefact_store[ArtefactSet.FORTRAN_BUILD_FILES]:
-        if file_path.name == 'feign_config_mod.f90':
-            feign_path = file_path
-            break
-    else:
-        raise RuntimeError("Could not find 'feign_config_mod.f90'.")
-
-    # rename "broken" version
-    broken_version = feign_path.with_suffix('.broken')
-    shutil.move(feign_path, broken_version)
-
-    # make fixed version
-    bad = "_config: '// &\n        'Unable to close temporary file'"
-    good = "_config: Unable to close temporary file'"
-
-    open(feign_path, 'wt').write(
-        open(broken_version, 'rt').read().replace(bad, good))

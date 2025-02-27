@@ -68,22 +68,35 @@ class FabLFRicAtm(LFRicBase):
     def find_source_files(self):
         """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
 
-        extract = FcmExtract(self.lfric_apps_root / "build" / "extract" /
-                             "extract.cfg")
+        extract_cfg = [FcmExtract(self.lfric_apps_root / "build" / "extract" /
+                                  "extract.cfg")]
+
+        socrates_extract_cfg = (self.lfric_apps_root / "science" /
+                               "socrates_interface" / "build" /
+                               "extract.cfg")
+        if socrates_extract_cfg.exists():
+           extract_cfg.append(FcmExtract(socrates_extract_cfg))
+
+        jules_extract_cfg = (self.lfric_apps_root / "science" /
+                            "jules_interface" / "build" /
+                            "extract.cfg")
+        if jules_extract_cfg.exists():
+           extract_cfg.append(FcmExtract(jules_extract_cfg))
 
         science_root = self.config.source_root / 'science'
         path_filters = []
-        for section, source_file_info in extract.items():
-            for (list_type, list_of_paths) in source_file_info:
-                if list_type == "exclude":
-                    path_filters.append(Exclude(science_root / section))
-                else:
-                    # Remove the 'src' which is the first part of the name
-                    new_paths = [i.relative_to(i.parents[-2])
-                                 for i in list_of_paths]
-                    for path in new_paths:
-                        path_filters.append(Include(science_root /
-                                                    section / path))
+        for extract in extract_cfg:
+            for section, source_file_info in extract.items():
+                for (list_type, list_of_paths) in source_file_info:
+                    if list_type == "exclude":
+                        path_filters.append(Exclude(science_root / section))
+                    else:
+                        # Remove the 'src' which is the first part of the name
+                        new_paths = [i.relative_to(i.parents[-2])
+                                     for i in list_of_paths]
+                        for path in new_paths:
+                            path_filters.append(Include(science_root /
+                                                        section / path))
         super().find_source_files(path_filters=path_filters)
 
     def get_rose_meta(self):
@@ -132,13 +145,21 @@ class FabLFRicAtm(LFRicBase):
         if fc.suite == "intel-classic":
             no_omp = "-qno-openmp"
             real8 = "-r8"
+            no_externals = ["-warn", "noexternals"]
+            # Some SOCRATES functions do not currently declare interfaces
+            # This avoids a warning-turned-error about missing interfaces
         else:
             no_omp = "-fno-openmp"
             real8 = "-fdefault-real-8"
+            no_externals = []
         path_flags = [AddFlags(
             '$output/science/um/atmosphere/large_scale_precipitation/*',
             [no_omp]),
-            AddFlags(match="$output/science/*", flags=[real8]),]
+            AddFlags(match="$output/science/*", flags=[real8]),
+            AddFlags(match="$output/science/socrates/radiance_core/*",
+                     flags=no_externals),
+            AddFlags(match="$output/science/socrates/interface_core/*",
+                     flags=no_externals)]
         # TODO: A remove flag functionality based on profile option
         # and precision is needed
         if self._args.profile == 'full-debug':
