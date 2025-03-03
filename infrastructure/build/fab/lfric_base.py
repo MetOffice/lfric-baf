@@ -103,7 +103,7 @@ class LFRicBase(BafBase):
         parser = super().define_command_line_options()
 
         parser.add_argument(
-            '--rose_picker', '-rp', type=str, default="v2.0.0",
+            '--rose_picker', '-rp', type=str, default="system",
             help="Version of rose_picker. Use 'system' to use an installed "
                  "version.")
         parser.add_argument("--vernier", action="store_true", default=False,
@@ -130,11 +130,11 @@ class LFRicBase(BafBase):
         '''Top level function that sets preprocessor flags
         by calling self.set_flags
         '''
-        if self._args.precision:
-            precision_flags = ['-DRDEF_PRECISION=' + self._args.precision,
-                               '-DR_SOLVER_PRECISION=' + self._args.precision,
-                               '-DR_TRAN_PRECISION=' + self._args.precision,
-                               '-DR_BL_PRECISION=' + self._args.precision]
+        if self.args.precision:
+            precision_flags = ['-DRDEF_PRECISION=' + self.args.precision,
+                               '-DR_SOLVER_PRECISION=' + self.args.precision,
+                               '-DR_TRAN_PRECISION=' + self.args.precision,
+                               '-DR_BL_PRECISION=' + self.args.precision]
         else:
             precision_flags = []
             r_def_precision = os.environ.get("RDEF_PRECISION")
@@ -162,7 +162,7 @@ class LFRicBase(BafBase):
             else:
                 precision_flags += ['-DR_BL_PRECISION=64']
 
-        # build/tests.mk - for mpi unit tests
+        # build/tests.mk - for mpi unit tests, not used atm
         mpi_tests_flags = ['-DUSE_MPI=YES']
 
         self.set_flags(precision_flags+['-DUSE_XIOS'],
@@ -177,7 +177,7 @@ class LFRicBase(BafBase):
         :returns: list of flags for the linker.
         '''
         libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
-        if self._args.vernier:
+        if self.args.vernier:
             libs.append("vernier")
         return libs + super().get_linker_flags()
 
@@ -240,7 +240,7 @@ class LFRicBase(BafBase):
             # TODO: Ideally we would just put this into the toolbox,
             # but atm we can't put several tools of one category in
             # (so ToolBox will need to support more than one MISC tool)
-            rp = get_rose_picker(self._args.rose_picker)
+            rp = get_rose_picker(self.args.rose_picker)
             # Ideally we would want to get all source files created in
             # the build directory, but then we need to know the list of
             # files to add them to the list of files to process
