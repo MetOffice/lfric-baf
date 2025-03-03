@@ -108,6 +108,16 @@ module psy_data_base_mod
             procedure :: ProvideArray3dInt
             procedure :: DeclareArray4dInt
             procedure :: ProvideArray4dInt
+            procedure :: DeclareScalarLong
+            procedure :: ProvideScalarLong
+            procedure :: DeclareArray1dLong
+            procedure :: ProvideArray1dLong
+            procedure :: DeclareArray2dLong
+            procedure :: ProvideArray2dLong
+            procedure :: DeclareArray3dLong
+            procedure :: ProvideArray3dLong
+            procedure :: DeclareArray4dLong
+            procedure :: ProvideArray4dLong
             procedure :: DeclareScalarLogical
             procedure :: ProvideScalarLogical
             procedure :: DeclareArray1dLogical
@@ -754,6 +764,226 @@ contains
         this%next_var_index = this%next_var_index + 1
 
     end subroutine ProvideArray4dInt
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine declares a scalar integer(kind=int64) value. This
+    !! implementation only increases the next index, and prints
+    !! the name of the variable if verbose output is requested.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareScalarLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), intent(in) :: value
+
+        this%next_var_index = this%next_var_index+1
+
+        if (.not. is_enabled) return
+
+        if (this%verbosity > 1) &
+            write(stderr,*) "PSyData: DeclareScalarLong: ", &
+                            trim(this%module_name), " ", &
+                            trim(this%region_name), ": ", name
+
+    end subroutine DeclareScalarLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine provides a scalar integer(kind=int64) value. This
+    !! implementation only increases the next index.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine ProvideScalarLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), intent(in) :: value
+
+        this%next_var_index = this%next_var_index+1
+
+    end subroutine ProvideScalarLong
+
+    ! ---------------------------------------------------------------------
+    !> @brief This subroutine handles a declaration of a 1D array of
+    !! integer(kind=int64) values. This base implementation only increases
+    !! next_var_index and prints the name of the variable if
+    !! verbose output is requested.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray1dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:), intent(in) :: value
+        this%next_var_index = this%next_var_index + 1
+
+        if (.not. is_enabled) return
+
+        if (this%verbosity > 1) &
+            write(stderr,*) "PSyData: DeclareArray1dLong: ", &
+                            trim(this%module_name), " ", &
+                            trim(this%region_name), ": ", name
+
+    end subroutine DeclareArray1dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine handles a provide call for a 1D integer(kind=int64) array.
+    !! This base implementation only increases next_var_index.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine ProvideArray1dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:), intent(in) :: value
+
+        this%next_var_index = this%next_var_index + 1
+
+    end subroutine ProvideArray1dLong
+
+    ! ---------------------------------------------------------------------
+    !> @brief This subroutine handles a declaration of a 2D array of
+    !! integer(kind=int64) values. This base implementation only increases
+    !! next_var_index and prints the name of the variable if
+    !! verbose output is requested.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray2dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:,:), intent(in) :: value
+        this%next_var_index = this%next_var_index + 1
+
+        if (.not. is_enabled) return
+
+        if (this%verbosity > 1) &
+            write(stderr,*) "PSyData: DeclareArray2dLong: ", &
+                            trim(this%module_name), " ", &
+                            trim(this%region_name), ": ", name
+
+    end subroutine DeclareArray2dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine handles a provide call for a 2D integer(kind=int64) array.
+    !! This base implementation only increases next_var_index.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine ProvideArray2dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:,:), intent(in) :: value
+
+        this%next_var_index = this%next_var_index + 1
+
+    end subroutine ProvideArray2dLong
+
+    ! ---------------------------------------------------------------------
+    !> @brief This subroutine handles a declaration of a 3D array of
+    !! integer(kind=int64) values. This base implementation only increases
+    !! next_var_index and prints the name of the variable if
+    !! verbose output is requested.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray3dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:,:,:), intent(in) :: value
+        this%next_var_index = this%next_var_index + 1
+
+        if (.not. is_enabled) return
+
+        if (this%verbosity > 1) &
+            write(stderr,*) "PSyData: DeclareArray3dLong: ", &
+                            trim(this%module_name), " ", &
+                            trim(this%region_name), ": ", name
+
+    end subroutine DeclareArray3dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine handles a provide call for a 3D integer(kind=int64) array.
+    !! This base implementation only increases next_var_index.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine ProvideArray3dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:,:,:), intent(in) :: value
+
+        this%next_var_index = this%next_var_index + 1
+
+    end subroutine ProvideArray3dLong
+
+    ! ---------------------------------------------------------------------
+    !> @brief This subroutine handles a declaration of a 4D array of
+    !! integer(kind=int64) values. This base implementation only increases
+    !! next_var_index and prints the name of the variable if
+    !! verbose output is requested.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray4dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:,:,:,:), intent(in) :: value
+        this%next_var_index = this%next_var_index + 1
+
+        if (.not. is_enabled) return
+
+        if (this%verbosity > 1) &
+            write(stderr,*) "PSyData: DeclareArray4dLong: ", &
+                            trim(this%module_name), " ", &
+                            trim(this%region_name), ": ", name
+
+    end subroutine DeclareArray4dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine handles a provide call for a 4D integer(kind=int64) array.
+    !! This base implementation only increases next_var_index.
+    !! @param[in,out] this The instance of the PSyDataBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine ProvideArray4dLong(this, name, value)
+
+        implicit none
+
+        class(PSyDataBaseType), intent(inout), target :: this
+        character(*), intent(in) :: name
+        integer(kind=int64), dimension(:,:,:,:), intent(in) :: value
+
+        this%next_var_index = this%next_var_index + 1
+
+    end subroutine ProvideArray4dLong
 
     ! -------------------------------------------------------------------------
     !> @brief This subroutine declares a scalar Logical(kind=4) value. This
