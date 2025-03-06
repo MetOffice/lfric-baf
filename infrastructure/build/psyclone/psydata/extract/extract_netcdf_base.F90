@@ -99,6 +99,16 @@ module extract_netcdf_base_mod
         procedure :: WriteArray3dInt
         procedure :: DeclareArray4dInt
         procedure :: WriteArray4dInt
+        procedure :: DeclareScalarLong
+        procedure :: WriteScalarLong
+        procedure :: DeclareArray1dLong
+        procedure :: WriteArray1dLong
+        procedure :: DeclareArray2dLong
+        procedure :: WriteArray2dLong
+        procedure :: DeclareArray3dLong
+        procedure :: WriteArray3dLong
+        procedure :: DeclareArray4dLong
+        procedure :: WriteArray4dLong
         procedure :: DeclareScalarLogical
         procedure :: WriteScalarLogical
         procedure :: DeclareArray1dLogical
@@ -142,6 +152,11 @@ module extract_netcdf_base_mod
             DeclareArray2dInt, &
             DeclareArray3dInt, &
             DeclareArray4dInt, &
+            DeclareScalarLong, &
+            DeclareArray1dLong, &
+            DeclareArray2dLong, &
+            DeclareArray3dLong, &
+            DeclareArray4dLong, &
             DeclareScalarLogical, &
             DeclareArray1dLogical, &
             DeclareArray2dLogical, &
@@ -170,6 +185,11 @@ module extract_netcdf_base_mod
             WriteArray2dInt, &
             WriteArray3dInt, &
             WriteArray4dInt, &
+            WriteScalarLong, &
+            WriteArray1dLong, &
+            WriteArray2dLong, &
+            WriteArray3dLong, &
+            WriteArray4dLong, &
             WriteScalarLogical, &
             WriteArray1dLogical, &
             WriteArray2dLogical, &
@@ -1152,6 +1172,407 @@ retval = CheckError(nf90_put_var(this%ncid, this%var_id(this%next_var_index), &
         call this%PSyDataBaseType%ProvideArray4dInt(name, value)
 
     end subroutine WriteArray4dInt
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine declares a scalar integer(kind=int64) value.
+    !! A corresponding variable definition is added to the NetCDF file, and
+    !! the variable id is stored in the var_id field.
+    !! @param[in,out] this The instance of the ExtractNetcdfBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareScalarLong(this, name, value)
+
+        use netcdf, only : nf90_def_var, NF90_INT64
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), intent(in)                                :: value
+
+        integer                            :: retval
+        integer, dimension(:), allocatable :: tmp_var_id
+
+        if (this%next_var_index > size(this%var_id)) then
+            ! This can happen in LFRic when vector fields are used
+            ! Each dimension of this vector becomes one NetCDF
+            ! variable, so we need to potentially reallocate this field
+            allocate(tmp_var_id(2*size(this%var_id)))
+            tmp_var_id(1:size(this%var_id)) = this%var_id
+            deallocate(this%var_id)
+            call move_alloc(tmp_var_id, this%var_id)
+            ! tmp_var_id is deallocated as part of move_alloc
+        endif
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Defining Long."
+        endif
+        retval = CheckError(nf90_def_var(this%ncid, name, NF90_INT64, &
+                                         this%var_id(this%next_var_index)))
+        call this%PSyDataBaseType%DeclareScalarLong(name, value)
+
+    end subroutine DeclareScalarLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine writes the value of a scalar integer(kind=int64)
+    !! variable to the NetCDF file. It takes the variable id from the
+    !! corresponding declaration.
+    !! @param[in,out] this The instance of the ExtractNetcdfBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine WriteScalarLong(this, name, value)
+
+        use netcdf, only : nf90_put_var
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), intent(in)                                :: value
+        integer                                             :: retval
+if (this%verbosity >= 2) then
+            write(stderr,*) "Writing Long."
+        endif
+retval = CheckError(nf90_put_var(this%ncid, this%var_id(this%next_var_index), &
+                                         value))
+call this%PSyDataBaseType%ProvideScalarLong(name, value)
+
+    end subroutine WriteScalarLong
+
+
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine declares a 1D array of integer(kind=int64).
+    !! A corresponding variable and dimension definitions are added
+    !! to the NetCDF file, and the variable id is stored in the var_id field.
+    !! @param[in,out] this The instance of the extract_PsyDataType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray1dLong(this, name, value)
+
+        use netcdf
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:), intent(in)      :: value
+
+        integer                            :: dimid1
+        integer                            :: retval
+        integer, dimension(1)        :: dimids
+        integer, dimension(:), allocatable :: tmp_var_id
+
+        if (.not. is_enabled) return
+
+        if (this%next_var_index > size(this%var_id)) then
+            allocate(tmp_var_id(2*size(this%var_id)))
+            tmp_var_id(1:size(this%var_id)) = this%var_id
+            deallocate(this%var_id)
+            call move_alloc(tmp_var_id, this%var_id)
+            ! tmp_var_id is deallocated as part of move_alloc
+        endif
+
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Declaring Array Long."
+        endif
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%1", &
+                                         size(value,1), dimid1))
+        dimids =  (/ dimid1 /)
+        retval = CheckError(nf90_def_var(this%ncid, name, NF90_INT64, &
+                                         dimids, this%var_id(this%next_var_index)))
+
+        call this%PSyDataBaseType%DeclareArray1dLong(name, value)
+
+    end subroutine DeclareArray1dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine writes a 1D array of integer(kind=int64)
+    !! to the NetCDF file.
+    !! @param[in,out] this The instance of the ExtractNetcdfBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine WriteArray1dLong(this, name, value)
+
+        use netcdf, only : nf90_put_var
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:), intent(in)      :: value
+
+        integer :: retval
+
+        if (.not. is_enabled) return
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Writing Array Long."
+        endif
+
+retval = CheckError(nf90_put_var(this%ncid, this%var_id(this%next_var_index), &
+                                         value(:)))
+        call this%PSyDataBaseType%ProvideArray1dLong(name, value)
+
+    end subroutine WriteArray1dLong
+
+
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine declares a 2D array of integer(kind=int64).
+    !! A corresponding variable and dimension definitions are added
+    !! to the NetCDF file, and the variable id is stored in the var_id field.
+    !! @param[in,out] this The instance of the extract_PsyDataType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray2dLong(this, name, value)
+
+        use netcdf
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:,:), intent(in)      :: value
+
+        integer                            :: dimid1, dimid2
+        integer                            :: retval
+        integer, dimension(2)        :: dimids
+        integer, dimension(:), allocatable :: tmp_var_id
+
+        if (.not. is_enabled) return
+
+        if (this%next_var_index > size(this%var_id)) then
+            allocate(tmp_var_id(2*size(this%var_id)))
+            tmp_var_id(1:size(this%var_id)) = this%var_id
+            deallocate(this%var_id)
+            call move_alloc(tmp_var_id, this%var_id)
+            ! tmp_var_id is deallocated as part of move_alloc
+        endif
+
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Declaring Array Long."
+        endif
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%1", &
+                                         size(value,1), dimid1))
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%2", &
+                                         size(value,2), dimid2))
+        dimids =  (/ dimid1, dimid2 /)
+        retval = CheckError(nf90_def_var(this%ncid, name, NF90_INT64, &
+                                         dimids, this%var_id(this%next_var_index)))
+
+        call this%PSyDataBaseType%DeclareArray2dLong(name, value)
+
+    end subroutine DeclareArray2dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine writes a 2D array of integer(kind=int64)
+    !! to the NetCDF file.
+    !! @param[in,out] this The instance of the ExtractNetcdfBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine WriteArray2dLong(this, name, value)
+
+        use netcdf, only : nf90_put_var
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:,:), intent(in)      :: value
+
+        integer :: retval
+
+        if (.not. is_enabled) return
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Writing Array Long."
+        endif
+
+retval = CheckError(nf90_put_var(this%ncid, this%var_id(this%next_var_index), &
+                                         value(:,:)))
+        call this%PSyDataBaseType%ProvideArray2dLong(name, value)
+
+    end subroutine WriteArray2dLong
+
+
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine declares a 3D array of integer(kind=int64).
+    !! A corresponding variable and dimension definitions are added
+    !! to the NetCDF file, and the variable id is stored in the var_id field.
+    !! @param[in,out] this The instance of the extract_PsyDataType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray3dLong(this, name, value)
+
+        use netcdf
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:,:,:), intent(in)      :: value
+
+        integer                            :: dimid1, dimid2, dimid3
+        integer                            :: retval
+        integer, dimension(3)        :: dimids
+        integer, dimension(:), allocatable :: tmp_var_id
+
+        if (.not. is_enabled) return
+
+        if (this%next_var_index > size(this%var_id)) then
+            allocate(tmp_var_id(2*size(this%var_id)))
+            tmp_var_id(1:size(this%var_id)) = this%var_id
+            deallocate(this%var_id)
+            call move_alloc(tmp_var_id, this%var_id)
+            ! tmp_var_id is deallocated as part of move_alloc
+        endif
+
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Declaring Array Long."
+        endif
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%1", &
+                                         size(value,1), dimid1))
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%2", &
+                                         size(value,2), dimid2))
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%3", &
+                                         size(value,3), dimid3))
+        dimids =  (/ dimid1, dimid2, dimid3 /)
+        retval = CheckError(nf90_def_var(this%ncid, name, NF90_INT64, &
+                                         dimids, this%var_id(this%next_var_index)))
+
+        call this%PSyDataBaseType%DeclareArray3dLong(name, value)
+
+    end subroutine DeclareArray3dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine writes a 3D array of integer(kind=int64)
+    !! to the NetCDF file.
+    !! @param[in,out] this The instance of the ExtractNetcdfBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine WriteArray3dLong(this, name, value)
+
+        use netcdf, only : nf90_put_var
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:,:,:), intent(in)      :: value
+
+        integer :: retval
+
+        if (.not. is_enabled) return
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Writing Array Long."
+        endif
+
+retval = CheckError(nf90_put_var(this%ncid, this%var_id(this%next_var_index), &
+                                         value(:,:,:)))
+        call this%PSyDataBaseType%ProvideArray3dLong(name, value)
+
+    end subroutine WriteArray3dLong
+
+
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine declares a 4D array of integer(kind=int64).
+    !! A corresponding variable and dimension definitions are added
+    !! to the NetCDF file, and the variable id is stored in the var_id field.
+    !! @param[in,out] this The instance of the extract_PsyDataType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine DeclareArray4dLong(this, name, value)
+
+        use netcdf
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:,:,:,:), intent(in)      :: value
+
+        integer                            :: dimid1, dimid2, dimid3, dimid4
+        integer                            :: retval
+        integer, dimension(4)        :: dimids
+        integer, dimension(:), allocatable :: tmp_var_id
+
+        if (.not. is_enabled) return
+
+        if (this%next_var_index > size(this%var_id)) then
+            allocate(tmp_var_id(2*size(this%var_id)))
+            tmp_var_id(1:size(this%var_id)) = this%var_id
+            deallocate(this%var_id)
+            call move_alloc(tmp_var_id, this%var_id)
+            ! tmp_var_id is deallocated as part of move_alloc
+        endif
+
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Declaring Array Long."
+        endif
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%1", &
+                                         size(value,1), dimid1))
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%2", &
+                                         size(value,2), dimid2))
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%3", &
+                                         size(value,3), dimid3))
+        ! A '%' is added to avoid a clash if the user should have say
+        ! an array 'a', and 'adim1'.
+        retval = CheckError(nf90_def_dim(this%ncid, name//"dim%4", &
+                                         size(value,4), dimid4))
+        dimids =  (/ dimid1, dimid2, dimid3, dimid4 /)
+        retval = CheckError(nf90_def_var(this%ncid, name, NF90_INT64, &
+                                         dimids, this%var_id(this%next_var_index)))
+
+        call this%PSyDataBaseType%DeclareArray4dLong(name, value)
+
+    end subroutine DeclareArray4dLong
+
+    ! -------------------------------------------------------------------------
+    !> @brief This subroutine writes a 4D array of integer(kind=int64)
+    !! to the NetCDF file.
+    !! @param[in,out] this The instance of the ExtractNetcdfBaseType.
+    !! @param[in] name The name of the variable (string).
+    !! @param[in] value The value of the variable.
+    subroutine WriteArray4dLong(this, name, value)
+
+        use netcdf, only : nf90_put_var
+
+        implicit none
+
+        class(ExtractNetcdfBaseType), intent(inout), target :: this
+        character(*), intent(in)                            :: name
+        integer(kind=int64), dimension(:,:,:,:), intent(in)      :: value
+
+        integer :: retval
+
+        if (.not. is_enabled) return
+        if (this%verbosity >= 2) then
+            write(stderr,*) "Writing Array Long."
+        endif
+
+retval = CheckError(nf90_put_var(this%ncid, this%var_id(this%next_var_index), &
+                                         value(:,:,:,:)))
+        call this%PSyDataBaseType%ProvideArray4dLong(name, value)
+
+    end subroutine WriteArray4dLong
 
     ! -------------------------------------------------------------------------
     !> @brief This subroutine declares a scalar Logical(kind=4) value.
