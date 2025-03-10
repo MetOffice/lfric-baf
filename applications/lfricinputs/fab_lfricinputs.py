@@ -43,8 +43,9 @@ class FabLfricInputs(LFRicBase):
 
         # pylint: disable=redefined-builtin
         for dir in dirs:
-            grab_folder(self.config, src=self.lfric_apps_root / dir,
-                        dst_label=dir)
+            grab_folder(self.config, 
+                        src=self.lfric_apps_root / dir,
+                        dst_label='')
 
         fcm_export(self.config, src=f'fcm:shumlib.xm_tr',
                    dst_label=f'shumlib')
