@@ -39,13 +39,21 @@ class FabLfricInputs(LFRicBase):
                 'interfaces/socrates_interface/source/',
                 'science/physics_schemes/source',
                 'science/gungho/source',
+                # for backward compatibility
+                'science/um_physics_interface/source/',
+                'science/jules_interface/source/',
+                'science/socrates_interface/source/',
                 ]
 
         # pylint: disable=redefined-builtin
         for dir in dirs:
-            grab_folder(self.config, 
-                        src=self.lfric_apps_root / dir,
-                        dst_label='')
+            try:
+              grab_folder(self.config, 
+                          src=self.lfric_apps_root / dir,
+                          dst_label='')
+            except:
+              # for backward compatibility
+              continue
 
         fcm_export(self.config, src=f'fcm:shumlib.xm_tr',
                    dst_label=f'shumlib')
@@ -94,15 +102,7 @@ class FabLfricInputs(LFRicBase):
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
 
     def preprocess_c(self):
-        path_flags = [AddFlags(match="$source/science/um/*",
-                               flags=['-I$relative/include',
-                                      '-I/$source/science/\
-                                        um/include/other/',
-                                      '-I$source/science/\
-                                        shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),
-                      AddFlags(match="$source/science/jules/*",
+        path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
                       AddFlags(match="$source/shumlib/*",
                                flags=['-DSHUMLIB_LIBNAME=libshum',
@@ -132,16 +132,21 @@ class FabLfricInputs(LFRicBase):
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),         
+                                        shum_thread_utils/src',]),       
+                      # for backward compatibility
+                      AddFlags(match="$source/science/um/*",
+                               flags=['-I$relative/include',
+                                      '-I/$source/science/\
+                                        um/include/other/',
+                                      '-I$source/science/\
+                                        shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',]),  
                      ]
         super().preprocess_c(path_flags=path_flags)
 
     def preprocess_fortran(self):
-        path_flags = [AddFlags(match="$source/science/um/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/shumlib/\
-                                       shum_thread_utils/src/']),
-                      AddFlags(match="$source/science/jules/*",
+        path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
                       AddFlags(match="$source/science/shumlib/*",
                                flags=['-DSHUMLIB_LIBNAME=libshum',
@@ -166,6 +171,11 @@ class FabLfricInputs(LFRicBase):
                                flags=['-I$relative/include',
                                       '-I$source/shumlib/\
                                         shum_thread_utils/src/']),
+                      # for backward compatibility
+                      AddFlags(match="$source/science/um/*",
+                               flags=['-I$relative/include',
+                                      '-I$source/shumlib/\
+                                       shum_thread_utils/src/']),
                      ]
         super().preprocess_fortran(path_flags=path_flags)
 
