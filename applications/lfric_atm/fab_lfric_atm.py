@@ -219,8 +219,7 @@ class FabLFRicAtm(LFRicBase):
             '$output/science/um/atmosphere/large_scale_precipitation/*',
             [no_omp]),
             AddFlags(match="$output/science/*", flags=[real8]),
-            AddFlags(match="$output/jules/*", flags=[real8]),
-            AddFlags(match="$output/socrates/*", flags=[real8]),
+            # jules and socrates are extracted in the science folder
             AddFlags(match="$output/legacy/*", flags=[real8]),
             AddFlags(match="$output/AC_assimilation/*", flags=[real8]),
             AddFlags(match="$output/aerosols/*", flags=[real8]),
