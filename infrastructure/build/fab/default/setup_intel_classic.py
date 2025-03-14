@@ -33,9 +33,9 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
     ifort = cast(Compiler, ifort)
     # The flag groups are mainly from infrastructure/build/fortran
     # /ifort.mk
-    no_optimisation_flags = ['-O0']
-    safe_optimisation_flags = ['-O2', '-fp-model=strict']
-    risky_optimisation_flags = ['-O3', '-xhost']
+    no_optimisation_flags = ['-g', '-O0', '-traceback']
+    safe_optimisation_flags = ['-O2', '-fp-model=strict', '-traceback']
+    risky_optimisation_flags = ['-O3', '-xhost', '-traceback']
     # With -warn errors we get externals that are too long. While this
     # is a (usually safe) warning, the long externals then causes the
     # build to abort. So for now we cannot use `-warn errors`
