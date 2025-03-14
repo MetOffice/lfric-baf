@@ -27,7 +27,8 @@ class RosePicker(Tool):
     def __init__(self, path: Path):
         super().__init__("rose_picker", exec_name=str(path))
         # This is the required PYTHONPATH for running rose_picker
-        self._pythonpath = path / "lib" / "python"
+        # when it is installed from the repository:
+        self._pythonpath = path.parents[1] / "lib" / "python"
 
     def check_available(self):
         ''':returns: whether rose_picker works by running `rose_picker -help`.
@@ -67,7 +68,7 @@ def get_rose_picker(tag: Optional[str] = "v2.0.0"):
         # (i.e. available without any path or adjustment of PYTHONPATH)
         return Tool("rose_picker", exec_name="rose_picker")
 
-    # Otherwise use rose_picker from the default Fab workspace. It wii
+    # Otherwise use rose_picker from the default Fab workspace. It will
     # create a instance of the class above, which will add its path to
     # PYTHONPATH when executing a rose_picker command.
 
@@ -101,4 +102,4 @@ def get_rose_picker(tag: Optional[str] = "v2.0.0"):
 
 # =============================================================================
 if __name__ == "__main__":
-    rose_picker = get_rose_picker("v1.0.0")
+    rose_picker = get_rose_picker("v2.0.0")

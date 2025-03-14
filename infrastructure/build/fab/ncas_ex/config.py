@@ -30,7 +30,7 @@ class Config(DefaultConfig):
         tr = ToolRepository()
         ftn = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
         # Any gfortran on Cray's EX need this flag in order to
-        # compiler mpi_mod:
+        # compile mpi_mod:
         ftn.add_flags(["-fallow-argument-mismatch"])
 
         # Update the linker. This is what the default sets up
