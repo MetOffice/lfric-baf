@@ -17,7 +17,7 @@ gfortran and ifort, this description assumes the usage of gfortran.
 In order to use the build procedure below, you need to have:
 
 - a Fortran compiler. For now supported are: `gfortran`, `ifort`,
-`ifx`, Cray's `ftn`, 'nvfortran'.
+`ifx`, Cray's `ftn`, `nvfortran`.
 - `mpif90` as a compiler wrapper that calls your Fortran compiler.
 - the correct rose-picker version (2.0.0)
 - libclang and python-clang (dependencies of Fab)
@@ -34,10 +34,9 @@ additional directories might need to be listed or be removed.
 
 ### Installation
 
-Check out this repository with (for now) the branch `support_more_compilers`, which
-fixes several issues encountered on different sites
+Check out this repository:
 
-    git clone -b  support_more_compilers --recurse-submodules git@github.com:MetOffice/lfric-baf
+    git clone --recurse-submodules git@github.com:MetOffice/lfric-baf
 
 If you already have cloned this repository without the `--recurse-submodules` option,
 run:
@@ -141,17 +140,16 @@ The options in detail:
 - `--site` will make sure your modified config file is used to setup compiler options
 - `--suite gnu` makes the gnu compiler suite  and related compiler wrapper the default.
 - `-mpi` Enables MPI build
-- `--fc mpif90-gfortran` Selects the Fortran compiler. Here mpif90 as compiler wrapper
+- `--fc mpif90-gfortran` selects the Fortran compiler. Here mpif90 as compiler wrapper
   around gfortran will be used. If your mpif90 should not be using gfortran (e.g. 
   it might be using intel), this will be detected and the build will
   be aborted. It might not be necessary to specify the compiler explicitly,
   since the default suite and the fact that MPI is enabled should allow Fab to
   detect this automatically. But it can be required if different compilers and
   compiler wrappers are available that would all fulfil the requirements.
-  are a
-- `--ld linkfer-mpif90-gfortran` Specifies the linker. This is for now required
+- `--ld linkfer-mpif90-gfortran` specifies the linker. This is for now required
   to ensure that a Fortran compiler is used for linking, since Fab does not know
-  if linking should be done with C or Fortran (e.g. mpicc or mpif90, and it might
+  if linking should be done with C or Fortran (e.g. mpicc or mpif90), and it might
   pick the wrong one. The name of a linker always starts with `linker-`, followed
   by the name of the compiler to use.
 
