@@ -2,9 +2,10 @@
 
 This repository contains the current state of BAF, the Build Architecture with
 Fab. BAF is an object-oriented command line interface on top of the UK Met Office
-build system Fab (https://github.com/MetOffice/fab), which is currently
-stored in this repository. It also contains LFRic-BAF, a complete new Fab-based
-build system for the UK Met Office's LFRic simulation code.
+build system Fab (https://github.com/MetOffice/fab). Fab itself is contained
+as a submodule here, to ensure that the versions of BAF and FAB match.
+It also contains LFRic-BAF, a complete new Fab-based build system for the
+UK Met Office's LFRic simulation code, as an example of using BAF.
 
 For now, you need to install this LFRic build system into existing LFRic repositories.
 This way, building with Fab can be tested before the new Fab build system becomes
@@ -15,35 +16,27 @@ gfortran and ifort, this description assumes the usage of gfortran.
 ## Prerequisites
 In order to use the build procedure below, you need to have:
 
-- `gfortran` (`ifort` can also be used, but the instructions here are
-  all written for `gfortran`. To use `ifort`, replace `--suite gnu` with
-  `-suite intel-classic`, and `gfortran` with `ifort` etc)
-- `mpif90` as a compiler wrapper that calls gfortran
+- a Fortran compiler. For now supported are: `gfortran`, `ifort`,
+`ifx`, Cray's `ftn`, `nvfortran`.
+- `mpif90` as a compiler wrapper that calls your Fortran compiler.
 - the correct rose-picker version (2.0.0)
-- libclang and python-clang
+- libclang and python-clang (dependencies of Fab)
 - All lfric dependencies must be available, including:
-  - netcdf (including `nf-config`)
+  - netcdf (including the `nf-config` tool)
   - hdf5
   - xios, yaxt
 
-The current scripts only support current LFRic trunk, i.e. they won't work with
-LFRic 1.1 (due to missing directories in 1.1).
+  Installation of PSyclone and fparser is described below, you need at least
+  PSyclone 3.0 and fparser 0.2, older versions will result in build failures.
 
-## Installing Fab build system into LFRic
-This repository comes with a version of Fab as a submodule, to make sure the
-scripts here have the matching Fab version available.
-
-You need to have current trunk of PSyclone installed
-(https://github.com/stfc/PSyclone). The API changes significantly in current trunk
-(a 3.0 release is expected shortly), and the config
-file included in LFRic and the example script relies on these new feature. This could
-be changed to support both 2.5.0 and current trunk later.
+The build scripts support current LFRic trunk. Depending on LFRic version,
+additional directories might need to be listed or be removed.
 
 ### Installation
 
 Check out this repository:
 
-    git clone -b main  --recurse-submodules git@github.com:MetOffice/lfric-baf
+    git clone --recurse-submodules git@github.com:MetOffice/lfric-baf
 
 If you already have cloned this repository without the `--recurse-submodules` option,
 run:
@@ -53,7 +46,12 @@ run:
 
 to get Fab from the submodule.
 
-Assuming that you prefer to use a python virtual environment, use the following:
+You need to have current trunk of PSyclone installed
+(https://github.com/stfc/PSyclone). The API changes significantly in current trunk
+(a 3.0 release is expected shortly), and the config
+file included in LFRic and the example script relies on these new feature. 
+
+If required, install current PSyclone in a Python virtual environment:
 
      # Create a virtual environment and install psyclone
      cd lfric-baf
@@ -63,17 +61,21 @@ Assuming that you prefer to use a python virtual environment, use the following:
      git clone https://github.com/stfc/PSyclone.git
      cd PSyclone
      pip3 install .
+     cd ..
 
-Install the included fab version:
+Note that this will also install the right version of fparser. This build system
+will only work with fparser 0.2 (or later).
+
+Install the fab version included in lfric-baf:
 
      # Now install this fab:
-     cd external/fab
+     cd fab
      pip3 install .     # Without venv, use pip3 install --user .
-     cd ../..
+     cd ..
 
 Then you need to copy the build system into the two LFRic repositories - core and apps.
 Assuming that the two environment variable `LFRIC_CORE` and `LFRIC_APPS` point to the
-checked out LFRic repositories, use:
+checked-out LFRic repositories, use:
 
      ./install.sh  $LFRIC_CORE $LFRIC_APPS
 
@@ -95,38 +97,19 @@ Fab-based build scripts will be installed into:
 The fab build scripts will pickup site-specific configuration from directories under
 `$LFRIC_CORE/infrastructure/build/fab/default`.
 
-For now (until we have more changes implemented), it is recommended to copy
-the whole directory `default` to a new subdirectory `YOURSITE_default`, e.g.
-`nci_default` (which already exists). It is important that `_default` is added
-(this is to support future setups that have different targets for one SITE, e.g.
-meto_spice, meto_xc40, meto_xcs). Also make sure to use an underscore before
-`default`, not a `minus` (since using a minus prevents python from importing
-files from these subdirectories).
-Then modify the file `setup_gnu.py` and if required add or modify linking options,
-which are defined in the lines:
+For now, it is recommended to copy the `niwa_xc50` directory, which shows how
+to implement a (initially) empty site-specific setup. It will inherit all
+functionality from the default configuration directory, which will setup
+sensible defaults for all supported compilers. Use a two-part name,
+the first part identifying your site, the second part the platform you are using.
+If you have only one site, use `default` as platform (which is the default
+used by Baf). Make sure to use an underscore between site and platform, not a
+`minus` (since using a minus prevents Python from importing
+files from these subdirectories, which can be useful).
 
-        linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
-        linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-        linker.add_lib_flags("xios", ["-lxios"])
-        linker.add_lib_flags("hdf5", ["-lhdf5"])
+The `niwa_xc50/config.py` file shows how to modify the linker options
+as a simple example.
 
-The first parameter specifies the internal name for libraries, followed by a list
-of linker options. If you should need additional library paths, you could e.g. use:
-
-        linker.add_lib_flags("yaxt", ["-L", "/my/path/to/yaxt", "-lyaxt", "-lyaxt_c"])
-
-It is important that each parameter (esp. `-L` etc) is an individual entry in the
-list, otherwise they will not be properly recognised by the linker.
-
-Similarly, you can change the compiler flags in the lines:
-
-    gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
-    flags = ['-ffree-line-length-none', '-g',
-             '-Werror=character-truncation', '-Werror=unused-value',
-             '-Werror=tabs', '-fdefault-real-8', '-fdefault-double-8',
-             '-Ditworks'
-             ]
-    gfortran.add_flags(flags)
 
 ### Building
 In order to use the Fab build system, a wrapper script installed in the LFRic core
@@ -138,38 +121,87 @@ repo (not from this repo). Example usage (but don't try this now):
 
 The wrapper script `build.sh` makes sure that the build scripts installed into the
 core repository will be found. Even if you are building an application in core,
-you still need to invoke the `build.sh` script!
+you still need to invoke the `build.sh` script to allow BAF to setup the Python
+import infrastructure!
 
 The new LFRic FAB build system relies on command line options to select compiler etc.
 For building lfric_atm with gfortran (using mpif90 as a compiler wrapper that uses
 gfortran), use:
 
-    $LFRIC_CORE/build.sh ./fab_lfric_atm.py --site YOURSITE --suite gnu \
+    $LFRIC_CORE/build.sh ./fab_lfric_atm.py --site YOURSITE --platform YOUR_PLATFORM \
+       --suite gnu \
        -mpi -fc mpif90-gfortran -ld  linker-mpif90-gfortran
 
-Note that the there is no `_default` added to the site, this will be added implicitly
-by fab. This behaviour is meant for future improvements when the fab system will support 
-different targets for one site. The options in detail:
+If you have only one platform and therefore use `default` as name, there is no need
+to specify the `--platform` command line options, it will default to `default`.
+
+The options in detail:
 
 - `--site` will make sure your modified config file is used to setup compiler options
-- `--suite gnu` Makes the gnu compiler suite  and related compiler wrapper the default
+- `--suite gnu` makes the gnu compiler suite  and related compiler wrapper the default.
 - `-mpi` Enables MPI build
-- `--fc mpif90-gfortran` Selects the Fortran compiler. Here mpif90 as compiler wrapper
+- `--fc mpif90-gfortran` selects the Fortran compiler. Here mpif90 as compiler wrapper
   around gfortran will be used. If your mpif90 should not be using gfortran (e.g. 
   it might be using intel), this will be detected and the build will
-  be aborted.
-- `--ld linkfer-mpif90-gfortran` Specifies the linker.
+  be aborted. It might not be necessary to specify the compiler explicitly,
+  since the default suite and the fact that MPI is enabled should allow Fab to
+  detect this automatically. But it can be required if different compilers and
+  compiler wrappers are available that would all fulfil the requirements.
+- `--ld linkfer-mpif90-gfortran` specifies the linker. This is for now required
+  to ensure that a Fortran compiler is used for linking, since Fab does not know
+  if linking should be done with C or Fortran (e.g. mpicc or mpif90), and it might
+  pick the wrong one. The name of a linker always starts with `linker-`, followed
+  by the name of the compiler to use.
 
-It is not strictly necessary to specify the compiler and linker, selecting gnu as
+It is not strictly necessary to specify the compiler, selecting gnu as
 compiler suite and specifying `-mpi` will be sufficient. But if your site installs
 additional tools (e.g. we have profiling compiler wrappers), an unexpected compiler
 or linker might be picked, hence it is recommended to be explicit.
 
+If you have problems with the compiler names, run a build script with the option
+`--available-compilers`, which will list all available compiler and linkers, and also
+include debug output why other compilers were not marked as available.
+
+Example output:
+
+    ----- Available compiler and linkers -----
+    Gcc - gcc: gcc
+    Mpicc(gcc)
+    Gfortran - gfortran: gfortran
+    Mpif90(gfortran)
+    Linker - linker-gcc: gcc
+    Linker - linker-gfortran: gfortran
+    Linker - linker-mpif90-gfortran: mpif90
+    Linker - linker-mpicc-gcc: mpicc
+
+
 The build directory will be under `$FAB_WORKSPACE`, with the name containing the application
-and compiler, e.g. `lfric_atm-mpif90-gfortran`. If  `$FAB_WORKSPACE` is not defined, it
+and compiler, e.g. `lfric_atm-mpif90-gfortran`. If `$FAB_WORKSPACE` is not defined, it
 defaults to `$HOME/fab-workspace`. The build directory will contain the binary, all
 original source files will be under `source`, and all files created during build (including
 preprocessed files, PSyclone modified files, object files, ...) under `build_output`.
+
+### Usage on Cray systems
+On Cray XCs, the recommended way of building code is to use the Cray-supplied
+compiler wrappers (e.g. `ftn`). FAB supports these wrappers, but it will be required
+to explicitly specify the compilers to use (since FAB will otherwise detect e.g. 
+`ifort`, instead of using `ftn` as wrapper around `ifort`). Since Crays also use
+`cc` as wrapper, which can lead to confusion on non-cray systems, these wrappers
+are named `crayftn` and `craycc`. Use the following to select the right compiler:
+- `crayftn-ftn` - Use the CCE compilers
+- `crayftn-ifort` - Use `ftn` with Intel's `ifort`
+- `crayftn-gfortran` - Use `ftn` with GNU's `gfortran`.
+- `craycc-cc` - Use the CCE compilers
+- `craycc-icc` - Use `cc` with Intel's `icc`
+- `craycc-gcc` - Use `cc` with GNU's `gcc`
+- `linker-crayftn-ifort` - Use the Cray `ftn` wrapper for `ifort` as linker.
+   Etc. for other linkers.
+
+Example usage using Cray's CCE (assuming that `core` is next to `apps`:
+
+    cd apps/applications/gungho
+    ../../../core/build.sh ./fab_gungho.py -fc crayftn-ftn -ld linker-crayftn-ftn
+
 
 ### Running PSyclone on UM files
 This repository contains an additional script that shows how to use PSyclone to

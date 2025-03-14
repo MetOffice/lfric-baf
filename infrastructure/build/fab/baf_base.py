@@ -212,6 +212,12 @@ class BafBase:
         parser.add_argument(
             '--no-openmp', '-no-openmp', action="store_false",
             dest="openmp", help="Disable OpenMP")
+        parser.add_argument(
+            '--openacc', '-openacc', default=True, action="store_true",
+            help="Enable OpenACC")
+        parser.add_argument(
+            '--host', '-host', default="cpu", type=str,
+            help="Determine the OpenACC or OpenMP: either 'cpu' or 'gpu'.")
         parser.add_argument("--site", "-s", type=str,
                             default="$SITE or 'default'",
                             help="Name of the site to use.")
@@ -232,6 +238,9 @@ class BafBase:
         '''
         # pylint: disable=too-many-branches
         self._args = parser.parse_args(sys.argv[1:])
+        if self.args.host.lower() not in ["", "cpu", "gpu"]:
+            raise RuntimeError(f"Invalid host directive "
+                               f"'{self.args.host}'.")
 
         tr = ToolRepository()
         if self._args.available_compilers:
@@ -294,32 +303,6 @@ class BafBase:
         preprocessor_flags = []
         self.set_flags(preprocessor_flags, self._preprocessor_flags)
 
-    def define_compiler_flags(self):
-        '''Top level function that sets (compiler- and site-specific)
-        compiler flags by calling self.set_flags
-        '''
-        compiler = self._tool_box.get_tool(Category.FORTRAN_COMPILER,
-                                           mpi=self.config.mpi)
-
-        if compiler.suite == "intel-classic":
-
-            debug_flags = ['-g', '-traceback']
-            compiler_flags = debug_flags
-
-            self.set_flags(compiler_flags, self._compiler_flags)
-
-        elif compiler.suite in ["gnu"]:
-
-            debug_flags = ['-g']
-            compiler_flags = debug_flags
-
-            self.set_flags(compiler_flags, self._compiler_flags)
-
-        else:
-            raise RuntimeError(f"Unknown compiler suite '{compiler.suite}'.")
-
-        return compiler
-
     def get_linker_flags(self) -> List[str]:
         '''Base class for setting linker flags. This base implementation
         for now just returns an empty list
@@ -375,7 +358,6 @@ class BafBase:
             self.preprocess_c()
             self.preprocess_fortran()
             self.analyse()
-            self.define_compiler_flags()
             self.compile_c()
             self.compile_fortran()
             # Disable archiving due to
