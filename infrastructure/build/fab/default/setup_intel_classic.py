@@ -32,32 +32,26 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
 
     ifort = cast(Compiler, ifort)
 
-    ifort.define_profile("default")
-    ifort.define_profile("full-debug", "default")
-    ifort.define_profile("fast-debug", "default")
-    ifort.define_profile("production", "default")
-    ifort.define_profile("unit-tests", "default")
-
-    # Default flags
-    # =============
+    # The base flags
+    # ==============
     # The following flags will be applied to all modes:
-    ifort.add_flags(["-stand", "f08"],               "default")
-    ifort.add_flags(["-g", "-traceback"],            "default")
+    ifort.add_flags(["-stand", "f08"],               "base")
+    ifort.add_flags(["-g", "-traceback"],            "base")
     # With -warn errors we get externals that are too long. While this
     # is a (usually safe) warning, the long externals then causes the
     # build to abort. So for now we cannot use `-warn errors`
-    ifort.add_flags(["-warn", "all"],                "default")
+    ifort.add_flags(["-warn", "all"],                "base")
 
     # By default turning interface warnings on causes "genmod" files to be
     # created. This adds unnecessary files to the build so we disable that
     # behaviour.
-    ifort.add_flags(["-gen-interfaces", "nosource"], "default")
+    ifort.add_flags(["-gen-interfaces", "nosource"], "base")
 
     # The "-assume realloc-lhs" switch causes Intel Fortran prior to v17 to
     # actually implement the Fortran2003 standard. At version 17 it becomes the
     # default behaviour.
     if ifort.get_version() < (17, 0):
-        ifort.add_flags(["-assume", "realloc-lhs"], "default")
+        ifort.add_flags(["-assume", "realloc-lhs"], "base")
 
     # Full debug
     # ==========

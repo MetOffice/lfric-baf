@@ -24,12 +24,6 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
-    gfortran.define_profile("default")
-    gfortran.define_profile("full-debug", "default")
-    gfortran.define_profile("fast-debug", "default")
-    gfortran.define_profile("production", "default")
-    gfortran.define_profile("unit-tests", "default")
-
     gfortran.add_flags(['-ffree-line-length-none', '-Wall',
                   '-g', "-Werror=conversion",
                   '-Werror=character-truncation',
@@ -39,7 +33,7 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
                   '-fdefault-real-8',
                   '-fdefault-double-8',
                   ],
-                  "default", )
+                  "base", )
     runtime = ["-fcheck=all", "-ffpe-trap=invalid,zero,overflow"]
     init = ["-finit-integer=31173",  "-finit-real=snan",
             "-finit-logical=true", "-finit-character=85"]
