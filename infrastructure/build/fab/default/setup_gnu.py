@@ -45,8 +45,8 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
             "-finit-logical=true", "-finit-character=85"]
     gfortran.add_flags(runtime + ["-O0"] + init, "full-debug")
     gfortran.add_flags(runtime + ["-O0"] + init, "unit-tests")
-    gfortran.add_flags(runtime + ["-Og"], "fast-debug")
-    gfortran.add_flags(["-Ofast"], "production")
+    gfortran.add_flags(runtime + ["-Og"],        "fast-debug")
+    gfortran.add_flags(["-Ofast"],               "production")
 
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
