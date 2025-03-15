@@ -10,7 +10,7 @@ import argparse
 from typing import cast
 
 from fab.build_config import BuildConfig
-from fab.tools import Category, Linker, ToolRepository
+from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
 def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
@@ -24,11 +24,15 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     nvfortran = tr.get_tool(Category.FORTRAN_COMPILER, "nvfortran")
-    flags = ['-Mextend',           # 132 characters line length
-             '-g', '-traceback',
-             '-r8',                # Default 8 bytes reals
+    nvfortran = cast(Compiler, nvfortran)
+
+    # The base flags
+    # ==============
+    flags = ["-Mextend",           # 132 characters line length
+             "-g", "-traceback",
+             "-r8",                # Default 8 bytes reals
+             "-O0",                # No optimisations
              ]
-    nvfortran.add_flags(flags)
 
     lib_flags = ["-c++libs"]
 
@@ -54,6 +58,27 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
             # OpenMP on CPU, that's already handled by Fab
             pass
 
+    nvfortran.add_flags(flags, "base")
+
+    # Full debug
+    # ==========
+    nvfortran.add_flags(["-O0", "-fp-model=strict"], "full-debug")
+
+    # Fast debug
+    # ==========
+    nvfortran.add_flags(["-O2", "-fp-model=strict"], "fast-debug")
+
+    # Production
+    # ==========
+    nvfortran.add_flags(["-O4"], "production")
+
+    # Set up the linker
+    # =================
+    # This will implicitly affect all nvfortran based linkers, e.g.
+    # linker-mpif90-nvfortran will use these flags as well.
+    linker = tr.get_tool(Category.LINKER, "linker-nvfortran")
+    linker = cast(Linker, linker)
+
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
     # Fab's shell tool (doesn't really matter which shell we get, so just
@@ -66,10 +91,6 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
     except RuntimeError:
         nc_flibs = []
 
-    # This will implicitly affect all gfortran based linkers, e.g.
-    # linker-mpif90-gfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-nvfortran")
-    linker = cast(Linker, linker)
     linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])

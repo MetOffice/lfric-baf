@@ -24,13 +24,12 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     ifort = tr.get_tool(Category.FORTRAN_COMPILER, "ifort")
+    ifort = cast(Compiler, ifort)
 
     if not ifort.is_available:
         # Since some flags depends on version, the code below requires
         # that the intel compiler actually works.
         return
-
-    ifort = cast(Compiler, ifort)
 
     # The base flags
     # ==============
@@ -74,7 +73,6 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
 
     # Set up the linker
     # =================
-
     # This will implicitly affect all ifort based linkers, e.g.
     # linker-mpif90-ifort will use these flags as well.
     linker = tr.get_tool(Category.LINKER, "linker-ifort")
@@ -85,7 +83,6 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
     # Fab's shell tool (doesn't really matter which shell we get, so just
     # ask for the default):
     shell = tr.get_default(Category.SHELL)
-    # We must remove the trailing new line, and create a list:
     try:
         # We must remove the trailing new line, and create a list:
         nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
