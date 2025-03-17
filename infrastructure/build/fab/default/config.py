@@ -58,10 +58,12 @@ class Config:
             if compiler.is_available:
                 # Define a base profile, which contains the common
                 # compilation flags. This 'base' is not accessible to
-                # the user, so it's not part of the profile list
-                compiler.define_profile("base")
+                # the user, so it's not part of the profile list. Also,
+                # make it inherit from the default profile '', so that
+                # a user does not have to specify the base profile
+                compiler.define_profile("base", inherit_from="")
                 for profile in self.get_valid_profiles():
-                    compiler.define_profile(profile, "base")
+                    compiler.define_profile(profile, inherit_from="base")
 
         self.setup_intel_classic(build_config)
         self.setup_intel_llvm(build_config)
