@@ -47,10 +47,14 @@ class Config:
         that are supported.
         '''
         # First create the default compiler profiles for all available
-        # compilers:
+        # compilers. While we have a tool box with exactly one compiler
+        # in it, compiler wrappers will require more than one compiler
+        # to be initialised - so we just initialise all of them (including
+        # the linker):
         tr = ToolRepository()
         for compiler in (tr[Category.C_COMPILER] +
-                         tr[Category.FORTRAN_COMPILER]):
+                         tr[Category.FORTRAN_COMPILER] +
+                         tr[Category.LINKER]):
             if compiler.is_available:
                 # Define a base profile, which contains the common
                 # compilation flags. This 'base' is not accessible to

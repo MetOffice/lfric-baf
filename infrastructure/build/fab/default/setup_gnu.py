@@ -87,4 +87,4 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
     linker.add_lib_flags("hdf5", ["-lhdf5"])
 
     # Always link with C++ libs
-    linker.add_post_lib_flags(["-lstdc++"])
+    linker.add_post_lib_flags(["-lstdc++"], "base")
