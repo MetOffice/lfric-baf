@@ -26,6 +26,9 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
     nvfortran = tr.get_tool(Category.FORTRAN_COMPILER, "nvfortran")
     nvfortran = cast(Compiler, nvfortran)
 
+    if not nvfortran.is_available:
+        return
+
     # The base flags
     # ==============
     flags = ["-Mextend",           # 132 characters line length
