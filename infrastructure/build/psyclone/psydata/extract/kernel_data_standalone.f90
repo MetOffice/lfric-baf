@@ -39,26 +39,26 @@
 ! Author J. Henrichs, Bureau of Meteorology
 ! Modified I. Kavcic, Met Office
 
-!> This module implements a simple NetCDF writer using the PSyData
+!> This module implements a simple standalone writer using the PSyData
 !! interface. It is specific to the LFRic infrastructure library.
 !! A Fortran code instrumented with corresponding calls
 !! to the PSyData API and linked in with this library will write
-!! the requested input and output parameters to a NetCDF file.
+!! the requested input and output parameters to a Fortran binary file.
 !!
 
 module extract_psy_data_mod
 
     use, intrinsic :: iso_fortran_env, only : int64, int32
-    use extract_netcdf_base_mod,       only : ExtractNetcdfBaseType, CheckError
+    use extract_standalone_base_mod,   only : ExtractStandaloneBaseType
 
     implicit none
 
     !> This is the data type that manages the information required
-    !! to write data to a NetCDF file using the PSyData API. A
+    !! to write data to a binary file using the PSyData API. A
     !! static instance of this type is created for each instrumented
     !! region with PSyclone (and each region will write a separate
     !! file).
-    type, extends(ExtractNetcdfBaseType), public :: extract_PSyDataType
+    type, extends(ExtractStandaloneBaseType), public :: extract_PSyDataType
 
     contains
         procedure :: DeclareField_r32
@@ -77,23 +77,23 @@ module extract_psy_data_mod
         procedure :: WriteIntFieldVector
 
         !> Declare generic interface for PreDeclareVariable:
-        generic, public :: PreDeclareVariable => &
-                           DeclareField_r32,     &
-                           DeclareFieldVector_r32,     &
-                           DeclareField_r64,     &
-                           DeclareFieldVector_r64,     &
-                           DeclareIntField,      &
+        generic, public :: PreDeclareVariable =>  &
+                           DeclareField_r32,      &
+                           DeclareFieldVector_r32,&
+                           DeclareField_r64,      &
+                           DeclareFieldVector_r64,&
+                           DeclareIntField,       &
                            DeclareIntFieldVector
 
         !> The generic interface for providing the value of variables,
         !! which in case of the kernel extraction writes the data to
-        !! the NetCDF file.
-        generic, public :: ProvideVariable => &
-                           WriteField_r32,     &
-                           WriteFieldVector_r32,     &
-                           WriteField_r64,     &
-                           WriteFieldVector_r64,     &
-                           WriteIntField,     &
+        !! the Fortran file.
+        generic, public :: ProvideVariable =>   &
+                           WriteField_r32,      &
+                           WriteFieldVector_r32,&
+                           WriteField_r64,      &
+                           WriteFieldVector_r64,&
+                           WriteIntField,       &
                            WriteIntFieldVector
 
     end type extract_PSyDataType
@@ -107,7 +107,7 @@ contains
     !! 32-bit data.
     !! It calls the PreDeclareVariable function provided by the base class
     !! (depending on the type of the argument, e.g. it might call
-    !! DeclareArray1dDouble).
+    !! DeclareArray1DDouble).
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
     !! @param[in] value The value of the variable.
@@ -129,8 +129,8 @@ contains
     end subroutine DeclareField_r32
 
     ! -------------------------------------------------------------------------
-    !> @brief This subroutine writes the values of an LFRic real-valued 32-bit
-    !! field to the NetCDF file. It uses the corresponding function
+    !> @brief This subroutine writes the values of an LFRic real-valued 32-bit field.
+    !! to the binary file. It uses the corresponding function
     !! provided by the base class.
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
@@ -188,7 +188,7 @@ contains
 
     ! -------------------------------------------------------------------------
     !> @brief This subroutine writes an LFRic real-valued 32-bit field vector to
-    !! the NetCDF file. Each component is stored as an individual variable using
+    !! the binary file. Each component is stored as an individual variable using
     !! the corresponding array function of the base class.
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
@@ -222,7 +222,7 @@ contains
     !! 64-bit data.
     !! It calls the PreDeclareVariable function provided by the base class
     !! (depending on the type of the argument, e.g. it might call
-    !! DeclareArray1dDouble).
+    !! DeclareArray1DDouble).
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
     !! @param[in] value The value of the variable.
@@ -244,8 +244,8 @@ contains
     end subroutine DeclareField_r64
 
     ! -------------------------------------------------------------------------
-    !> @brief This subroutine writes the values of an LFRic real-valued 64-bit
-    !! field to the NetCDF file. It uses the corresponding function
+    !> @brief This subroutine writes the values of an LFRic real-valued 64-bit field.
+    !! to the binary file. It uses the corresponding function
     !! provided by the base class.
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
@@ -303,7 +303,7 @@ contains
 
     ! -------------------------------------------------------------------------
     !> @brief This subroutine writes an LFRic real-valued 64-bit field vector to
-    !! the NetCDF file. Each component is stored as an individual variable using
+    !! the binary file. Each component is stored as an individual variable using
     !! the corresponding array function of the base class.
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
@@ -336,7 +336,7 @@ contains
     !> @brief This subroutine declares an LFRic field with integer-valued data.
     !! It calls the PreDeclareVariable function provided by the base class
     !! (depending on the type of the argument, e.g. it might call
-    !! DeclareArray1dInt).
+    !! DeclareArray1DInt).
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
     !! @param[in] value The value of the variable.
@@ -360,9 +360,9 @@ contains
 
     ! -------------------------------------------------------------------------
     !> @brief This subroutine writes the values of an LFRic integer-valued field.
-    !! to the NetCDF file. It uses the corresponding function
+    !! to the binary file. It uses the corresponding function
     !! provided by the base class.
-    !! @param[in,out] this The instance of the extract_PSyDataType.
+    !! @param[in,out] this The instance of the extract_`.
     !! @param[in] name The name of the variable (string).
     !! @param[in] value The value of the variable.
     subroutine WriteIntField(this, name, value)
@@ -411,7 +411,7 @@ contains
             value_proxy = value(i)%get_proxy()
             ! We add a '%' here to avoid a potential name clash if
             ! the user should have a vector field 'a' (which is now stored
-            ! as a%1, a%2, ...), and a field 'a1'.
+            ! as a%1, a%2, ...), and a field 'a1'
             write(number, '("%",i0)') i
             call this%PreDeclareVariable(name//trim(number), value_proxy%data)
         enddo
@@ -420,7 +420,7 @@ contains
 
 ! -------------------------------------------------------------------------
     !> @brief This subroutine writes an LFRic integer-valued field vector to the
-    !! NetCDF file. Each component is stored as an individual variable
+    !! binary file. Each component is stored as an individual variable
     !! using the corresponding array function of the base class.
     !! @param[in,out] this The instance of the extract_PSyDataType.
     !! @param[in] name The name of the variable (string).
