@@ -24,11 +24,49 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
-    flags = ['-ffree-line-length-none', '-g',
-             '-Werror=character-truncation', '-Werror=unused-value',
-             '-Werror=tabs', '-fdefault-real-8', '-fdefault-double-8'
-             ]
-    gfortran.add_flags(flags)
+
+    if not gfortran.is_available:
+        return
+
+    # The base flags
+    # ==============
+    gfortran.add_flags(
+        ['-ffree-line-length-none', '-Wall',
+         '-g', "-Werror=conversion",
+         '-Werror=character-truncation',
+         '-Werror=unused-value',
+         '-Werror=tabs',
+         '-std=f2008',
+         '-fdefault-real-8',
+         '-fdefault-double-8',
+         ],
+        "base")
+
+    runtime = ["-fcheck=all", "-ffpe-trap=invalid,zero,overflow"]
+    init = ["-finit-integer=31173",  "-finit-real=snan",
+            "-finit-logical=true", "-finit-character=85"]
+    # Full debug
+    # ==========
+    gfortran.add_flags(runtime + ["-O0"] + init, "full-debug")
+
+    # Fast debug
+    # ==========
+    gfortran.add_flags(runtime + ["-Og"], "fast-debug")
+
+    # Production
+    # ==========
+    gfortran.add_flags(["-Ofast"], "production")
+
+    # unit-tests
+    # ==========
+    gfortran.add_flags(runtime + ["-O0"] + init, "unit-tests")
+
+    # Set up the linker
+    # =================
+    # This will implicitly affect all gfortran based linkers, e.g.
+    # linker-mpif90-gfortran will use these flags as well.
+    linker = tr.get_tool(Category.LINKER, "linker-gfortran")
+    linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
@@ -43,14 +81,10 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
     except RuntimeError:
         nc_flibs = []
 
-    # This will implicitly affect all gfortran based linkers, e.g.
-    # linker-mpif90-gfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-gfortran")
-    linker = cast(Linker, linker)
     linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])
 
     # Always link with C++ libs
-    linker.add_post_lib_flags(["-lstdc++"])
+    linker.add_post_lib_flags(["-lstdc++"], "base")

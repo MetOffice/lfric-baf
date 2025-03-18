@@ -10,7 +10,7 @@ import argparse
 from typing import cast
 
 from fab.build_config import BuildConfig
-from fab.tools import Category, Linker, ToolRepository
+from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
 def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
@@ -24,16 +24,19 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ftn")
-    flags = ["-g", "-G0", "-m", "0",
-             "-M", "E664,E7208,E7212",
-             "-R", "bcdps",            # bounds, array shape, collapse,
-                                       # pointer, string checking
-             "-en",                    # Fortran standard
-             "-ef",                    # use lowercase module names! Important!
-             "-hnocaf",                # Required for linking with C++
-             ]
+    ftn = cast(Compiler, ftn)
 
-    lib_flags = ["-lcraystdc++"]
+    if not ftn.is_available:
+        return
+
+    # The base flags
+    # ==============
+    flags = ["-g", "-G0", "-m", "0",    # ?
+             "-M", "E664,E7208,E7212",  # ?
+             "-en",                     # Fortran standard
+             "-ef",                     # use lowercase module names!Important!
+             "-hnocaf",                 # Required for linking with C++
+             ]
 
     # Handle accelerator options:
     if args.openacc or args.openmp:
@@ -55,7 +58,37 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
             # OpenMP on CPU, that's already handled by Fab
             pass
 
-    ftn.add_flags(flags)
+    ftn.add_flags(flags, "base")
+
+    # Full debug
+    # ==========
+    ftn.add_flags(["-Ktrap=fp",    # floating point checking
+                   "-R", "bcdps",  # bounds, array shape, collapse,
+                                   # pointer, string checking
+                   "-O0"],         # No optimisation
+                  "full-debug")
+    if ftn.get_version() >= (15, 0):
+        ftn.add_flags(["-G0"], "full-debug")
+    else:
+        ftn.add_flags(["-Gfast"], "full-debug")
+
+    # Fast debug
+    # ==========
+    ftn.add_flags(["-O2"], "fast-debug")
+    if ftn.get_version() >= (15, 0):
+        ftn.add_flags(["-G2"], "fast-debug")
+    else:
+        ftn.add_flags(["-Gfast"], "fast-debug")
+
+    # Production
+    # ==========
+    ftn.add_flags(["-O3"], "production")
+
+    # Set up the linker
+    # =================
+    linker = tr.get_tool(Category.LINKER, "linker-crayftn-ftn")
+    linker = cast(Linker, linker)
+
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
     # Fab's shell tool (doesn't really matter which shell we get, so just
@@ -69,16 +102,12 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
     except RuntimeError:
         nc_flibs = []
 
-    # This will implicitly affect all gfortran based linkers, e.g.
-    # linker-mpif90-gfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-crayftn-ftn")
-    linker = cast(Linker, linker)
     linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])
 
-    linker.add_post_lib_flags(lib_flags)
+    linker.add_post_lib_flags("-lcraystdc++")
 
     # Using the GNU compiler on Crays for now needs the additional
     # flag -fallow-argument-mismatch to compile mpi_mod.f90
