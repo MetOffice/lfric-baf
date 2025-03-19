@@ -64,7 +64,7 @@ module extract_standalone_base_mod
     type, extends(PSyDataBaseType), public :: ExtractStandaloneBaseType
 
         !> The unit number to use for output
-        integer                            :: unit_number
+        integer                            :: unit_number = -1
 
     contains
 
@@ -180,8 +180,13 @@ contains
                                            num_pre_vars, num_post_vars)
 
 #ifdef NO_MPI
-        open(newunit=this%unit_number, access='sequential',  &
-             form="formatted", file=module_name//"-"//region_name//".ascii")
+        if (this%unit_number == -1) then
+            open(newunit=this%unit_number, access='sequential',  &
+                 form="formatted", file=module_name//"-"//region_name//".ascii")
+        else
+            open(unit=this%unit_number, access='sequential',  &
+                 form="formatted", file=module_name//"-"//region_name//".ascii")
+        endif
 #else
         ! Add the rank to the file name:
         call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
@@ -189,10 +194,17 @@ contains
         num_digits = floor(log(real(size))/log(10.0)) + 1
         write(rank_format, "('(I',I0,'.',I0,')')") num_digits, num_digits
         write(rank_string, rank_format) rank
-        open(newunit=this%unit_number, access='sequential',  &
-             form="formatted",                               &
-             file=module_name//"-"//region_name//"-"//       &
-                  trim(rank_string)//".ascii")
+        if (this%unit_number == -1) then
+            open(newunit=this%unit_number, access='sequential',  &
+                 form="formatted",                               &
+                 file=module_name//"-"//region_name//"-"//       &
+                      trim(rank_string)//".ascii")
+        else
+            open(newunit=this%unit_number, access='sequential',  &
+                 form="formatted",                               &
+                 file=module_name//"-"//region_name//"-"//       &
+                      trim(rank_string)//".ascii")
+        endif
 #endif
 
     end subroutine PreStart
