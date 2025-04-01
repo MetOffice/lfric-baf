@@ -3,6 +3,7 @@
 '''This module contains a setup NIWA's XC-50
 '''
 
+import os
 from typing import cast
 
 from fab.tools import Category, Linker, ToolRepository
@@ -30,7 +31,7 @@ class Config(DefaultConfig):
         tr = ToolRepository()
         ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ifort")
         # Add any flags you want to have:
-        ftn.add_flags([])
+        ftn.add_flags([f"-I{os.environ['EBROOTXIOS']}/inc"])
 
         # Update the linker. This is what the default sets up
         # (except NetCDF, which is defined using nf-config, and
