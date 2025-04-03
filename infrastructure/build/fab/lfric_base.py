@@ -109,10 +109,6 @@ class LFRicBase(BafBase):
         parser.add_argument("--vernier", action="store_true", default=False,
                             help="Support profiling with Vernier.")
         parser.add_argument(
-            '--profile', '-pro', type=str, default="fast-debug",
-            help="Profile mode for compilation, choose from \
-                'fast-debug'(default), 'full-debug', 'production'")
-        parser.add_argument(
             '--precision', '-pre', type=str, default=None,
             help="Precision for reals, choose from '64', '32', \
                 default is R_SOLVER_PRECISION=32 while others are 64")
