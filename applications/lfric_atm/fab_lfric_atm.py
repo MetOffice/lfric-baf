@@ -51,12 +51,12 @@ class FabLFRicAtm(LFRicBase):
         # pylint: disable=redefined-builtin
         for dir in dirs:
             try:
-              grab_folder(self.config,
-                          src=self.lfric_apps_root / dir,
-                          dst_label='')
-            except: 
-              # for backward compatibility
-              continue
+                grab_folder(self.config,
+                            src=self.lfric_apps_root / dir,
+                            dst_label='')
+            except:
+                # for backward compatibility
+                continue
 
         gr = GetRevision("../../dependencies.sh")
         xm = "xm"
@@ -82,29 +82,29 @@ class FabLFRicAtm(LFRicBase):
                                   "extract.cfg")]
 
         socrates_extract_cfg = (self.lfric_apps_root / "interfaces" /
-                               "socrates_interface" / "build" /
-                               "extract.cfg")
+                                "socrates_interface" / "build" /
+                                "extract.cfg")
         if socrates_extract_cfg.exists():
-           extract_cfg.append(FcmExtract(socrates_extract_cfg))
+            extract_cfg.append(FcmExtract(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "interfaces" /
-                            "jules_interface" / "build" /
-                            "extract.cfg")
+                             "jules_interface" / "build" /
+                             "extract.cfg")
         if jules_extract_cfg.exists():
-           extract_cfg.append(FcmExtract(jules_extract_cfg))
+            extract_cfg.append(FcmExtract(jules_extract_cfg))
 
         # for backward compatibility
         socrates_extract_cfg = (self.lfric_apps_root / "science" /
-                               "socrates_interface" / "build" /
-                               "extract.cfg")
+                                "socrates_interface" / "build" /
+                                "extract.cfg")
         if socrates_extract_cfg.exists():
-           extract_cfg.append(FcmExtract(socrates_extract_cfg))
+            extract_cfg.append(FcmExtract(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "science" /
-                            "jules_interface" / "build" /
-                            "extract.cfg")
+                             "jules_interface" / "build" /
+                             "extract.cfg")
         if jules_extract_cfg.exists():
-           extract_cfg.append(FcmExtract(jules_extract_cfg))
+            extract_cfg.append(FcmExtract(jules_extract_cfg))
 
         science_root = self.config.source_root / 'science'
         path_filters = []
@@ -142,30 +142,30 @@ class FabLFRicAtm(LFRicBase):
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),         
+                                        shum_thread_utils/src',]),
                       AddFlags(match="$source/boundary_layer/*",
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),         
+                                        shum_thread_utils/src',]),
                       AddFlags(match="$source/large_scale_precipitation/*",
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),         
+                                        shum_thread_utils/src',]),
                       AddFlags(match="$source/free_tracers/*",
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),  
+                                        shum_thread_utils/src',]),
                       # for backward compatibility
                       AddFlags(match="$source/science/um/*",
                                flags=['-I$relative/include',
                                       '-I/$source/science/um/include/other/',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),       
-                     ]
+                                        shum_thread_utils/src',]),
+                      ]
         super().preprocess_c(path_flags=path_flags)
 
     def preprocess_fortran(self):
@@ -199,7 +199,7 @@ class FabLFRicAtm(LFRicBase):
                                flags=['-I$relative/include',
                                       '-I$source/shumlib/\
                                         shum_thread_utils/src/']),
-                     ]
+                      ]
         super().preprocess_fortran(path_flags=path_flags)
 
     def compile_fortran(self):
@@ -244,12 +244,6 @@ class FabLFRicAtm(LFRicBase):
                      flags=no_externals),
             AddFlags(match="$output/science/socrates/interface_core/*",
                      flags=no_externals)]
-        # TODO: A remove flag functionality based on profile option
-        # and precision is needed
-        if self._args.profile == 'full-debug':
-            self._compiler_flags.remove('-check all,noshape') \
-                if '-check all,noshape' in self._compiler_flags \
-                else self._compiler_flags.remove('-check all')
         super().compile_fortran(path_flags=path_flags)
 
 
