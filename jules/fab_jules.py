@@ -26,7 +26,8 @@ class JulesBuild(BafBase):
     '''
 
     def __init__(self, name: str, revision: str):
-        '''Build jules using Fab.
+        '''Build jules using Fab. It stores the revision number,
+        so it can be used in the grab_files step.
 
         :param name: the name for the fab workspace.
         :param revision: the revision to use
