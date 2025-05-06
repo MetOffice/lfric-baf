@@ -340,7 +340,10 @@ class BafBase:
                 flag_group.append(flag)
 
     def grab_files(self):
-        grab_folder(self.config, src="", dst_label="")
+        '''This should be overwritten by an application, since without this
+        there are no source files.'''
+        raise RuntimeError("You have to overwrite `grab_files` to define "
+                           "the source code")
 
     def find_source_files(self):
         find_source_files(self.config)
