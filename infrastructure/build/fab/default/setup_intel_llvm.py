@@ -10,7 +10,7 @@ import argparse
 from typing import cast
 
 from fab.build_config import BuildConfig
-from fab.tools import Category, Linker, ToolRepository
+from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
 def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
@@ -24,42 +24,45 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     ifx = tr.get_tool(Category.FORTRAN_COMPILER, "ifx")
+    ifx = cast(Compiler, ifx)
 
-    # The flag groups are mainly from infrastructure/build/fortran
-    # /ifort.mk
-    no_optimisation_flags = ['-O0']
-    safe_optimisation_flags = ['-O2', '-fp-model=strict']
-    risky_optimisation_flags = ['-O3', '-xhost']
+    if not ifx.is_available:
+        return
+
+    # The base flags
+    # ==============
+    # The following flags will be applied to all modes:
+    ifx.add_flags(["-stand", "f08"],               "base")
+    ifx.add_flags(["-g", "-traceback"],            "base")
     # With -warn errors we get externals that are too long. While this
     # is a (usually safe) warning, the long externals then causes the
     # build to abort. So for now we cannot use `-warn errors`
-    warnings_flags = ['-warn', 'all', '-gen-interfaces', 'nosource']
-    init_flags = ['-ftrapuv']
+    ifx.add_flags(["-warn", "all"],                "base")
 
-    fortran_standard_flags = ['-stand', 'f08']
+    # By default turning interface warnings on causes "genmod" files to be
+    # created. This adds unnecessary files to the build so we disable that
+    # behaviour.
+    ifx.add_flags(["-gen-interfaces", "nosource"], "base")
 
-    # ifort.mk has some app and file-specific options for older
-    # intel compilers. They have not been included here
-    compiler_flag_group = []
-    runtime_flags = ['-check', 'all', '-fpe0']
+    # Full debug
+    # ==========
+    ifx.add_flags(["-check", "all", "-fpe0"], "full-debug")
+    ifx.add_flags(["-O0", "-ftrapuv"],        "full-debug")
 
-    # TODO: we need to move the compilation profile into the BuildConfig
-    mode = "full-debug"
-    if mode == 'full-debug':
-        compiler_flag_group += (warnings_flags +
-                                init_flags + runtime_flags +
-                                no_optimisation_flags +
-                                fortran_standard_flags)
-    elif mode == 'production':
-        compiler_flag_group += (warnings_flags +
-                                risky_optimisation_flags)
-    else:  # 'fast-debug'
-        compiler_flag_group += (warnings_flags +
-                                safe_optimisation_flags +
-                                fortran_standard_flags)
+    # Fast debug
+    # ==========
+    ifx.add_flags(["-O2", "-fp-model=strict"], "fast-debug")
 
-    ifx.add_flags(compiler_flag_group)
+    # Production
+    # ==========
+    ifx.add_flags(["-O3", "-xhost"], "production")
 
+    # Set up the linker
+    # =================
+    # This will implicitly affect all ifx based linkers, e.g.
+    # linker-mpif90-ifx will use these flags as well.
+    linker = tr.get_tool(Category.LINKER, "linker-ifx")
+    linker = cast(Linker, linker)    # Make mypy happy
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
     # Fab's shell tool (doesn't really matter which shell we get, so just
@@ -72,9 +75,7 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
     except RuntimeError:
         nc_flibs = []
 
-    linker = tr.get_tool(Category.LINKER, "linker-ifx")
-    linker = cast(Linker, linker)    # Make mypy happy
-    linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
+    linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])

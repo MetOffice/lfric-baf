@@ -59,19 +59,21 @@ class BafBase:
         self.handle_command_line_options(parser)
         # Now allow further site-customisations depending on
         # the command line arguments
-        self._site_config.handle_command_line_options(self._args)
+        self._site_config.handle_command_line_options(self.args)
 
         if root_symbol:
             self._root_symbol = root_symbol
         else:
             self._root_symbol = name
 
+        label = f"{name}-{self.args.profile}-$compiler"
         self._config = BuildConfig(tool_box=self._tool_box,
-                                   project_label=f'{name}-$compiler',
+                                   project_label=label,
                                    verbose=True,
                                    n_procs=16,
-                                   mpi=self._args.mpi,
-                                   openmp=self._args.openmp
+                                   mpi=self.args.mpi,
+                                   openmp=self.args.openmp,
+                                   profile=self.args.profile,
                                    )
         self._preprocessor_flags = []
         self._compiler_flags = []
@@ -200,6 +202,7 @@ class BafBase:
         parser.add_argument(
             '--ld', '-ld', type=str, default="$LD",
             help="Name of the linker to use")
+
         parser.add_argument(
             '--mpi', '-mpi', default=True, action="store_true",
             help="Enable MPI")
@@ -218,12 +221,19 @@ class BafBase:
         parser.add_argument(
             '--host', '-host', default="cpu", type=str,
             help="Determine the OpenACC or OpenMP: either 'cpu' or 'gpu'.")
+
         parser.add_argument("--site", "-s", type=str,
                             default="$SITE or 'default'",
                             help="Name of the site to use.")
         parser.add_argument("--platform", "-p", type=str,
                             default="$PLATFORM or 'default'",
                             help="Name of the platform of the site to use.")
+        if self._site_config:
+            valid_profiles = self._site_config.get_valid_profiles()
+            parser.add_argument(
+                '--profile', '-pro', type=str, default=valid_profiles[0],
+                help=(f"Sets the compiler profile, choose from "
+                      f"'{valid_profiles}'."))
         return parser
 
     def handle_command_line_options(self, parser):
@@ -243,7 +253,7 @@ class BafBase:
                                f"'{self.args.host}'.")
 
         tr = ToolRepository()
-        if self._args.available_compilers:
+        if self.args.available_compilers:
             all_available = []
             # We don't print the values immediately, since `is_available` runs
             # tests with debugging enabled, which adds a lot of debug output.
@@ -262,38 +272,51 @@ class BafBase:
                 print(tool)
             sys.exit()
 
-        if self._args.suite:
-            tr.set_default_compiler_suite(self._args.suite)
+        if not self._site_config:
+            # If there is no site config, use the default (empty) profile
+            self.args.profile = ""
+        else:
+            # Otherwise make sure the selected profile is supported:
+            if (self.args.profile and self.args.profile
+                    not in self._site_config.get_valid_profiles()):
+                raise RuntimeError(f"Invalid profile '{self.args.profile}")
+            if not self.args.profile:
+                # If no default was selected, set the profile to be the
+                # default, which is the first entry of all valid profiles:
+                self.args.profile = self._site_config.get_valid_profiles()[0]
 
-            self.logger.info(f"Setting suite to '{self._args.suite}'.")
+        if self.args.suite:
+            tr.set_default_compiler_suite(self.args.suite)
+
+            self.logger.info(f"Setting suite to '{self.args.suite}'.")
             # suite will overwrite use of env variables, so change the
             # value of these arguments to be none so they will be ignored
-            if self._args.fc == "$FC":
-                self._args.fc = None
-            if self._args.cc == "$CC":
-                self._args.cc = None
-            if self._args.ld == "$LD":
-                self._args.ld = None
+            if self.args.fc == "$FC":
+                self.args.fc = None
+            if self.args.cc == "$CC":
+                self.args.cc = None
+            if self.args.ld == "$LD":
+                self.args.ld = None
         else:
             # If no suite is specified, if required set the defaults
             # for compilers based on the environment variables.
-            if self._args.fc == "$FC":
-                self._args.fc = os.environ.get("FC")
-            if self._args.cc == "$CC":
-                self._args.cc = os.environ.get("CC")
-            if self._args.ld == "$LD":
-                self._args.ld = os.environ.get("LD")
+            if self.args.fc == "$FC":
+                self.args.fc = os.environ.get("FC")
+            if self.args.cc == "$CC":
+                self.args.cc = os.environ.get("CC")
+            if self.args.ld == "$LD":
+                self.args.ld = os.environ.get("LD")
 
         # If no suite was specified, and a special tool was requested,
         # add it to the tool box:
-        if self._args.cc:
-            cc = tr.get_tool(Category.C_COMPILER, self._args.cc)
+        if self.args.cc:
+            cc = tr.get_tool(Category.C_COMPILER, self.args.cc)
             self._tool_box.add_tool(cc)
-        if self._args.fc:
-            fc = tr.get_tool(Category.FORTRAN_COMPILER, self._args.fc)
+        if self.args.fc:
+            fc = tr.get_tool(Category.FORTRAN_COMPILER, self.args.fc)
             self._tool_box.add_tool(fc)
-        if self._args.ld:
-            ld = tr.get_tool(Category.LINKER, self._args.ld)
+        if self.args.ld:
+            ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
     def define_preprocessor_flags(self):

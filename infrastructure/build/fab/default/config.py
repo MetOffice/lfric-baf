@@ -5,8 +5,10 @@
 '''
 
 import argparse
+from typing import List
 
 from fab.build_config import BuildConfig
+from fab.tools import Category, ToolRepository
 
 from default.setup_cray import setup_cray
 from default.setup_gnu import setup_gnu
@@ -30,10 +32,39 @@ class Config:
         '''
         return self._args
 
+    def get_valid_profiles(self) -> List[str]:
+        '''Determines the list of all allowed compiler profiles. The first
+        entry in this list is the default profile to be used. This method
+        can be overwritten by site configs to add or modify the supported
+        profiles.
+
+        :returns: list of all supported compiler profiles.
+        '''
+        return ["full-debug", "fast-debug", "production", "unit-tests"]
+
     def update_toolbox(self, build_config: BuildConfig):
         '''Set the default compiler flags for the various compiler
         that are supported.
         '''
+        # First create the default compiler profiles for all available
+        # compilers. While we have a tool box with exactly one compiler
+        # in it, compiler wrappers will require more than one compiler
+        # to be initialised - so we just initialise all of them (including
+        # the linker):
+        tr = ToolRepository()
+        for compiler in (tr[Category.C_COMPILER] +
+                         tr[Category.FORTRAN_COMPILER] +
+                         tr[Category.LINKER]):
+            if compiler.is_available:
+                # Define a base profile, which contains the common
+                # compilation flags. This 'base' is not accessible to
+                # the user, so it's not part of the profile list. Also,
+                # make it inherit from the default profile '', so that
+                # a user does not have to specify the base profile
+                compiler.define_profile("base", inherit_from="")
+                for profile in self.get_valid_profiles():
+                    compiler.define_profile(profile, inherit_from="base")
+
         self.setup_intel_classic(build_config)
         self.setup_intel_llvm(build_config)
         self.setup_gnu(build_config)

@@ -24,62 +24,65 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
 
     tr = ToolRepository()
     ifort = tr.get_tool(Category.FORTRAN_COMPILER, "ifort")
+    ifort = cast(Compiler, ifort)
 
     if not ifort.is_available:
         # Since some flags depends on version, the code below requires
         # that the intel compiler actually works.
         return
 
-    ifort = cast(Compiler, ifort)
-    # The flag groups are mainly from infrastructure/build/fortran
-    # /ifort.mk
-    no_optimisation_flags = ['-g', '-O0', '-traceback']
-    safe_optimisation_flags = ['-O2', '-fp-model=strict', '-traceback']
-    risky_optimisation_flags = ['-O3', '-xhost', '-traceback']
+    # The base flags
+    # ==============
+    # The following flags will be applied to all modes:
+    ifort.add_flags(["-stand", "f08"],               "base")
+    ifort.add_flags(["-g", "-traceback"],            "base")
     # With -warn errors we get externals that are too long. While this
     # is a (usually safe) warning, the long externals then causes the
     # build to abort. So for now we cannot use `-warn errors`
-    warnings_flags = ['-warn', 'all', '-gen-interfaces', 'nosource']
-    init_flags = ['-ftrapuv']
+    ifort.add_flags(["-warn", "all"],                "base")
 
+    # By default turning interface warnings on causes "genmod" files to be
+    # created. This adds unnecessary files to the build so we disable that
+    # behaviour.
+    ifort.add_flags(["-gen-interfaces", "nosource"], "base")
+
+    # The "-assume realloc-lhs" switch causes Intel Fortran prior to v17 to
+    # actually implement the Fortran2003 standard. At version 17 it becomes the
+    # default behaviour.
+    if ifort.get_version() < (17, 0):
+        ifort.add_flags(["-assume", "realloc-lhs"], "base")
+
+    # Full debug
+    # ==========
     # ifort.mk: bad interaction between array shape checking and
     # the matmul" intrinsic in at least some iterations of v19.
     if (19, 0, 0) <= ifort.get_version() < (19, 1, 0):
-        runtime_flags = ['-check', 'all,noshape', '-fpe0']
+        runtime_flags = ["-check", "all,noshape", "-fpe0"]
     else:
-        runtime_flags = ['-check', 'all', '-fpe0']
+        runtime_flags = ["-check", "all", "-fpe0"]
+    ifort.add_flags(runtime_flags,        "full-debug")
+    ifort.add_flags(["-O0", "-ftrapuv"],  "full-debug")
 
-    # ifort.mk: option for checking code meets Fortran standard
-    # - currently 2008
-    fortran_standard_flags = ['-stand', 'f08']
+    # Fast debug
+    # ==========
+    ifort.add_flags(["-O2", "-fp-model=strict"], "fast-debug")
 
-    # ifort.mk has some app and file-specific options for older
-    # intel compilers. They have not been included here
-    compiler_flag_group = []
+    # Production
+    # ==========
+    ifort.add_flags(["-O3", "-xhost"], "production")
 
-    # TODO: we need to move the compile mode into the BuildConfig
-    mode = "full_debug"
-    if mode == 'full-debug':
-        compiler_flag_group += (warnings_flags +
-                                init_flags + runtime_flags +
-                                no_optimisation_flags +
-                                fortran_standard_flags)
-    elif mode == 'production':
-        compiler_flag_group += (warnings_flags +
-                                risky_optimisation_flags)
-    else:  # 'fast-debug'
-        compiler_flag_group += (warnings_flags +
-                                safe_optimisation_flags +
-                                fortran_standard_flags)
-
-    ifort.add_flags(compiler_flag_group)
+    # Set up the linker
+    # =================
+    # This will implicitly affect all ifort based linkers, e.g.
+    # linker-mpif90-ifort will use these flags as well.
+    linker = tr.get_tool(Category.LINKER, "linker-ifort")
+    linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
     # Fab's shell tool (doesn't really matter which shell we get, so just
     # ask for the default):
     shell = tr.get_default(Category.SHELL)
-    # We must remove the trailing new line, and create a list:
     try:
         # We must remove the trailing new line, and create a list:
         nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
@@ -87,10 +90,6 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
     except RuntimeError:
         nc_flibs = []
 
-    # This will implicitly affect all ifort based linkers, e.g.
-    # linker-mpif90-ifort will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-ifort")
-    linker = cast(Linker, linker)
     linker.add_lib_flags("netcdf", nc_flibs)
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
