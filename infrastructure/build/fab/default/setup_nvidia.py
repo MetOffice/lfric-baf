@@ -27,7 +27,10 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
     nvfortran = cast(Compiler, nvfortran)
 
     if not nvfortran.is_available:
-        return
+        nvfortran = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-nvfortran")
+        nvfortran = cast(Compiler, nvfortran)
+        if not nvfortran.is_available:
+            return
 
     # The base flags
     # ==============
@@ -79,7 +82,7 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace):
     # =================
     # This will implicitly affect all nvfortran based linkers, e.g.
     # linker-mpif90-nvfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-nvfortran")
+    linker = tr.get_tool(Category.LINKER, f"linker-{nvfortran.name}")
     linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such

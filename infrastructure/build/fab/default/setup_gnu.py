@@ -26,7 +26,9 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
     gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
 
     if not gfortran.is_available:
-        return
+        gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-gfortran")
+        if not gfortran.is_available:
+            return
 
     # The base flags
     # ==============
@@ -65,7 +67,7 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace):
     # =================
     # This will implicitly affect all gfortran based linkers, e.g.
     # linker-mpif90-gfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-gfortran")
+    linker = tr.get_tool(Category.LINKER, f"linker-{gfortran.name}")
     linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such
