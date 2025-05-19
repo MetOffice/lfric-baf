@@ -70,7 +70,7 @@ class BafBase:
         self._config = BuildConfig(tool_box=self._tool_box,
                                    project_label=label,
                                    verbose=True,
-                                   n_procs=16,
+                                   n_procs=self.args.nprocs,
                                    mpi=self.args.mpi,
                                    openmp=self.args.openmp,
                                    profile=self.args.profile,
@@ -203,6 +203,9 @@ class BafBase:
             '--ld', '-ld', type=str, default="$LD",
             help="Name of the linker to use")
 
+        parser.add_argument(
+            '--nprocs', '-n', type=int, default=1,
+            help="Number of processes (default is 1)")
         parser.add_argument(
             '--mpi', '-mpi', default=True, action="store_true",
             help="Enable MPI")
