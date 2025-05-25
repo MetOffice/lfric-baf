@@ -14,7 +14,7 @@ from importlib import import_module
 import logging
 import os
 import sys
-from typing import List
+from typing import List, Optional
 
 from fab.build_config import BuildConfig
 from fab.steps.analyse import analyse
@@ -170,13 +170,16 @@ class BafBase:
         # The constructor handles everything.
         self._site_config = config_module.Config()
 
-    def define_command_line_options(self, parser=None):
+    def define_command_line_options(
+            self,
+            parser: Optional[argparse.ArgumentParser] = None
+            ) -> argparse.ArgumentParser:
         '''Defines command line options. Can be overwritten by a derived
         class which can provide its own instance (to easily allow for a
         different description).
+
         :param parser: optional a pre-defined argument parser. If not, a
             new instance will be created.
-        :type argparse: Optional[:py:class:`argparse.ArgumentParser`]
         '''
 
         if not parser:
@@ -236,7 +239,8 @@ class BafBase:
                       f"'{valid_profiles}'."))
         return parser
 
-    def handle_command_line_options(self, parser):
+    def handle_command_line_options(self,
+                                    parser: argparse.ArgumentParser) -> None:
         '''Analyse the actual command line options using the specified parser.
         The base implementation will handle the `--suite` parameter, and
         compiler/linker parameters (including the usage of environment
@@ -244,7 +248,6 @@ class BafBase:
         specified by a derived script.
 
         :param parser: the argument parser.
-        :type parser: :py:class:`argparse.ArgumentParser`
         '''
         # pylint: disable=too-many-branches
         self._args = parser.parse_args(sys.argv[1:])
