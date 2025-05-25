@@ -7,8 +7,9 @@
 
 """This module contains a BAF-based build script for jules."""
 
+from argparse import ArgumentParser
 import logging
-from typing import List
+from typing import cast, List, Optional
 
 from baf_base import BafBase
 
@@ -25,15 +26,36 @@ class JulesBuild(BafBase):
     :parameter revision: the revision of Jules to extract.
     """
 
-    def __init__(self, name: str, revision: str):
+    def __init__(self, name: str):
         """Build jules using Fab. It stores the revision number,
         so it can be used in the grab_files step.
 
         :param name: the name for the fab workspace.
-        :param revision: the revision to use
         """
-        self._revision = revision
+        self._revision = None
         super().__init__(name)
+
+    def define_command_line_options(self,
+                                    parser: Optional[ArgumentParser] = None
+                                    ) -> ArgumentParser:
+        """
+        :param parser: optional a pre-defined argument parser. If not, a
+            new instance will be created.
+        """
+        parser = super().define_command_line_options(parser)
+        parser = cast(ArgumentParser, parser)
+        parser.add_argument(
+            "--revision", "-r", type=str, default="vn7.8",
+            help="Sets the Jules revision to checkout.")
+        return parser
+
+    def handle_command_line_options(self, parser):
+        """Grab the requested (or default) Jules revision to use and
+        store it in an attribute.
+        """
+
+        super().handle_command_line_options(parser)
+        self._revision = self.args.revision
 
     def grab_files(self):
         """Extracts all the required source files from the repositories."""
@@ -46,7 +68,8 @@ class JulesBuild(BafBase):
                 dst_label="jules",
             )
         except Exception as e:
-            logging.warning(f"git_checkout failed: {e}, falling back to fcm_export")
+            logging.warning(f"git_checkout failed: {e}, "
+                            f"falling back to fcm_export")
             for src, dst_label in [("fcm:jules.xm_tr/src", "src"),
                                    ("fcm:jules.xm_tr/utils", "utils"),]:
                 fcm_export(
@@ -94,8 +117,5 @@ if __name__ == "__main__":
     logger = logging.getLogger("fab")
     logger.setLevel(logging.DEBUG)
 
-    # TODO: Ideally, the version number should be added as command line
-    # option by overwriting define_command_line_options and
-    # handle_command_line_options
-    jb = JulesBuild("jules", revision="vn7.8")
+    jb = JulesBuild("jules")
     jb.build()
