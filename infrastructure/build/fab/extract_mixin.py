@@ -51,7 +51,7 @@ class ExtractMixin:
         return no_private_fpath
 
     @step
-    def remove_private(self):
+    def remove_private_step(self):
         state = self.config
         input_files = state.artefact_store[ArtefactSet.FORTRAN_BUILD_FILES]
         args = [(state, filename) for filename in input_files]
@@ -62,15 +62,15 @@ class ExtractMixin:
         # at the end of the run will not delete these files.
         state.add_current_prebuilds(results)
 
-    def grab_files(self):
-        super().grab_files()
+    def grab_files_step(self):
+        super().grab_files_step()
         grab_folder(self.config, src=self.lfric_core_root /
                     "infrastructure" / "build" / "psyclone" / "psydata"
                     / "extract", dst_label='psydata')
 
-    def psyclone(self):
-        self.remove_private()
-        super().psyclone()
+    def psyclone_step(self):
+        self.remove_private_step()
+        super().psyclone_step()
 
     def get_transformation_script(self, fpath, config):
         ''':returns: the transformation script to be used by PSyclone.

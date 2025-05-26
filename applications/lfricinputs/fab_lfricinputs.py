@@ -31,8 +31,8 @@ class FabLfricInputs(LFRicBase):
             ['-DUM_PHYSICS',
              '-DCOUPLED', '-DUSE_MPI=YES'], self._preprocessor_flags)
 
-    def grab_files(self):
-        super().grab_files()
+    def grab_files_step(self):
+        super().grab_files_step()
         dirs = ['applications/lfricinputs/source/',
                 'interfaces/jules_interface/source/',
                 'interfaces/physics_schemes_interface/source/',
@@ -58,7 +58,7 @@ class FabLfricInputs(LFRicBase):
         fcm_export(self.config, src=f'fcm:shumlib.xm_tr',
                    dst_label=f'shumlib')
 
-    def find_source_files(self):
+    def find_source_files_step(self):
         """Based on $LFRIC_APPS_ROOT/applications/lfricinputs/fcm-make"""
 
         shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
@@ -95,13 +95,13 @@ class FabLfricInputs(LFRicBase):
                         path_filters.append(
                             Include(self.config.source_root / path))
 
-        super().find_source_files(path_filters=path_filters)
+        super().find_source_files_step(path_filters=path_filters)
 
     def get_rose_meta(self):
         return (self.lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
 
-    def preprocess_c(self):
+    def preprocess_c_step(self):
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
                       AddFlags(match="$source/shumlib/*",
@@ -143,9 +143,9 @@ class FabLfricInputs(LFRicBase):
                                       '-I$source/science/shumlib/\
                                         shum_thread_utils/src',]),  
                      ]
-        super().preprocess_c(path_flags=path_flags)
+        super().preprocess_c_step(path_flags=path_flags)
 
-    def preprocess_fortran(self):
+    def preprocess_fortran_step(self):
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
                       AddFlags(match="$source/science/shumlib/*",
@@ -177,7 +177,7 @@ class FabLfricInputs(LFRicBase):
                                       '-I$source/shumlib/\
                                        shum_thread_utils/src/']),
                      ]
-        super().preprocess_fortran(path_flags=path_flags)
+        super().preprocess_fortran_step(path_flags=path_flags)
 
 
 # -----------------------------------------------------------------------------

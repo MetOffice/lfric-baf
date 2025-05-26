@@ -18,7 +18,7 @@ from lfric_base import LFRicBase
 
 class FabGravityWave(LFRicBase):
 
-    def grab_files(self):
+    def grab_files_step(self):
         super().grab_files()
         dirs = ['applications/gravity_wave/source/',
                 'science/gungho/source',

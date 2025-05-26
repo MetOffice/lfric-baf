@@ -18,8 +18,8 @@ from lfric_base import LFRicBase
 
 class FabSkeleton(LFRicBase):
 
-    def grab_files(self):
-        super().grab_files()
+    def grab_files_step(self):
+        super().grab_files_step()
         dirs = ['applications/skeleton/source/']
 
         # pylint: disable=redefined-builtin

@@ -342,37 +342,37 @@ class BafBase:
             if flag not in flag_group:
                 flag_group.append(flag)
 
-    def grab_files(self):
+    def grab_files_step(self):
         '''This should be overwritten by an application, since without this
         there are no source files.'''
         raise RuntimeError("You have to overwrite `grab_files` to define "
                            "the source code")
 
-    def find_source_files(self):
+    def find_source_files_step(self):
         find_source_files(self.config)
 
-    def preprocess_c(self, path_flags=None):
+    def preprocess_c_step(self, path_flags=None):
         preprocess_c(self.config, common_flags=self._preprocessor_flags,
                      path_flags=path_flags)
 
-    def preprocess_fortran(self, path_flags=None):
+    def preprocess_fortran_step(self, path_flags=None):
         preprocess_fortran(self.config, common_flags=self._preprocessor_flags,
                            path_flags=path_flags)
 
-    def analyse(self):
+    def analyse_step(self):
         analyse(self.config, root_symbol=self._root_symbol)
 
-    def compile_c(self):
+    def compile_c_step(self):
         compile_c(self.config)
 
-    def compile_fortran(self, path_flags=None):
+    def compile_fortran_step(self, path_flags=None):
         compile_fortran(self.config, common_flags=self._compiler_flags,
                         path_flags=path_flags)
 
-    def archive_objects(self):
+    def archive_objects_step(self):
         archive_objects(self.config)
 
-    def link(self):
+    def link_step(self):
         link_exe(self.config, libs=self.get_linker_flags())
 
     def build(self):
@@ -380,22 +380,22 @@ class BafBase:
         # but otherwise the config object is used from this object, so no
         # need to use it anywhere.
         with self._config as _:
-            self.grab_files()
-            self.find_source_files()
+            self.grab_files_step()
+            self.find_source_files_step()
             c_pragma_injector(self.config)
             self.define_preprocessor_flags()
-            self.preprocess_c()
-            self.preprocess_fortran()
-            self.analyse()
-            self.compile_c()
-            self.compile_fortran()
+            self.preprocess_c_step()
+            self.preprocess_fortran_step()
+            self.analyse_step()
+            self.compile_c_step()
+            self.compile_fortran_step()
             # Disable archiving due to
             # https://github.com/MetOffice/fab/issues/310
             # Archives can contain several versions of a file (with different)
             # hashes, meaning at link time an older version might be used,
             # even if a newer one is available.
             # self.archive_objects()
-            self.link()
+            self.link_step()
 
 
 # ==========================================================================
