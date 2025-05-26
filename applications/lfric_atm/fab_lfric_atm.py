@@ -28,9 +28,50 @@ class FabLFRicAtm(LFRicBase):
     def define_preprocessor_flags(self):
         super().define_preprocessor_flags()
 
-        self.set_flags(
+        self.add_preprocessor_flags(
             ['-DUM_PHYSICS',
-             '-DCOUPLED', '-DUSE_MPI=YES'], self._preprocessor_flags)
+             '-DCOUPLED', '-DUSE_MPI=YES'])
+
+        path_flags = [AddFlags(match="$source/science/jules/*",
+                               flags=['-DUM_JULES', '-I$output']),
+                      AddFlags(match="$source/science/shumlib/*",
+                               flags=['-DSHUMLIB_LIBNAME=libshum',
+                                      '-I$output',
+                                      '-I$source/science/shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',
+                                      '-I$relative'],),
+                      AddFlags(match="$source/science/*",
+                               flags=['-DLFRIC']),
+                      AddFlags(match="$source/atmosphere_service/*",
+                               flags=['-I$relative/include',
+                                      '-I$source/science/shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',]),
+                      AddFlags(match="$source/boundary_layer/*",
+                               flags=['-I$relative/include',
+                                      '-I$source/science/shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',]),
+                      AddFlags(match="$source/large_scale_precipitation/*",
+                               flags=['-I$relative/include',
+                                      '-I$source/science/shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',]),
+                      AddFlags(match="$source/free_tracers/*",
+                               flags=['-I$relative/include',
+                                      '-I$source/science/shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',]),
+                      # for backward compatibility
+                      AddFlags(match="$source/science/um/*",
+                               flags=['-I$relative/include',
+                                      '-I/$source/science/um/include/other/',
+                                      '-I$source/science/shumlib/common/src',
+                                      '-I$source/science/shumlib/\
+                                        shum_thread_utils/src',]),
+                      ]
+        self.add_preprocessor_flags(path_flags)
 
     def grab_files_step(self):
         super().grab_files_step()
@@ -126,82 +167,6 @@ class FabLFRicAtm(LFRicBase):
         return (self.lfric_apps_root / 'applications/lfric_atm' / 'rose-meta' /
                 'lfric-lfric_atm' / 'HEAD' / 'rose-meta.conf')
 
-    def preprocess_c_step(self):
-        path_flags = [AddFlags(match="$source/science/jules/*",
-                               flags=['-DUM_JULES', '-I$output']),
-                      AddFlags(match="$source/science/shumlib/*",
-                               flags=['-DSHUMLIB_LIBNAME=libshum',
-                                      '-I$output',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',
-                                      '-I$relative'],),
-                      AddFlags(match="$source/science/*",
-                               flags=['-DLFRIC']),
-                      AddFlags(match="$source/atmosphere_service/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),
-                      AddFlags(match="$source/boundary_layer/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),
-                      AddFlags(match="$source/large_scale_precipitation/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),
-                      AddFlags(match="$source/free_tracers/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),
-                      # for backward compatibility
-                      AddFlags(match="$source/science/um/*",
-                               flags=['-I$relative/include',
-                                      '-I/$source/science/um/include/other/',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/\
-                                        shum_thread_utils/src',]),
-                      ]
-        super().preprocess_c_step(path_flags=path_flags)
-
-    def preprocess_fortran(self):
-        path_flags = [AddFlags(match="$source/science/jules/*",
-                               flags=['-DUM_JULES', '-I$output']),
-                      AddFlags(match="$source/science/shumlib/*",
-                               flags=['-DSHUMLIB_LIBNAME=libshum',
-                                      '-I$output',
-                                      '-I$source/shumlib/common/src',
-                                      '-I$relative'],),
-                      AddFlags(match="$source/science/*",
-                               flags=['-DLFRIC']),
-                      AddFlags(match="$source/atmosphere_service/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/shumlib/\
-                                        shum_thread_utils/src/']),
-                      AddFlags(match="$source/boundary_layer/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/shumlib/\
-                                        shum_thread_utils/src/']),
-                      AddFlags(match="$source/large_scale_precipitation/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/shumlib/\
-                                        shum_thread_utils/src/']),
-                      AddFlags(match="$source/free_tracers/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/shumlib/\
-                                        shum_thread_utils/src/']),
-                      # for backward compatibility
-                      AddFlags(match="$source/science/um/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/shumlib/\
-                                        shum_thread_utils/src/']),
-                      ]
-        super().preprocess_fortran_step(path_flags=path_flags)
-
     def compile_fortran_step(self):
         fc = self.config.tool_box[Category.FORTRAN_COMPILER]
         # TODO: needs a better solution, we are still hardcoding compilers here
@@ -235,7 +200,8 @@ class FabLFRicAtm(LFRicBase):
             AddFlags(match="$output/gravity_wave_drag/*", flags=[real8]),
             AddFlags(match="$output/idealised/*", flags=[real8]),
             AddFlags(match="$output/large_scale_cloud/*", flags=[real8]),
-            AddFlags(match="$output/large_scale_precipitation/*", flags=[real8]),
+            AddFlags(match="$output/large_scale_precipitation/*",
+                     flags=[real8]),
             AddFlags(match="$output/PWS_diagnostics/*", flags=[real8]),
             AddFlags(match="$output/radiation_control/*", flags=[real8]),
             AddFlags(match="$output/stochastic_physics/*", flags=[real8]),

@@ -14,9 +14,9 @@ from importlib import import_module
 import logging
 import os
 import sys
-from typing import List, Optional
+from typing import List, Optional, Union
 
-from fab.build_config import BuildConfig
+from fab.build_config import AddFlags, BuildConfig
 from fab.steps.analyse import analyse
 from fab.steps.archive_objects import archive_objects
 from fab.steps.c_pragma_injector import c_pragma_injector
@@ -25,7 +25,6 @@ from fab.steps.compile_fortran import compile_fortran
 from fab.steps.find_source_files import find_source_files
 from fab.steps.link import link_exe
 from fab.steps.preprocess import preprocess_c, preprocess_fortran
-from fab.steps.grab.folder import grab_folder
 from fab.tools import Category, ToolBox, ToolRepository
 
 
@@ -37,11 +36,20 @@ class BafBase:
     :param Optional[str] root_symbol:
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name, root_symbol=None):
+    def __init__(self,
+                 name: str,
+                 root_symbol: Optional[str] = None):
         self._logger = logging.getLogger('fab')
         self._site = None
         self._platform = None
         self._target = None
+
+        # The preprocessor flags to be used. One stores the common flags
+        # (without path-specific component), the other the path-specific
+        # flags (which are still handled separately in Fab)
+        self._preprocessor_flags_common: List[str] = []
+        self._preprocessor_flags_path: List[AddFlags] = []
+
         # We have to determine the site-specific setup first, so that e.g.
         # new compilers can be added before command line options are handled
         # (which might request this new compiler). So first parse the command
@@ -75,8 +83,6 @@ class BafBase:
                                    openmp=self.args.openmp,
                                    profile=self.args.profile,
                                    )
-        self._preprocessor_flags = []
-        self._compiler_flags = []
 
         if self._site_config:
             self._site_config.update_toolbox(self._config)
@@ -114,6 +120,20 @@ class BafBase:
             command line information.
         '''
         return self._args
+
+    @property
+    def preprocess_flags_common(self) -> List[str]:
+        """
+        :returns: the list of all common preprocessor flags.
+        """
+        return self._preprocessor_flags_common
+
+    @property
+    def preprocess_flags_path(self) -> List[AddFlags]:
+        """
+        :returns: the list of all path-specific flags.
+        """
+        return self._preprocessor_flags_path
 
     def define_site_platform_target(self):
         '''This method defines the attributes site, platform (and
@@ -326,11 +346,9 @@ class BafBase:
             self._tool_box.add_tool(ld)
 
     def define_preprocessor_flags(self):
-        '''Top level function that sets preprocessor flags
-        by calling self.set_flags
+        '''Top level function that sets preprocessor flags. The base
+        implementation does nothing, should be overwritten.
         '''
-        preprocessor_flags = []
-        self.set_flags(preprocessor_flags, self._preprocessor_flags)
 
     def get_linker_flags(self) -> List[str]:
         '''Base class for setting linker flags. This base implementation
@@ -340,10 +358,39 @@ class BafBase:
         '''
         return []
 
-    def set_flags(self, list_of_flags, flag_group):
+    def add_preprocessor_flags(
+            self,
+            list_of_flags: Union[AddFlags, str, List[AddFlags], List[str]]
+            ) -> None:
+        """
+        This function appends a preprocessor flags to the internal list of
+        all preprocessor flags, which will be passed to Fab's varioud
+        preprocessing steps (for C, Fortran, and X90).
+
+        Each flag can be either a str, or a path-specific instance of
+        Fab's AddFlags object. For the convenience of the user, this function
+        also accepts a single flag or a list of flags.
+
+        No checking will be done if a flag is already in the list of flags.
+
+        :param list_of_flags: the preprocessor flag(s) to add. This can be
+            either a str or an AddFlags, and in each case either a single
+            item or a list.
+        """
+
+        # This convoluted test makes mypy
+        if isinstance(list_of_flags, AddFlags):
+            list_of_flags = [list_of_flags]
+        elif isinstance(list_of_flags, str):
+            list_of_flags = [list_of_flags]
+
+        # While Fab still distinguishes between path-specific and common
+        # flags, we have to sort these flags here:
         for flag in list_of_flags:
-            if flag not in flag_group:
-                flag_group.append(flag)
+            if isinstance(flag, AddFlags):
+                self._preprocessor_flags_path.append(flag)
+            else:
+                self._preprocessor_flags_common.append(flag)
 
     def grab_files_step(self):
         '''This should be overwritten by an application, since without this
@@ -352,15 +399,29 @@ class BafBase:
                            "the source code")
 
     def find_source_files_step(self):
+        """
+        This function calls Fab's find_source_files, to identify and add
+        all source files to Fab's artefact store.
+        """
         find_source_files(self.config)
 
     def preprocess_c_step(self, path_flags=None):
-        preprocess_c(self.config, common_flags=self._preprocessor_flags,
-                     path_flags=path_flags)
+        """
+        Calls Fab's preprocessing of all C files. It passes the
+        common and path-specific flags set using add_preprocessor_flags.
+        """
+        if not path_flags:
+            path_flags = []
+        preprocess_c(self.config,
+                     common_flags=self.preprocess_flags_common,
+                     path_flags=self.preprocess_flags_path + path_flags)
 
     def preprocess_fortran_step(self, path_flags=None):
-        preprocess_fortran(self.config, common_flags=self._preprocessor_flags,
-                           path_flags=path_flags)
+        if not path_flags:
+            path_flags = []
+        preprocess_fortran(self.config,
+                           common_flags=self.preprocess_flags_common,
+                           path_flags=self.preprocess_flags_path+path_flags)
 
     def analyse_step(self):
         analyse(self.config, root_symbol=self._root_symbol)
@@ -369,7 +430,7 @@ class BafBase:
         compile_c(self.config)
 
     def compile_fortran_step(self, path_flags=None):
-        compile_fortran(self.config, common_flags=self._compiler_flags,
+        compile_fortran(self.config, common_flags=[],
                         path_flags=path_flags)
 
     def archive_objects_step(self):

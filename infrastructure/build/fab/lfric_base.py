@@ -161,8 +161,7 @@ class LFRicBase(BafBase):
         # build/tests.mk - for mpi unit tests, not used atm
         mpi_tests_flags = ['-DUSE_MPI=YES']
 
-        self.set_flags(precision_flags+['-DUSE_XIOS'],
-                       self._preprocessor_flags)
+        self.add_preprocessor_flags(precision_flags+['-DUSE_XIOS'])
         # -DUSE_XIOS is not found in makefile but in fab run_config and
         # driver_io_mod.F90
 
@@ -277,8 +276,13 @@ class LFRicBase(BafBase):
                 ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
                                  'xios', 'mod_wait'])
 
-    def preprocess_x90_step(self):
-        preprocess_x90(self.config, common_flags=self._preprocessor_flags)
+    def preprocess_x90_step(self) -> None:
+        """
+        Invokes the Fab preprocess step for all X90 files.
+        """
+        # TODO: Fab does not support path-specific flags for X90 files.
+        preprocess_x90(self.config,
+                       common_flags=self.preprocess_flags_common)
 
     def psyclone_step(self):
         psyclone_cli_args = self.get_psyclone_config()
