@@ -313,8 +313,12 @@ class LFRicBase(BafBase):
         ''':returns: the transformation script to be used by PSyclone.
         :rtype: Path
         '''
-        optimisation_path = (config.source_root / 'optimisation' /
-                             f"{self.site}-{self.platform}")
+        # Newer LFRic versions have a psykal directory
+        optimisation_path = (config.source_root / "optimisation" /
+                             f"{self.site}-{self.platform}" / "psykal")
+        if not optimisation_path.exists():
+            optimisation_path = (config.source_root / "optimisation" /
+                                 f"{self.site}-{self.platform}")
         relative_path = None
         for base_path in [config.source_root, config.build_output]:
             try:

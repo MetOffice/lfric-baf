@@ -30,6 +30,11 @@ class FabGravityWave(LFRicBase):
             grab_folder(self.config, src=self.lfric_apps_root / dir,
                         dst_label='')
 
+        # Copy the optimisation scripts into a separate directory
+        dir = 'applications/gravity_wave/optimisation'
+        grab_folder(self.config, src=self.lfric_apps_root / dir,
+                    dst_label='optimisation')
+
     def get_rose_meta(self):
         return (self.lfric_apps_root / 'applications' / 'gravity_wave'
                 / 'rose-meta' / 'lfric-gravity_wave' / 'HEAD'
