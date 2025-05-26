@@ -17,6 +17,14 @@ Besides the command line options supported by BAF,
 it accepts the option ``--revision`` to specify the
 Jules version to check out. It defaults to ``vn7.8``.
 
+The compiler setup is taken from the ``default`` directory.
+Note that at this stage only the gnu setup has been verified
+to work with Jules, see ticket #47.
+
 ## TODO:
-Support building Jules from a local directory instead
-of a checkout.
+1. Support building Jules from a local directory instead
+   of a checkout.
+2. Verify (and fix if required) the build with other compilers,
+   see https://github.com/MetOffice/lfric-baf/issues/47.
+2. Move the Jules build into the Jules trunk, e.g. into
+   main/trunk/etc/fab.
