@@ -19,7 +19,7 @@ from lfric_base import LFRicBase
 class FabGungho(LFRicBase):
 
     def grab_files_step(self):
-        super().grab_files_Step()
+        super().grab_files_step()
         dirs = ['applications/gungho_model/source/',
                 'science/gungho/source',
                 'science/shared/source/',
