@@ -12,8 +12,7 @@ ROOT_DIR=$( cd -- "$( dirname -- "$(readlink -f ${BASH_SOURCE[0]})" )" &> /dev/n
 
 echo "ROOT $ROOT_DIR"
 FAB_DIR=$ROOT_DIR/../infrastructure/build/fab
-PSYCLONE_BUILD_DIR=$ROOT_DIR/infrastructure/build/psyclone
 
 # Add ROOT_DIR here first, so we import compiler settings from
 # THIS default directory
-PYTHONPATH=$ROOT_DIR:$FAB_DIR:$PSYCLONE_BUILD_DIR:$PYTHONPATH $*
+PYTHONPATH=$ROOT_DIR:$FAB_DIR:$PYTHONPATH $*
