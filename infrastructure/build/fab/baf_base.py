@@ -417,6 +417,10 @@ class BafBase:
                      path_flags=self.preprocess_flags_path + path_flags)
 
     def preprocess_fortran_step(self, path_flags=None):
+        """
+        Calls Fab's preprocessing of all fortran files. It passes the
+        common and path-specific flags set using add_preprocessor_flags.
+        """
         if not path_flags:
             path_flags = []
         preprocess_fortran(self.config,
@@ -424,23 +428,51 @@ class BafBase:
                            path_flags=self.preprocess_flags_path+path_flags)
 
     def analyse_step(self):
+        """
+        Calls Fab's analyse. It passes the config and root symbol for
+        Fab to analyze the source code dependencies.
+        """
         analyse(self.config, root_symbol=self._root_symbol)
 
     def compile_c_step(self):
+        """
+        Calls Fab's compile_c. It passes the config for Fab to compile
+        all C files. Optionally, common flags, path-specific flags and
+        alternative source can also be passed to Fab for compilation.
+        """
         compile_c(self.config)
 
     def compile_fortran_step(self, path_flags=None):
+        """
+        Calls Fab's compile_fortran. It passes the config for Fab to
+        compile all Fortran files. Optionally, common flags, path-specific
+        flags and alternative source can also be passed to Fab for
+        compilation.
+        """
         compile_fortran(self.config, common_flags=[],
                         path_flags=path_flags)
 
     def archive_objects_step(self):
+        """
+        Calls Fab's archive_objects. At the moment, the config is passed
+        to Fab to create an object archive.
+        """
         archive_objects(self.config)
 
     def link_step(self):
+        """
+        Calls Fab's link_exe. It passes the config and a list of required
+        library names set using get_linker_flags to Fab for linking.
+        """
         link_exe(self.config, libs=self.get_linker_flags())
 
     def build(self):
-        # We need to use with to trigger the entrance/exit functionality,
+        """
+        This function defines the build process for Fab. Generally, a build
+        process involves grabbing and finding Fortran and C source files for
+        proprocessing, dependency analysis, compilation and linking.
+        """
+        # We need to use "with" to trigger the entrance/exit functionality,
         # but otherwise the config object is used from this object, so no
         # need to use it anywhere.
         with self._config as _:
@@ -464,7 +496,7 @@ class BafBase:
 
 # ==========================================================================
 if __name__ == "__main__":
-
+    # This tests the BafBase class using command line
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
     baf_base = BafBase(name="command-line-test",
