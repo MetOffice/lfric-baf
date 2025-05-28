@@ -364,7 +364,7 @@ class BafBase:
             ) -> None:
         """
         This function appends a preprocessor flags to the internal list of
-        all preprocessor flags, which will be passed to Fab's varioud
+        all preprocessor flags, which will be passed to Fab's various
         preprocessing steps (for C, Fortran, and X90).
 
         Each flag can be either a str, or a path-specific instance of
@@ -378,7 +378,7 @@ class BafBase:
             item or a list.
         """
 
-        # This convoluted test makes mypy
+        # This convoluted test makes mypy happy
         if isinstance(list_of_flags, AddFlags):
             list_of_flags = [list_of_flags]
         elif isinstance(list_of_flags, str):
