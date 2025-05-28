@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-'''This module contains a class that reads in fcm extract specifications.
+'''
+This module contains a class that reads in fcm extract specifications.
 '''
 
 
@@ -10,7 +11,8 @@ import sys
 
 
 class FcmExtract(dict):
-    '''A simple class that reads in an fcm extract.cfg file and stores
+    '''
+    A simple class that reads in an fcm extract.cfg file and stores
     the information about excluded and included file to be used in FAB.
 
     :param str filename: the name of the fcm extract file to read.
@@ -81,7 +83,8 @@ class FcmExtract(dict):
 
 # ============================================================================
 def main():
-    '''Simple wrapper to avoid pylint errors.
+    '''
+    Simple wrapper to avoid pylint errors.
     '''
     fe = FcmExtract(sys.argv[1])
     print("Sections", fe.keys())
