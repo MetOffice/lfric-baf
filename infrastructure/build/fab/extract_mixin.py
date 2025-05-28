@@ -5,7 +5,8 @@
 #  which you should have received as part of this distribution
 # ##############################################################################
 
-'''This module contains an ExtractMixin class to add support for all extration
+'''
+This module contains an ExtractMixin class to add support for all extration
 scripts. 
 '''
 
@@ -33,7 +34,8 @@ class ExtractMixin:
     '''
     @staticmethod
     def remove_one_private(args: tuple) -> Path:
-        '''This static method removes the private attributes of Fortran files
+        '''
+        This static method removes the private attributes of Fortran files
         for PSyclone extraction.
 
         :param args: a tuple with first the config and then the file path
