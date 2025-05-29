@@ -86,7 +86,7 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
 
     # Set up the linker
     # =================
-    linker = tr.get_tool(Category.LINKER, "linker-crayftn-ftn")
+    linker = tr.get_tool(Category.LINKER, f"linker-{ftn.name}")
     linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such

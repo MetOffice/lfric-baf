@@ -55,15 +55,18 @@ class Config:
         for compiler in (tr[Category.C_COMPILER] +
                          tr[Category.FORTRAN_COMPILER] +
                          tr[Category.LINKER]):
-            if compiler.is_available:
-                # Define a base profile, which contains the common
-                # compilation flags. This 'base' is not accessible to
-                # the user, so it's not part of the profile list. Also,
-                # make it inherit from the default profile '', so that
-                # a user does not have to specify the base profile
-                compiler.define_profile("base", inherit_from="")
-                for profile in self.get_valid_profiles():
-                    compiler.define_profile(profile, inherit_from="base")
+            # Define a base profile, which contains the common
+            # compilation flags. This 'base' is not accessible to
+            # the user, so it's not part of the profile list. Also,
+            # make it inherit from the default profile '', so that
+            # a user does not have to specify the "base" profile.
+            # Note that we set this even if a compiler is not available.
+            # This is required in case that compilers are not in PATH,
+            # so e.g. mpif90-ifort works, but ifort cannot be found.
+            # We still need to be able to set and query flags for ifort.
+            compiler.define_profile("base", inherit_from="")
+            for profile in self.get_valid_profiles():
+                compiler.define_profile(profile, inherit_from="base")
 
         self.setup_intel_classic(build_config)
         self.setup_intel_llvm(build_config)

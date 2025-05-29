@@ -27,7 +27,10 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
     ifx = cast(Compiler, ifx)
 
     if not ifx.is_available:
-        return
+        ifx = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-ifx")
+        ifx = cast(Compiler, ifx)
+        if not ifx.is_available:
+            return
 
     # The base flags
     # ==============
@@ -61,7 +64,7 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
     # =================
     # This will implicitly affect all ifx based linkers, e.g.
     # linker-mpif90-ifx will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-ifx")
+    linker = tr.get_tool(Category.LINKER, f"linker-{ifx.name}")
     linker = cast(Linker, linker)    # Make mypy happy
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using
