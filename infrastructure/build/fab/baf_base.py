@@ -516,7 +516,9 @@ class BafBase:
 
 # ==========================================================================
 if __name__ == "__main__":
-    # This tests the BafBase class using command line
+    '''
+    This tests the BafBase class using the command line.
+    '''
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
     baf_base = BafBase(name="command-line-test",

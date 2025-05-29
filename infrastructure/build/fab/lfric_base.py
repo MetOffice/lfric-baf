@@ -11,15 +11,17 @@ applications to only modify very few settings to have a working FAB build
 script.
 '''
 
+import argparse
 import inspect
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Iterable
 
 from fab.artefacts import ArtefactSet, SuffixFilter
+from fab.build_config import BuildConfig
 from fab.steps.analyse import analyse
-from fab.steps.find_source_files import find_source_files, Exclude
+from fab.steps.find_source_files import find_source_files, Exclude, Include
 from fab.steps.psyclone import psyclone, preprocess_x90
 from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
@@ -97,14 +99,18 @@ class LFRicBase(BafBase):
         # as the apps root:
         return self._lfric_core_root
 
-    def define_command_line_options(self, parser=None):
+    def define_command_line_options(self, 
+                                    parser: Optional[argparse.ArgumentParser] = None
+                                    ) -> argparse.ArgumentParser:
         '''
-        Defines command line options. Can be overwritten by a derived
-        class which can provide its own instance (to easily allow for a
-        different description).
-        :param parser: optional a pre-defined argument parser. If not, a
-            new instance will be created.
+        This adds LFRic specific command line options to the base class
+        define_command_line_option. Currently, --rose_piker, --vernier
+        and --precision options are added.
+
+        :param parser: optional a pre-defined argument parser. 
         :type argparse: Optional[:py:class:`argparse.ArgumentParser`]
+        :returns: the argument parser with the LFRic specific options added.
+        :rtype :py:class:`argparse.ArgumentParser`
         '''
         parser = super().define_command_line_options()
 
@@ -189,13 +195,14 @@ class LFRicBase(BafBase):
         include yaxt, xios, netcdf, hdf5 and vernier
 
         :returns: list of flags for the linker.
+        :rtype: List[str]
         '''
         libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
         if self.args.vernier:
             libs.append("vernier")
         return libs + super().get_linker_flags()
 
-    def grab_files_step(self):
+    def grab_files_step(self) -> None:
         '''
         This method overwrites the base class grab_files_step. It includes all
         the LFRic core directories that are commonly required for building LFRic
@@ -240,7 +247,19 @@ class LFRicBase(BafBase):
                         "infrastructure" / "build" / "psyclone" / "psydata"
                         / dir, dst_label='psydata')
 
-    def find_source_files_step(self, path_filters=None):
+    def find_source_files_step(self, 
+                               path_filters: Optional[Iterable[Exclude, Include]] = None
+                               ) -> None:
+        '''
+        This method overwrites the base class find_source_files_step.
+        It first calls the configurator_step to set up the configurator.
+        Then it finds all the source files in the LFRic core directories,
+        excluding the unit tests. Finally, it calls the templaterator_step.
+
+        :param path_filters: optional list of path filters to be passed to
+        Fab find_source_files, default is None.
+        :type path_filters: Optional[Iterable[Exclude, Include]]
+        '''
         self.configurator_step()
 
         if path_filters is None:
@@ -251,7 +270,14 @@ class LFRicBase(BafBase):
 
         self.templaterator_step(self.config)
 
-    def configurator_step(self):
+    def configurator_step(self) -> None:
+        '''
+        This method first gets the rose meta data information by calling
+        get_rose_meta. If the rose meta data is available, it then get the
+        rose picker tool by calling the get_rose_picker. Finally, it runs
+        the LFRic configurator with the LFRic core and apps sources by calling
+        configurator.  
+        '''
         rose_meta = self.get_rose_meta()
         if rose_meta:
             # Get the right version of rose-picker, depending on
@@ -268,7 +294,13 @@ class LFRicBase(BafBase):
                          rose_meta_conf=rose_meta,
                          rose_picker=rp)
 
-    def templaterator_step(self, config):
+    def templaterator_step(self, config: BuildConfig) -> None:
+        '''
+        This method runs the LFRic templaterator Fab tool.
+        
+        :param config: the Fab build configuration
+        :type config: :py:class:`fab.BuildConfig`
+        '''
         base_dir = self.lfric_core_root / "infrastructure" / "build" / "tools"
 
         templaterator = Templaterator(base_dir/"Templaterator")
@@ -290,10 +322,22 @@ class LFRicBase(BafBase):
                 config.artefact_store.add(ArtefactSet.FORTRAN_BUILD_FILES,
                                           out_file)
 
-    def get_rose_meta(self):
-        return ""
+    def get_rose_meta(self) -> Optional[Path]:
+        '''
+        This method returns the path to the rose meta data config file.
+        Currently, it returns none for the LFRic applications to overwrite
+        if required.
+        '''
+        return None
 
-    def analyse_step(self):
+    def analyse_step(self) -> None:
+        '''
+        The method overwrites the base class analyse_step.
+        For LFRic, it first runs the preprocess_x90_step and then runs
+        psyclone_step. Finally, it calls Fab's analyse for dependency
+        analysis, ignoring the third party modules that are commonly
+        used by LFRic.
+        '''
         self.preprocess_x90_step()
         self.psyclone_step()
         analyse(self.config, root_symbol=self._root_symbol,
@@ -308,7 +352,17 @@ class LFRicBase(BafBase):
         preprocess_x90(self.config,
                        common_flags=self.preprocess_flags_common)
 
-    def psyclone_step(self):
+    def psyclone_step(self) -> None:
+        '''
+        This method runs Fab's psyclone. It first sets the additional psyclone
+        command line arguments by calling get_psyclone_config to get the PSyclone
+        configuration file and by calling get_additional_psyclone_options to get
+        additional psyclone command line set by the user, e.g. for profiling, if any.
+        Finally, Fab's psyclone is called with the Fab build configuration, the kernel
+        root directory, the transforamtion script got through calling
+        get_transformation_script, the api, and the additional psyclone command line
+        arguments.
+        '''
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
 
@@ -318,16 +372,19 @@ class LFRicBase(BafBase):
                  cli_args=psyclone_cli_args)
 
     def get_psyclone_config(self) -> List[str]:
-        ''':returns: the command line options to pick the right
-            PSyclone config file.
+        '''
+        :returns: the command line options to pick the right
+        PSyclone config file.
+        :rtype: List[str]
         '''
         return ["--config", self._psyclone_config]
 
     def get_additional_psyclone_options(self) -> List[str]:
-        ''':returns: Additional PSyclone command line options. This
-        basic version checks if profiling using Tau or Vernier
-        is enabled, and if so, adds the kernel profiling flags
-        to PSyclone.
+        '''
+        :returns: Additional PSyclone command line options. This
+        basic version checks if profiling using Tau or Vernier is enabled,
+        and if so, adds the kernel profiling flags to PSyclone.
+        :rtype: List[str]
         '''
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
@@ -337,8 +394,18 @@ class LFRicBase(BafBase):
             return ["--profile", "kernels"]
         return []
 
-    def get_transformation_script(self, fpath, config):
-        ''':returns: the transformation script to be used by PSyclone.
+    def get_transformation_script(self, fpath: Path, config: BuildConfig) -> Path:
+        '''
+        This method returns the path to the transformation script that PSyclone
+        will use for each x90 file. It first checks if there is a specific
+        transformation script for the x90 file. If not, it will see whether a global
+        transformation script can be used. 
+
+        :param fpath: the path to the file being processed.
+        :type fpath: Path
+        :param config: the FAB BuildConfig instance.
+        :type config: :py:class:`fab.BuildConfig`
+        :returns: the transformation script to be used by PSyclone.
         :rtype: Path
         '''
         # Newer LFRic versions have a psykal directory
@@ -367,7 +434,9 @@ class LFRicBase(BafBase):
 
 # ==========================================================================
 if __name__ == "__main__":
-
+    '''
+    This tests the LFRicBase class using the command line.
+    '''
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
     lfric_base = LFRicBase(name="command-line-test",

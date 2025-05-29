@@ -1,7 +1,9 @@
 import logging
 import shutil
 from pathlib import Path
+from typing import Optional
 
+from fab.build_config import BuildConfig
 from fab.artefacts import ArtefactSet
 from fab.steps import step
 from fab.steps.find_source_files import find_source_files
@@ -11,23 +13,47 @@ logger = logging.getLogger('fab')
 
 
 class Script(Tool):
-    '''A simple wrapper that runs a shell script.
-    :name: the path to the script to run.
+    '''
+    A simple wrapper that runs a shell script.
+
+    :param name: the path to the script to run.
+    :type name: Path
     '''
     def __init__(self, name: Path):
         super().__init__(name=name.name, exec_name=str(name),
                          category=Category.MISC)
 
-    def check_available(self):
+    def check_available(self) -> bool:
+        '''
+        This method overrides the base class check_available to simply
+        mark the script tool as available. 
+        '''
         return True
 
 
 @step
-def configurator(config, lfric_core_source: Path,
+def configurator(config: BuildConfig,
+                 lfric_core_source: Path,
                  lfric_apps_source: Path,
                  rose_meta_conf: Path,
                  rose_picker: Tool,
-                 config_dir=None):
+                 config_dir: Optional[Path] = None) -> None:
+    '''
+    This method implements the LFRic configurator tool.
+
+    param config: the Fab build config instance
+    :type config: :py:class:`fab.BuildConfig`
+    param lfric_core_source: the path to the LFRic core directory
+    :type lfric_core_source: Path
+    param lfric_apps_source: the path to the LFRic apps directory
+    :type lfric_apps_source: Path
+    param rose_meta_conf: the path to the rose-meta configuration file
+    :type rose_meta_conf: Path
+    param rose_picker: the rose picker tool
+    :type rose_picker: Tool
+    param config_dir: the directory for the generated configuration files
+    :type config_dir: Optional[Path]
+    '''
     # pylint: disable=too-many-arguments
     tools = lfric_core_source / 'infrastructure' / 'build' / 'tools'
     config_dir = config_dir or config.build_output / 'configuration'

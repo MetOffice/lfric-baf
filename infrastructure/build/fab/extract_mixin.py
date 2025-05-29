@@ -106,8 +106,12 @@ class ExtractMixin:
         This method overwrites the base class get_transformation_script by
         returning the path to the transformation script that PSyclone will
         use for extraction.
+
         :param fpath: the path to the file being processed.
+        :type fpath: Path
         :param config: the FAB BuildConfig instance.
+        :type config: :py:class:`fab.BuildConfig`
         :returns: the transformation script to be used by PSyclone.
+        :rtype: Path
         '''
         return config.source_root / 'optimisation' / 'extract' / 'global.py'
