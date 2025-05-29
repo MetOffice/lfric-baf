@@ -161,8 +161,7 @@ class LFRicBase(BafBase):
         # build/tests.mk - for mpi unit tests, not used atm
         mpi_tests_flags = ['-DUSE_MPI=YES']
 
-        self.set_flags(precision_flags+['-DUSE_XIOS'],
-                       self._preprocessor_flags)
+        self.add_preprocessor_flags(precision_flags+['-DUSE_XIOS'])
         # -DUSE_XIOS is not found in makefile but in fab run_config and
         # driver_io_mod.F90
 
@@ -177,7 +176,7 @@ class LFRicBase(BafBase):
             libs.append("vernier")
         return libs + super().get_linker_flags()
 
-    def grab_files(self):
+    def grab_files_step(self):
         dirs = ['infrastructure/source/',
                 'components/driver/source/',
                 'components/inventory/source/',
@@ -217,8 +216,8 @@ class LFRicBase(BafBase):
                         "infrastructure" / "build" / "psyclone" / "psydata"
                         / dir, dst_label='psydata')
 
-    def find_source_files(self, path_filters=None):
-        self.configurator()
+    def find_source_files_step(self, path_filters=None):
+        self.configurator_step()
 
         if path_filters is None:
             path_filters = []
@@ -226,9 +225,9 @@ class LFRicBase(BafBase):
                           path_filters=([Exclude('unit-test', '/test/')] +
                                         path_filters))
 
-        self.templaterator(self.config)
+        self.templaterator_step(self.config)
 
-    def configurator(self):
+    def configurator_step(self):
         rose_meta = self.get_rose_meta()
         if rose_meta:
             # Get the right version of rose-picker, depending on
@@ -245,7 +244,7 @@ class LFRicBase(BafBase):
                          rose_meta_conf=rose_meta,
                          rose_picker=rp)
 
-    def templaterator(self, config):
+    def templaterator_step(self, config):
         base_dir = self.lfric_core_root / "infrastructure" / "build" / "tools"
 
         templaterator = Templaterator(base_dir/"Templaterator")
@@ -253,11 +252,9 @@ class LFRicBase(BafBase):
         t90_filter = SuffixFilter(ArtefactSet.INITIAL_SOURCE, [".t90", ".T90"])
         template_files = t90_filter(config.artefact_store)
         # Don't bother with parallelising this, atm there is only one file:
-        print("TEMPLATE", template_files)
         for template_file in template_files:
             out_dir = input_to_output_fpath(config=config,
                                             input_path=template_file).parent
-            print("OUTDIR IS", out_dir)
             out_dir.mkdir(parents=True, exist_ok=True)
             templ_r32 = {"kind": "real32", "type": "real"}
             templ_r64 = {"kind": "real64", "type": "real"}
@@ -272,17 +269,22 @@ class LFRicBase(BafBase):
     def get_rose_meta(self):
         return ""
 
-    def analyse(self):
-        self.preprocess_x90()
-        self.psyclone()
+    def analyse_step(self):
+        self.preprocess_x90_step()
+        self.psyclone_step()
         analyse(self.config, root_symbol=self._root_symbol,
                 ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
                                  'xios', 'mod_wait'])
 
-    def preprocess_x90(self):
-        preprocess_x90(self.config, common_flags=self._preprocessor_flags)
+    def preprocess_x90_step(self) -> None:
+        """
+        Invokes the Fab preprocess step for all X90 files.
+        """
+        # TODO: Fab does not support path-specific flags for X90 files.
+        preprocess_x90(self.config,
+                       common_flags=self.preprocess_flags_common)
 
-    def psyclone(self):
+    def psyclone_step(self):
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
 

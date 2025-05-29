@@ -30,8 +30,8 @@ class FabLFRicAtmUmTransform(FabLFRicAtm):
         '''
         return config.source_root / "optimisation" / "umscript.py"
 
-    def psyclone(self):
-        super().psyclone()
+    def psyclone_step(self):
+        super().psyclone_step()
 
         psyclone = self.config.tool_box[Category.PSYCLONE]
         psyclone_cli_args = self.get_psyclone_config()
