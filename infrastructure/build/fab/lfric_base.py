@@ -5,7 +5,8 @@
 #  which you should have received as part of this distribution
 # ##############################################################################
 
-'''This is an OO basic interface to FAB. It allows the typical LFRic
+'''
+This is an OO basic interface to FAB. It allows the typical LFRic
 applications to only modify very few settings to have a working FAB build
 script.
 '''
@@ -14,7 +15,7 @@ import inspect
 import logging
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from fab.artefacts import ArtefactSet, SuffixFilter
 from fab.steps.analyse import analyse
@@ -31,14 +32,15 @@ from templaterator import Templaterator
 
 
 class LFRicBase(BafBase):
-    '''This is the base class for all LFRic FAB scripts.
+    '''
+    This is the base class for all LFRic FAB scripts.
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
     :param Optional[str] root_symbol:
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name, root_symbol=None):
+    def __init__(self, name: str, root_symbol: Optional[str] = None):
 
         super().__init__(name, root_symbol=root_symbol)
 
@@ -71,11 +73,14 @@ class LFRicBase(BafBase):
         self._psyclone_config = (self.config.source_root / 'psyclone_config' /
                                  'psyclone.cfg')
 
-    def get_apps_root_dir(self, path):
-        '''This identifies the root directory of the LFRic apps directory,
+    def get_apps_root_dir(self, path: Path) -> Path:
+        '''
+        This identifies the root directory of the LFRic apps directory,
         given a file in the apps directory. This is done by looking for a
         file `dependencies.sh` in the directory, and searching up in the
         directory tree till it is found.
+
+        param path: the path to a file in the apps directory.
         '''
         dep_name = "dependencies.sh"
         # path.anchor gives us the root as string:
@@ -93,7 +98,8 @@ class LFRicBase(BafBase):
         return self._lfric_core_root
 
     def define_command_line_options(self, parser=None):
-        '''Defines command line options. Can be overwritten by a derived
+        '''
+        Defines command line options. Can be overwritten by a derived
         class which can provide its own instance (to easily allow for a
         different description).
         :param parser: optional a pre-defined argument parser. If not, a
@@ -115,16 +121,27 @@ class LFRicBase(BafBase):
         return parser
 
     @property
-    def lfric_core_root(self):
+    def lfric_core_root(self) -> Path:
+        '''
+        :returns: the root directory of the LFRic core repository.
+        :rtype: Path
+        '''
         return self._lfric_core_root
 
     @property
-    def lfric_apps_root(self):
+    def lfric_apps_root(self) -> Path:
+        '''
+        :returns: the root directory of the LFRic apps repository.
+        :rtype: Path
+        '''
         return self._lfric_apps_root
 
-    def define_preprocessor_flags(self):
-        '''Top level function that sets preprocessor flags
-        by calling self.set_flags
+    def define_preprocessor_flags(self) -> None:
+        '''
+        This method overwrites the base class define_preprocessor_flags.
+        It uses add_preprocessor_flags to set up preprocessing flags for LFRic 
+        applications. Currently, the precision flags with precision level set
+        in the command line option and the '-DUSE_XIOS' flag are set here.
         '''
         if self.args.precision:
             precision_flags = ['-DRDEF_PRECISION=' + self.args.precision,
@@ -166,8 +183,10 @@ class LFRicBase(BafBase):
         # driver_io_mod.F90
 
     def get_linker_flags(self) -> List[str]:
-        '''Base class for setting linker flags. This base implementation
-        for now just returns an empty list
+        '''
+        This method overwrites the base class get_liner_flags. It passes the
+        libraries that LFRic uses to the linker. Currently, these libraries
+        include yaxt, xios, netcdf, hdf5 and vernier
 
         :returns: list of flags for the linker.
         '''
@@ -177,6 +196,11 @@ class LFRicBase(BafBase):
         return libs + super().get_linker_flags()
 
     def grab_files_step(self):
+        '''
+        This method overwrites the base class grab_files_step. It includes all
+        the LFRic core directories that are commonly required for building LFRic
+        applications. It also grabs the psydata directory for profiling, if required.
+        '''
         dirs = ['infrastructure/source/',
                 'components/driver/source/',
                 'components/inventory/source/',
