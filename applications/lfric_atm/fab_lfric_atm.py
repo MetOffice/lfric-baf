@@ -41,7 +41,7 @@ class FabLFRicAtm(LFRicBase):
                                       '-I$source/science/shumlib/\
                                         shum_thread_utils/src',
                                       '-I$relative'],),
-                      AddFlags(match="$source/science/*",
+                      AddFlags(match="$source/*",
                                flags=['-DLFRIC']),
                       AddFlags(match="$source/atmosphere_service/*",
                                flags=['-I$relative/include',

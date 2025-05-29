@@ -39,7 +39,7 @@ class FabLfricInputs(LFRicBase):
                                       '-I$source/shumlib/'
                                       'shum_thread_utils/src',
                                       '-I$relative'],),
-                      AddFlags(match="$source/science/8",
+                      AddFlags(match="$source/*",
                                flags=['-DLFRIC']),
                       AddFlags(match="$source/atmosphere_service/*",
                                flags=['-I$relative/include',
