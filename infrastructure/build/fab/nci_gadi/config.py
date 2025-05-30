@@ -1,51 +1,72 @@
 #! /usr/bin/env python3
 
-'''This module contains the default configuration for NCI. It will be invoked
+'''
+This module contains the default configuration for NCI. It will be invoked
 by the Baf scripts. This script:
 - sets intel-classic as the default compiler suite to use.
 - Adds the tau compiler wrapper as (optional) compilers to the ToolRepository.
-
 '''
 
+from pathlib import Path
+from typing import List, Union, Optional
 
-from fab.tools import (Category, Compiler, CompilerWrapper, Tool,
+from fab.build_config import BuildConfig
+from fab.tools import (Category, Compiler, CompilerWrapper,
                        ToolRepository)
 
 from default.config import Config as DefaultConfig
 
 
 class Tauf90(CompilerWrapper):
-    '''Class for the Tau profiling Fortran compiler wrapper.
+    '''
+    Class for the Tau profiling Fortran compiler wrapper.
     It will be using the name "tau-COMPILER_NAME", but will call tau_f90.sh.
 
     :param compiler: the compiler that the tau_f90.sh wrapper will use.
+    :type compiler: :py:class:`fab.tools.Compiler`
     '''
 
     def __init__(self, compiler: Compiler):
         super().__init__(name=f"tau-{compiler.name}",
                          exec_name="tau_f90.sh", compiler=compiler, mpi=True)
 
-    def compile_file(self, input_file,
-                     output_file,
-                     openmp,
-                     add_flags=None,
-                     syntax_only=None):
+    def compile_file(self, input_file: Path,
+                     output_file: Path,
+                     config: BuildConfig,
+                     add_flags:Union[None, List[str]] = None,
+                     syntax_only: Optional[bool] = None) -> None:
+        '''
+        This method overrides the Fab CompilerWrapper class compile_file
+        method to fall back to the wrapped compiler for certain Fortran files and
+        use the tau_f90.sh wrapper to compile the rest.
+
+        :param Path input_file: the path of the input file to compile
+        :param Path output_file: the path of the output file to create
+        :param config: the Fab build configuration instance
+        :type config: :py:class:`fab.BuildConfig`
+        :param add_flags: additional flags to pass to the compiler
+        :type add_flags: Union[None, List[str]]
+        :param syntax_only: whether to only check the syntax of the file
+        :type syntax_only: Optional[bool]
+        '''
         if ('psy.f90' in str(input_file)) or \
           ('/kernel/' in str(input_file)) or \
           ('leaf_jls_mod' in str(input_file)) or \
           ('/science/' in str(input_file)):
             self.compiler.compile_file(input_file, output_file,
-                                       openmp, add_flags, syntax_only)
+                                       config, add_flags, syntax_only)
         else:
             super().compile_file(input_file, output_file,
-                                 openmp, add_flags, syntax_only)
+                                 config, add_flags, syntax_only)
 
 
 class Taucc(CompilerWrapper):
-    '''Class for the Tau profiling C compiler wrapper.
+    '''
+    Class for the Tau profiling C compiler wrapper.
     It will be using the name "tau-COMPILER_NAME", but will call tau_cc.sh.
 
-    :param compiler: the compiler that the tau_cc.sh wrapper will use.
+    :param compiler: the compiler that the tau_cc.sh wrapper will use
+    :type compiler: :py:class:`fab.tools.Compiler`
     '''
 
     def __init__(self, compiler: Compiler):
@@ -54,7 +75,8 @@ class Taucc(CompilerWrapper):
 
 
 class Config(DefaultConfig):
-    '''For NCI, make intel the default, and add the Tau wrapper.
+    '''
+    For NCI, make intel the default, and add the Tau wrapper.
     '''
 
     def __init__(self):

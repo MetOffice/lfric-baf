@@ -16,7 +16,7 @@ import inspect
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Union
 
 from fab.artefacts import ArtefactSet, SuffixFilter
 from fab.build_config import BuildConfig
@@ -248,7 +248,7 @@ class LFRicBase(BafBase):
                         / dir, dst_label='psydata')
 
     def find_source_files_step(self, 
-                               path_filters: Optional[Iterable[Exclude, Include]] = None
+                               path_filters: Optional[Iterable[Union[Exclude, Include]]] = None
                                ) -> None:
         '''
         This method overwrites the base class find_source_files_step.
@@ -297,7 +297,7 @@ class LFRicBase(BafBase):
     def templaterator_step(self, config: BuildConfig) -> None:
         '''
         This method runs the LFRic templaterator Fab tool.
-        
+
         :param config: the Fab build configuration
         :type config: :py:class:`fab.BuildConfig`
         '''
@@ -401,12 +401,9 @@ class LFRicBase(BafBase):
         transformation script for the x90 file. If not, it will see whether a global
         transformation script can be used. 
 
-        :param fpath: the path to the file being processed.
-        :type fpath: Path
-        :param config: the FAB BuildConfig instance.
-        :type config: :py:class:`fab.BuildConfig`
-        :returns: the transformation script to be used by PSyclone.
-        :rtype: Path
+        :param Path fpath: the path to the file being processed.
+        :param `fab.BuildConfig` config: the FAB BuildConfig instance.
+        :returns Path: the transformation script to be used by PSyclone.
         '''
         # Newer LFRic versions have a psykal directory
         optimisation_path = (config.source_root / "optimisation" /

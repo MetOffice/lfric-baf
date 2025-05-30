@@ -286,7 +286,7 @@ class BafBase:
         variables). Needs to be overwritten to handle additional options
         specified by a derived script.
 
-        :param parser: the argument parser.
+        :param argparse.ArgumentParser parser: the argument parser.
         '''
         # pylint: disable=too-many-branches
         self._args = parser.parse_args(sys.argv[1:])

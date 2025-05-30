@@ -41,17 +41,17 @@ def configurator(config: BuildConfig,
     '''
     This method implements the LFRic configurator tool.
 
-    param config: the Fab build config instance
+    :param config: the Fab build config instance
     :type config: :py:class:`fab.BuildConfig`
-    param lfric_core_source: the path to the LFRic core directory
+    :param lfric_core_source: the path to the LFRic core directory
     :type lfric_core_source: Path
-    param lfric_apps_source: the path to the LFRic apps directory
+    :param lfric_apps_source: the path to the LFRic apps directory
     :type lfric_apps_source: Path
-    param rose_meta_conf: the path to the rose-meta configuration file
+    :param rose_meta_conf: the path to the rose-meta configuration file
     :type rose_meta_conf: Path
-    param rose_picker: the rose picker tool
+    :param rose_picker: the rose picker tool
     :type rose_picker: Tool
-    param config_dir: the directory for the generated configuration files
+    :param config_dir: the directory for the generated configuration files
     :type config_dir: Optional[Path]
     '''
     # pylint: disable=too-many-arguments
