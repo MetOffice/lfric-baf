@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 
 
-'''This module contains the default Baf configuration class.
+'''
+This module contains the default Baf configuration class.
 '''
 
 import argparse
@@ -18,7 +19,8 @@ from default.setup_nvidia import setup_nvidia
 
 
 class Config:
-    '''This class is the default Configuration object for Baf builds.
+    '''
+    This class is the default Configuration object for Baf builds.
     It provides several callbacks which will be called from the build
     scripts to allow site-specific customisations.
     '''
@@ -27,24 +29,30 @@ class Config:
         self._args = None
 
     @property
-    def args(self):
-        ''':returns: the command line options specified by the user.
+    def args(self) -> argparse.Namespace:
+        '''
+        :returns argparse.Namespace: the command line options specified by the user.
         '''
         return self._args
 
     def get_valid_profiles(self) -> List[str]:
-        '''Determines the list of all allowed compiler profiles. The first
+        '''
+        Determines the list of all allowed compiler profiles. The first
         entry in this list is the default profile to be used. This method
         can be overwritten by site configs to add or modify the supported
         profiles.
 
-        :returns: list of all supported compiler profiles.
+        :returns List[str]: list of all supported compiler profiles.
         '''
         return ["full-debug", "fast-debug", "production", "unit-tests"]
 
-    def update_toolbox(self, build_config: BuildConfig):
-        '''Set the default compiler flags for the various compiler
+    def update_toolbox(self, build_config: BuildConfig) -> None:
+        '''
+        Set the default compiler flags for the various compiler
         that are supported.
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         # First create the default compiler profiles for all available
         # compilers. While we have a tool box with exactly one compiler
@@ -71,46 +79,75 @@ class Config:
         self.setup_nvidia(build_config)
         self.setup_cray(build_config)
 
-    def handle_command_line_options(self, args: argparse.Namespace):
-        '''Additional callback function executed once all command line
+    def handle_command_line_options(self, args: argparse.Namespace) -> None:
+        '''
+        Additional callback function executed once all command line
         options have been added. This is for example used to add
         Vernier profiling flags, which are site-specific.
+
+        :param argparse.Namespace args: the command line options added in
+        the site configs
         '''
         # Keep a copy of the args, so they can be used when
         # initialising compilers
         self._args = args
 
-    def setup_cray(self, build_config: BuildConfig):
-        '''For now call an external function, since it is expected that
+    def setup_cray(self, build_config: BuildConfig) -> None:
+        '''
+        This method sets up the Cray compiler and linker flags.
+        For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         setup_cray(build_config, self.args)
 
-    def setup_gnu(self, build_config: BuildConfig):
-        '''For now call an external function, since it is expected that
+    def setup_gnu(self, build_config: BuildConfig) -> None:
+        '''
+        This method sets up the Gnu compiler and linker flags.
+        For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         setup_gnu(build_config, self.args)
 
-    def setup_intel_classic(self, build_config):
-        '''For now call an external function, since it is expected that
+    def setup_intel_classic(self, build_config: BuildConfig) -> None:
+        '''
+        This method sets up the Intel classic compiler and linker flags.
+        For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         setup_intel_classic(build_config, self.args)
 
-    def setup_intel_llvm(self, build_config: BuildConfig):
-        '''For now call an external function, since it is expected that
+    def setup_intel_llvm(self, build_config: BuildConfig) -> None:
+        '''
+        This method sets up the Intel LLVM compiler and linker flags.
+        For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         setup_intel_llvm(build_config, self.args)
 
-    def setup_nvidia(self, build_config: BuildConfig):
-        '''For now call an external function, since it is expected that
+    def setup_nvidia(self, build_config: BuildConfig) -> None:
+        '''
+        This method sets up the Nvidia compiler and linker flags.
+        For now call an external function, since it is expected that
         this configuration can be very lengthy (once we support
         compiler modes).
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         setup_nvidia(build_config, self.args)

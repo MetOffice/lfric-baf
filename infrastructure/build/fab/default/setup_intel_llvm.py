@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-'''This file contains a function that sets the default flags for all
-Intel llvm based compilers in the ToolRepository (ifx, icx).
+'''
+This file contains a function that sets the default flags for all
+Intel llvm based compilers and linkers in the ToolRepository (ifx, icx).
 
 This function gets called from the default site-specific config file
 '''
@@ -13,13 +14,15 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
+def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument, too-many-locals
-    '''Defines the default flags for all Intel llvm compilers.
+    '''
+    Defines the default flags for all Intel llvm compilers.
 
-    :para build_config: the build config from which required parameters
-        can be taken.
-    :param args: all command line options
+    :param build_config: the Fab build config instance from which
+    required parameters can be taken.
+    :type build_config: :py:class:`fab.BuildConfig`
+    :param argparse.Namespace args: all command line options
     '''
 
     tr = ToolRepository()
