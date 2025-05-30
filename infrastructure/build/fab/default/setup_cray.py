@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-'''This file contains a function that sets the default flags for the Cray
-compilers in the ToolRepository.
+'''
+This file contains a function that sets the default flags for the Cray
+compilers and linkers in the ToolRepository.
 
 This function gets called from the default site-specific config file
 '''
@@ -13,13 +14,15 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
+def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument
-    '''Defines the default flags for ftn.
+    '''
+    Defines the default flags for ftn.
 
-    :param build_config: the build config from which required parameters
-        can be taken.
-    :param args: all command line options
+    :param build_config: the Fab build config instance from which
+    required parameters can be taken.
+    :type build_config: :py:class:`fab.BuildConfig`
+    :param argparse.Namespace args: all command line options
     '''
 
     tr = ToolRepository()

@@ -5,9 +5,11 @@
 # which you should have received as part of this distribution
 ##############################################################################
 
-"""This module contains a BAF-based build script for jules."""
+'''
+This module contains a BAF-based build script for Jules.
+'''
 
-from argparse import ArgumentParser
+import argparse
 import logging
 from typing import cast, List, Optional
 
@@ -20,45 +22,55 @@ from fab.steps.root_inc_files import root_inc_files
 
 
 class JulesBuild(BafBase):
-    """A class to build Jules using BAF as base class.
+    '''
+    A class to build Jules using BAF as base class.
 
-    :parameter name: name of the build.
-    :parameter revision: the revision of Jules to extract.
-    """
+    :param str name: name of the build.
+    '''
 
     def __init__(self, name: str):
-        """Build jules using Fab. It stores the revision number,
+        '''
+        Build Jules using Fab. It stores the revision number,
         so it can be used in the grab_files step.
-
-        :param name: the name for the fab workspace.
-        """
+        '''
         self._revision = None
         super().__init__(name)
 
     def define_command_line_options(self,
-                                    parser: Optional[ArgumentParser] = None
-                                    ) -> ArgumentParser:
-        """
-        :param parser: optional a pre-defined argument parser. If not, a
-            new instance will be created.
-        """
+                                    parser: Optional[argparse.ArgumentParser] = None
+                                    ) -> argparse.ArgumentParser:
+        '''
+        This adds a revision option to the command line options inherited
+        from the base class.
+
+        :param Optional[argparse.ArgumentParser] parser: a pre-defined
+        argument parser. If not, a new instance will be created.
+        :returns: the argument parser with the jules specific options added.
+        :rtype :py:class:`argparse.ArgumentParser`
+        '''
+
         parser = super().define_command_line_options(parser)
-        parser = cast(ArgumentParser, parser)
+        parser = cast(argparse.ArgumentParser, parser)
         parser.add_argument(
             "--revision", "-r", type=str, default="vn7.8",
             help="Sets the Jules revision to checkout.")
         return parser
 
-    def handle_command_line_options(self, parser):
-        """Grab the requested (or default) Jules revision to use and
+    def handle_command_line_options(self, parser: argparse.ArgumentParser) -> None:
+        '''
+        Grab the requested (or default) Jules revision to use and
         store it in an attribute.
-        """
+
+        :param argparse.ArgumentParser parser: the argument parser.
+        '''
 
         super().handle_command_line_options(parser)
         self._revision = self.args.revision
 
-    def grab_files(self):
-        """Extracts all the required source files from the repositories."""
+    def grab_files(self) -> None:
+        '''
+        Extracts all the required Jules source files from the repositories.
+        '''
         # Try to grab sources from GitHub, fallback to FCM if that fails
         try:
             git_checkout(
@@ -80,7 +92,9 @@ class JulesBuild(BafBase):
                 )
 
     def find_source_files(self):
-        """Finds all the sources files to analyse."""
+        '''
+        Finds all the Jules sources files to analyse.
+        '''
         path_filters = [
             Exclude("src/control/um/"),
             Exclude("src/initialisation/um/"),
@@ -94,11 +108,12 @@ class JulesBuild(BafBase):
         # move inc files to the root for easy tool use
         root_inc_files(self.config)
 
-    def define_preprocessor_flags(self):
-        """Defines the preprocessor flags.
+    def define_preprocessor_flags(self) -> None:
+        '''
+        Defines the preprocessor flags.
         TODO: This uses a BAF private attribute, this must be
         done properly.
-        """
+        '''
         super().define_preprocessor_flags()
         self.set_flags(
             ["-P", "-DMPI_DUMMY", "-DNCDF_DUMMY", "-I$output"],
@@ -106,9 +121,10 @@ class JulesBuild(BafBase):
         )
 
     def get_linker_flags(self) -> List[str]:
-        """Base class for setting linker flags.
+        '''
+        Base class for setting linker flags.
         :returns: list of flags for the linker.
-        """
+        '''
         libs = ["netcdf", "hdf5"]
         return libs
 

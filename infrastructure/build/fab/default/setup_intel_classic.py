@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-'''This file contains a function that sets the default flags for all
+'''
+This file contains a function that sets the default flags for all
 Intel classic based compilers in the ToolRepository (ifort, icc).
 
 This function gets called from the default site-specific config file
@@ -13,13 +14,15 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
+def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument, too-many-locals
-    '''Defines the default flags for all Intel classic compilers.
+    '''
+    Defines the default flags for all Intel classic compilers and linkers.
 
-    :para build_config: the build config from which required parameters
-        can be taken.
-    :param args: all command line options
+    :param build_config: the Fab build config instance from which
+    required parameters can be taken.
+    :type build_config: :py:class:`fab.BuildConfig`
+    :param argparse.Namespace args: all command line options
     '''
 
     tr = ToolRepository()

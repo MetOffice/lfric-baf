@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-'''This module contains a function that extracts the revision numbers
+'''
+This module contains a function that extracts the revision numbers
 from a dependencies.sh file.
 '''
 
@@ -8,7 +9,8 @@ import re
 
 
 class GetRevision(dict):
-    '''A simple dictionary-like class that stores the version information
+    '''
+    A simple dictionary-like class that stores the version information
     from a parameter.sh file:
         export casim_rev=um13.4
         export socrates_rev=1483
@@ -16,9 +18,11 @@ class GetRevision(dict):
         gr = GetRevision("$LFRIC_APPS_SRC/dependencies.sh")
         gr["casim"] --> "um13.4"
         gr["socrates"] --> 1483  # Converted to an integer
+
+    :param filename: The path to the dependencies.sh file.
     '''
 
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         super().__init__()
         re_revision = re.compile(r"^ *export ([a-z0-0]+)_rev *= *(.*)$")
         with open(filename, encoding="utf8") as f_in:
@@ -31,6 +35,9 @@ class GetRevision(dict):
 
 # ============================================================================
 if __name__ == "__main__":
+    '''
+    A simple test to print the revision numbers from the dependencies.sh file.
+    '''
     gr = GetRevision("../../../../lfric_apps/dependencies.sh")
     for lib_name, version_info in gr.items():
         print(f"{lib_name} -> {version_info}")

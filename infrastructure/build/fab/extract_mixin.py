@@ -5,28 +5,41 @@
 #  which you should have received as part of this distribution
 # ##############################################################################
 
-'''This is a mixin that will add support for extraction. It is important to be
-added first as base class so that the methods overwritten here will be called.
-If the derived class also needs to overwrite e.f. the psyclone method, it
-must take care to call the right base class implementation(s).
+'''
+This module contains an ExtractMixin class to add support for all extration
+scripts. 
 '''
 
 import logging
 import shutil
+from pathlib import Path
 
+from fab.build_config import BuildConfig
 from fab.artefacts import ArtefactSet
 from fab.steps import run_mp, step
 from fab.steps.grab.folder import grab_folder
 from fab.util import file_checksum, log_or_dot, TimerLogger
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
 class ExtractMixin:
-
+    '''
+    This is a base class for all extractions. It is important to be added
+    first as base class so that the methods overwritten here will be called.
+    If the derived class also needs to overwrite e.g. the psyclone method, it
+    must take care to call the right base class implementation(s).
+    '''
     @staticmethod
-    def remove_one_private(args):
+    def remove_one_private(args: tuple) -> Path:
+        '''
+        This static method removes the private attributes of Fortran files
+        for PSyclone extraction.
+
+        :param args: a tuple with first the config and then the file path
+        '''
         state, fpath = args
         hash = file_checksum(fpath).file_hash
         no_private_fpath = (state.prebuild_folder /
@@ -52,6 +65,12 @@ class ExtractMixin:
 
     @step
     def remove_private_step(self):
+        '''
+        This method calls the static method remove_one_private to remove
+        the private attributes of Fortran files for PSyclone extraction. It
+        goes through all the Fortran files in the artefact and pass their
+        paths and also the config to remove_one_private.
+        '''
         state = self.config
         input_files = state.artefact_store[ArtefactSet.FORTRAN_BUILD_FILES]
         args = [(state, filename) for filename in input_files]
@@ -63,17 +82,36 @@ class ExtractMixin:
         state.add_current_prebuilds(results)
 
     def grab_files_step(self):
+        '''
+        This method overwrites the grab_files_step in the base class by also
+        including the psydata extract folder in LFRic core repo for extraction. 
+        '''
         super().grab_files_step()
         grab_folder(self.config, src=self.lfric_core_root /
                     "infrastructure" / "build" / "psyclone" / "psydata"
                     / "extract", dst_label='psydata')
 
     def psyclone_step(self):
+        '''
+        This method overwrites the psyclone_step in the base class by first
+        calling the remove_private_step method to remove private attributes
+        from Fortran files. It then calls the base class psyclone_step method
+        for PSyclone processing.
+        '''
         self.remove_private_step()
         super().psyclone_step()
 
-    def get_transformation_script(self, fpath, config):
-        ''':returns: the transformation script to be used by PSyclone.
+    def get_transformation_script(self, fpath: Path, config: BuildConfig) -> Path:
+        '''
+        This method overwrites the base class get_transformation_script by
+        returning the path to the transformation script that PSyclone will
+        use for extraction.
+
+        :param fpath: the path to the file being processed.
+        :type fpath: Path
+        :param config: the FAB BuildConfig instance.
+        :type config: :py:class:`fab.BuildConfig`
+        :returns: the transformation script to be used by PSyclone.
         :rtype: Path
         '''
         return config.source_root / 'optimisation' / 'extract' / 'global.py'

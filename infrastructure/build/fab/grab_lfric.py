@@ -5,6 +5,11 @@
 #  which you should have received as part of this distribution
 # ##############################################################################
 
+"""
+This script is used on NCI GADI to export the LFRic core and apps codes
+into the FAB workspace with FCM for Gitlab pipeline tests. 
+"""
+
 import sys
 
 from fab.build_config import BuildConfig
