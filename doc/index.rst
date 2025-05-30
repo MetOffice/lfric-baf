@@ -11,4 +11,5 @@ User Guide
     processing
     config
     tools
+    examples
     usage_patterns

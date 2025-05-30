@@ -28,22 +28,6 @@ the behaviour. For example, the BAF base class provides a list
 of useful command line options. But any application-specific script
 can add additional command line options.
 
-Concepts for Site-specific Setup
---------------------------------
-BAF's support for site-specific setup is based on using a site name
-and a platform name. For example, The UK Met Office traditionally
-uses ``meto`` as site name, and then a different platform name, e.g.
-``xc40`` or ``ex1a``. BAF uses a specific setup directory based on the
-concatenation of these names. In the example above, this would be
-``meto_xc40`` or ``meta_ex1a``. These names can be specified as command
-line option (see :ref:`Command Line Options<command_line_options>`).
-
-If no site name is specified, ``default`` is used. And similarly,
-if no platform is specified, ``default`` is also used (resulting
-e.g. in ``meto-default`` etc). If neither site nor platform is specified,
-the name ``default`` is used.
-
-
 .. _command_line_options:
 
 Command Line Options

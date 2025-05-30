@@ -121,3 +121,57 @@ naming of the command line argument. If at some stage the command line
 option for the Jules revision needs to be changed, the actual extract
 step would not need to be changed.
 
+.. _new_build_phase:
+
+Adding a new phase into the build process
+-----------------------------------------
+A new phase can be inserted in the build process by overwriting
+one of the existing steps, before or after which the new phase
+should be executed. Here an example that adds PSyclone processing
+for LFRic build script:
+
+.. code-block:: python
+
+    def preprocess_x90_step(self) -> None:
+        """
+        Invokes the Fab preprocess step for all X90 files.
+        """
+        # TODO: Fab does not support path-specific flags for X90 files.
+        preprocess_x90(self.config,
+                       common_flags=self.preprocess_flags_common)
+
+    def psyclone_step(self) -> None:
+    	"""
+    	Call Fab's existing PSyclone step.
+    	"""
+    	psyclone(...)
+
+    def analyse_step(self) -> None:
+        '''
+        The method overwrites the base class analyse_step.
+        For LFRic, it first runs the preprocess_x90_step and then runs
+        psyclone_step. Finally, it calls the original analyse step.
+        '''
+        self.preprocess_x90_step()
+        self.psyclone_step()
+        self.analyse_step()
+
+A new step, i.e. one not already provided by Fab, is defined by using
+Fab's ``step`` fixture. For example, to define a new ``remove_private_step``,
+the following code is used:
+
+.. code-block:: python
+
+    from fab.steps import step
+
+    @step
+    def remove_private_step(self):
+    	...
+
+    def psyclone_step(self):
+      '''
+      Overwriting the psyclone_step method added above
+      '''
+      self.remove_private_step()
+      super().psyclone_step()
+
