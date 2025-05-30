@@ -129,7 +129,7 @@ class BafBase:
     def args(self) -> argparse.Namespace:
         '''
         :returns: the arg parse objects containing the user's
-        command line information.
+            command line information.
         '''
         return self._args
 
