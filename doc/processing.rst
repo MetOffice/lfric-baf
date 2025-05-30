@@ -161,29 +161,255 @@ options::
 
 Building
 --------
+While Fab provides a very flexible way in which the different phases
+of the build process can be executed, BAF provides a fixed order
+in which these steps happen (though of course the user could overwrite
+the ``build`` method to provide their own order). If additional
+phases need to be inserted into the build process, this can be done
+by overwriting the corresponding steps, see :ref:`new_build_phase`
+for an example.
 
-grab_files_step
-~~~~~~~~~~~~~~~
-find_source_files_step
-~~~~~~~~~~~~~~~~~~~~~~
-c_pragma_injector
-~~~~~~~~~~~~~~~~~
-define_preprocessor_flags
-~~~~~~~~~~~~~~~~~~~~~~~~~
-preprocess_c_step
-~~~~~~~~~~~~~~~~~
-preprocess_fortran_step
-~~~~~~~~~~~~~~~~~~~~~~~
-analyse_step
-~~~~~~~~~~~~
-compile_c_step
-~~~~~~~~~~~~~~
-compile_fortran_step
-~~~~~~~~~~~~~~~~~~~~
-archive_objects
-~~~~~~~~~~~~~~~
-link_step
-~~~~~~~~~
+The naming of the steps follow the Fab naming, but adds a ``_step``
+as suffix to distinguish the methods from the Fab functions.
+Typically, an application will need to overwrite at least some
+of these methods (for example to specify the source files).
+This will require either adding calls to Fab methods, or just
+calling the base-class. Details will be provided in each section.
+
+``grab_files_step``
+~~~~~~~~~~~~~~~~~~~
+This step is responsible for copying the required source files
+into the Fab work space (under the source folder). The base class
+itself should not be called, it will raise an exception, since any
+script must specify where to get the source code from. Typically,
+in this step various Fab functions are used to get the source files:
+
+``grab_folder``
+    Fab's ``grab_folder`` recursively copies a file directory into the fab
+    work space. It requires that the source files have been made available
+    previously, e.g. either as a local working copy, or a checkout from
+    a repository
+
+``git_checkout``
+    Fab's ``git_checkout`` checks out a git repository, and puts the files
+    into the working directory.
+
+``svn_export``, ``svn_checkout``
+    Fab provides these two interfaces to svn, and similarly to
+    ``git_checkout`` these will either export or checkout a Subversion
+    repository.
+
+``grab_archive``
+    This wii unpack common archive formats like ``tar``, ``zip``,
+    ``tztar`` etc.
+
+``fcm_export``, ``fcm_checkout``
+    Compatibility layer to the old fcm configuration. This basically runs
+    the corresponding Subversion commands.
+
+A script can obviously use any other Python function to get or create source
+files.
+
+``find_source_files_step``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+This step is responsible for identifying the source files that are
+to be used in the build process. While Fab has the ability to analyse
+the source tree and determine the minimal necessary set of files, it
+is possible that different versions of the same file would be found
+in the source tree (e.g. different version of the same file coming
+from different repositories that have been checked out). Since Fab
+does not support using the same file name more than once (and
+since in general it would lead to inconsistency if the same file
+name is used), Fab provides the ability to include or exclude
+files from its source directory in the Fab work space.
+
+TODO: link to Fab's documentation
+
+This is typically done by specifying a list of path files. Each
+element in this list can be either an ``Exclude`` or an ``Include``
+object, indicating that files of a specified pattern should be
+included or excluded. An example code:
+
+.. code-block:: python
+
+    path_filters = [
+        Exclude('my_folder'),
+        Include('my_folder/my_file.F90'),
+    ]
+
+These path files are then passed to Fab's ``find_source_files``
+function. For example:
+
+.. code-block:: Python
+
+    # Setting up path_filters as shows above
+    find_source_files(self.config,
+                      path_filters=([Exclude('unit-test', '/test/')] +
+                                    path_filters))
+
+This step will not affect any files, it will just set up Fab's
+``ArtefactStore`` to be aware of the available source files.
+
+Often, suites will provide FCM configuration that include a long list
+of files to exclude (and include) to avoid duplicated files into a
+complex build environment based on many source repositories.
+
+.. code-block::
+
+    extract.path-excl[um] = / # everything
+    extract.path-incl[um] =                              \
+        src/atmosphere/AC_assimilation/iau_mod.F90       \
+        src/atmosphere/PWS_diagnostics/pws_diags_mod.F90 \
+        src/atmosphere/aerosols/aero_params_mod.F90      \
+        ...
+
+While Fab is not yet the main build system, BAF provides a small tool to
+interface with existing FCM configuration files. This tool can read
+existing FCM configuration files, and convert the ``path-incl`` and
+``path-excl`` directives into Fab's ``Exclude`` and ``Include``
+objects. Example usage:
+
+.. code-block:: python
+
+        extract_cfg = FcmExtract(self.lfric_apps_root / "build" / "extract" /
+                                  "extract.cfg")
+
+        science_root = self.config.source_root / 'science'
+        path_filters = []
+        for section, source_file_info in extract_cfg.items():
+            for (list_type, list_of_paths) in source_file_info:
+                if list_type == "exclude":
+                    # Exclude in this application removes the whole
+                    # app (so that individual files can then be picked
+                    # using include)
+                    path_filters.append(Exclude(science_root / section))
+                else:
+                    # Remove the 'src' which is the first part of the name
+                    # in this script, which we don't have here
+                    new_paths = [i.relative_to(i.parents[-2])
+                                 for i in list_of_paths]
+                    for path in new_paths:
+                        path_filters.append(Include(science_root /
+                                                    section / path))
+
+This class is described in more details in the
+:ref:`Tools Section<fcm_extract>`.
+
+``define_preprocessor_flags``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TODO: the ``_step`` is missing!
+
+This method is called before preprocessing, and it allows the application
+to specify all flags required for preprocessing all C, and Fortran files.
+
+.. automethod:: baf_base.BafBase.define_preprocessor_flags
+    :noindex:
+
+BAF provides its own method of adding preprocessor flags:
+
+.. automethod:: baf_base.BafBase.add_preprocessor_flags
+    :noindex:
+
+Flags can be specified either as a single flag, or as a list of flags.
+Each flag can either be a simple string, which is a command line option
+for the compiler, or a path-specific flag using Fab's ``AddFlags``
+class (TODO: link to fab). Example code:
+
+.. code-block:: python
+
+    def define_preprocessor_flags(self):
+        super().define_preprocessor_flags()
+
+        self.add_preprocessor_flags(['-DUM_PHYSICS',
+                                     '-DCOUPLED',
+                                     '-DUSE_MPI=YES'])
+
+        path_flags = [AddFlags(match="$source/science/jules/*",
+                               flags=['-DUM_JULES', '-I$output']),
+                      AddFlags(match="$source/large_scale_precipitation/*",
+                               flags=['-I$relative/include',
+                                      '-I$source/science/shumlib/common/src'])]
+
+        self.add_preprocessor_flags(path_flags)
+        # Add a preprocessor flag depending on compilation profile:
+        if self.args.profile == "full-debug":
+            self.add_preprocessor_flags("-DDEBUG")
+
+``preprocess_c_step``
+~~~~~~~~~~~~~~~~~~~~~
+There is usually no reason to overwrite this method. It will use
+the preprocessor flags defined in the previous step and preprocess
+all C files.
+
+.. automethod:: baf_base.BafBase.preprocess_c_step
+    :noindex:
+
+While the method takes an optional parameter for path-specific flags,
+the BAF method of providing the flags in the
+``define_preprocessor_flags`` is the recommended way to go, since it
+makes sure that all preprocess steps will be using a consistent set
+of flags.
+
+
+``preprocess_fortran_step``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There is usually no reason to overwrite this method. It will use
+the preprocessor flags defined in the previous
+``define_all_preprocessor_flags`` step and preprocess
+all Fortran files.
+
+.. automethod:: baf_base.BafBase.preprocess_fortran_step
+    :noindex:
+
+While the method takes an optional parameter for path-specific flags,
+the BAF method of providing the flags in the
+``define_preprocessor_flags`` is the recommended way to go, since it
+makes sure that all preprocess steps will be using a consistent set
+of flags.
+
+
+``analyse_step``
+~~~~~~~~~~~~~~~~
+This steps does the complete dependency analysis for the application.
+There is usually no reason for an application to overwrite this step.
+
+.. automethod:: baf_base.BafBase.analyse_step
+    :noindex:
+
+``compile_c_step``
+~~~~~~~~~~~~~~~~~~
+This step compiles all C files. There is usually no reason for an
+application to overwrite this step.
+
+.. automethod:: baf_base.BafBase.compile_c_step
+    :noindex:
+
+``compile_fortran_step``
+~~~~~~~~~~~~~~~~~~~~~~~~
+This step compiles all Fortran files. There is usually no reason for an
+application to overwrite this step.
+
+.. automethod:: baf_base.BafBase.compile_fortran_step
+    :noindex:
+
+``archive_objects``
+~~~~~~~~~~~~~~~~~~~
+This step creates an archive with all compiled object files.
+
+.. warning::
+
+    Due to https://github.com/MetOffice/fab/issues/310
+    it is not recommended to create archives. Therefore, this
+    step is for now not executed at all!
+
+``link_step``
+~~~~~~~~~~~~~
+This step links all required object files into the executable
+or library. There is usually no reason for an application to overwrite
+this method.
+
+.. automethod:: baf_base.BafBase.link_step
+    :noindex:
 
 
 Full Baf Documentation
