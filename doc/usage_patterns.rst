@@ -175,3 +175,53 @@ the following code is used:
       self.remove_private_step()
       super().psyclone_step()
 
+.. _new_compilation_profiles:
+
+Adding new compilation profiles
+-------------------------------
+This can be done in site-specific configuration files.
+As shown in :ref:`use_default_configuration` it is recommended
+to use a ``default`` configuration, which will allow for
+consistency across sites. The following example shows
+how a site can then add its own compilation profile:
+
+.. code-block:: python
+
+    def get_valid_profiles(self) -> List[str]:
+        '''
+        Determines the list of all allowed compiler profiles. Here we
+        add one additional profile `memory-debug`. Note that the default
+        setup will automatically create that mode for any available compiler.
+
+        :returns List[str]: list of all supported compiler profiles.
+        '''
+        return super().get_valid_profiles() + ["memory-debug"]
+
+This code will add a new ``memory-debug`` option, which can be selected
+using the command line option ``--profile memory-debug``. Of course,
+the site-specific config needs to then also set up this new mode.
+For example:
+
+.. code-block:: python
+
+    def update_toolbox(self, build_config: BuildConfig) -> None:
+        '''
+        Define additional profiling mode 'memory-debug'.
+
+        :param build_config: the Fab build configuration instance
+        :type build_config: :py:class:`fab.BuildConfig`
+        '''
+
+        # The base class needs to be called first to create all
+        # profile modes - this will include the newly defined in
+        # the above get_valid_profiles call:
+        super().update_toolbox(build_config)
+
+        tr = ToolRepository()
+
+        # Define the new compilation profile `memory-debug`
+        gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
+        gfortran.add_flags(["-fsanitize=address"], "memory-debug")
+
+        linker = tr.get_tool(Category.LINKER, "linker-gfortran")
+        linker.add_post_lib_flags(["-static-libasan"], "memory-debug")
