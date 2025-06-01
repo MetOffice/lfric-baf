@@ -24,7 +24,7 @@ from fab.steps.c_pragma_injector import c_pragma_injector
 from fab.steps.compile_c import compile_c
 from fab.steps.compile_fortran import compile_fortran
 from fab.steps.find_source_files import find_source_files
-from fab.steps.link import link_exe
+from fab.steps.link import link_exe, link_shared_object
 from fab.steps.preprocess import preprocess_c, preprocess_fortran
 from fab.tools import Category, ToolBox, ToolRepository
 
@@ -35,16 +35,30 @@ class BafBase:
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
+    :param link_target: what target should be created. Must be one of
+        "executable" (default), "static-library", or "shared-library"
     :param Optional[str] root_symbol:
+
+    :raises ValueError: if link_target is not one of "executable",
+        "static-library", or "shared-library".
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  name: str,
+                 link_target: Optional[str] = "executable",
                  root_symbol: Optional[str] = None):
+        link_target = link_target.lower()
+        valid_targets = ["executable", "static-library", "shared-library"]
+        if link_target not in valid_targets:
+            raise ValueError(f"Invalid parameter '{link_target}', must be "
+                             f"one of '{', '.join(valid_targets)}'.")
+        self._link_target = link_target
         self._logger = logging.getLogger('fab')
         self._site = None
         self._platform = None
         self._target = None
+        # Save the name to use as library name (if required)
+        self._name = name
 
         # The preprocessor flags to be used. One stores the common flags
         # (without path-specific component), the other the path-specific
@@ -452,7 +466,10 @@ class BafBase:
         Calls Fab's analyse. It passes the config and root symbol for
         Fab to analyze the source code dependencies.
         """
-        analyse(self.config, root_symbol=self._root_symbol)
+        if self._link_target == "executable":
+            analyse(self.config, root_symbol=self._root_symbol)
+        else:
+            analyse(self.config, root_symbol=None)
 
     def compile_c_step(self) -> None:
         """
@@ -484,7 +501,17 @@ class BafBase:
         Calls Fab's link_exe. It passes the config and a list of required
         library names set using get_linker_flags to Fab for linking.
         """
-        link_exe(self.config, libs=self.get_linker_flags())
+        if self._link_target == "static-library":
+            out_path = self.config.project_workspace / f"lib{self._name}.a"
+            archive_objects(self.config,
+                            output_fpath=str(out_path))
+        elif self._link_target == "shared-library":
+            out_path = self.config.project_workspace / f"lib{self._name}.so"
+            link_shared_object(self.config,
+                               output_fpath=str(out_path))
+        else:
+            # Binary:
+            link_exe(self.config, libs=self.get_linker_flags())
 
     def build(self) -> None:
         """
@@ -516,9 +543,7 @@ class BafBase:
 
 # ==========================================================================
 if __name__ == "__main__":
-    '''
-    This tests the BafBase class using the command line.
-    '''
+    # This tests the BafBase class using the command line.
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
     baf_base = BafBase(name="command-line-test",
