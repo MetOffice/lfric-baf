@@ -47,10 +47,9 @@ class GcomBuild(BafBase):
         This adds a revision option to the command line options inherited
         from the base class.
 
-        :param Optional[argparse.ArgumentParser] parser: a pre-defined
-        argument parser. If not, a new instance will be created.
+        :param parser: a pre-defined argument parser. If not, a new instance
+            will be created.
         :returns: the argument parser with the Gcom specific options added.
-        :rtype :py:class:`argparse.ArgumentParser`
         '''
 
         parser = super().define_command_line_options(parser)
@@ -70,7 +69,7 @@ class GcomBuild(BafBase):
         '''
 
         super().handle_command_line_options(parser)
-        self.branch = self.args.branch
+        self._branch = self.args.branch
 
     def grab_files_step(self) -> None:
         '''
