@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-'''
-This file contains a function that sets the default flags for all
+'''This file contains a function that sets the default flags for all
 Intel classic based compilers in the ToolRepository (ifort, icc).
 
 This function gets called from the default site-specific config file
@@ -14,15 +13,13 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace) -> None:
+def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace):
     # pylint: disable=unused-argument, too-many-locals
-    '''
-    Defines the default flags for all Intel classic compilers and linkers.
+    '''Defines the default flags for all Intel classic compilers.
 
-    :param build_config: the Fab build config instance from which
-    required parameters can be taken.
-    :type build_config: :py:class:`fab.BuildConfig`
-    :param argparse.Namespace args: all command line options
+    :para build_config: the build config from which required parameters
+        can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()
@@ -30,15 +27,9 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace) -> 
     ifort = cast(Compiler, ifort)
 
     if not ifort.is_available:
-        # This can happen if ifort is not in path (in spack environments).
-        # To support this common use case, see if mpif90-ifort is available,
-        # and initialise this otherwise.
-        ifort = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-ifort")
-        ifort = cast(Compiler, ifort)
-        if not ifort.is_available:
-            # Since some flags depends on version, the code below requires
-            # that the intel compiler actually works.
-            return
+        # Since some flags depends on version, the code below requires
+        # that the intel compiler actually works.
+        return
 
     # The base flags
     # ==============
@@ -84,7 +75,7 @@ def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace) -> 
     # =================
     # This will implicitly affect all ifort based linkers, e.g.
     # linker-mpif90-ifort will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, f"linker-{ifort.name}")
+    linker = tr.get_tool(Category.LINKER, "linker-ifort")
     linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such

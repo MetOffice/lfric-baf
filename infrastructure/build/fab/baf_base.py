@@ -5,7 +5,8 @@
 #  which you should have received as part of this distribution
 # ##############################################################################
 
-'''This is an OO basic interface to FAB. It allows typical applications to
+'''
+This is an OO basic interface to FAB. It allows typical applications to
 only modify very few settings to have a working FAB build script.
 '''
 
@@ -14,9 +15,9 @@ from importlib import import_module
 import logging
 import os
 import sys
-from typing import List
+from typing import List, Optional, Union
 
-from fab.build_config import BuildConfig
+from fab.build_config import AddFlags, BuildConfig
 from fab.steps.analyse import analyse
 from fab.steps.archive_objects import archive_objects
 from fab.steps.c_pragma_injector import c_pragma_injector
@@ -25,23 +26,32 @@ from fab.steps.compile_fortran import compile_fortran
 from fab.steps.find_source_files import find_source_files
 from fab.steps.link import link_exe
 from fab.steps.preprocess import preprocess_c, preprocess_fortran
-from fab.steps.grab.folder import grab_folder
 from fab.tools import Category, ToolBox, ToolRepository
 
 
 class BafBase:
-    '''This is the base class for all FAB scripts.
+    '''
+    This is the base class for all FAB scripts.
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
     :param Optional[str] root_symbol:
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name, root_symbol=None):
+    def __init__(self,
+                 name: str,
+                 root_symbol: Optional[str] = None):
         self._logger = logging.getLogger('fab')
         self._site = None
         self._platform = None
         self._target = None
+
+        # The preprocessor flags to be used. One stores the common flags
+        # (without path-specific component), the other the path-specific
+        # flags (which are still handled separately in Fab)
+        self._preprocessor_flags_common: List[str] = []
+        self._preprocessor_flags_path: List[AddFlags] = []
+
         # We have to determine the site-specific setup first, so that e.g.
         # new compilers can be added before command line options are handled
         # (which might request this new compiler). So first parse the command
@@ -70,53 +80,76 @@ class BafBase:
         self._config = BuildConfig(tool_box=self._tool_box,
                                    project_label=label,
                                    verbose=True,
-                                   n_procs=16,
+                                   n_procs=self.args.nprocs,
                                    mpi=self.args.mpi,
                                    openmp=self.args.openmp,
                                    profile=self.args.profile,
                                    )
-        self._preprocessor_flags = []
-        self._compiler_flags = []
 
         if self._site_config:
             self._site_config.update_toolbox(self._config)
 
     @property
-    def site(self):
-        ''':returns: the site.'''
+    def site(self) -> str:
+        '''
+        :returns: the site.
+        '''
         return self._site
 
     @property
-    def logger(self):
-        ''':returns: the logging instance to use.'''
+    def logger(self) -> logging.Logger:
+        '''
+        :returns: the logging instance to use.
+        '''
         return self._logger
 
     @property
-    def platform(self):
-        ''':returns: the platform.'''
+    def platform(self) -> str:
+        '''
+        :returns: the platform.
+        '''
         return self._platform
 
     @property
-    def target(self):
-        ''':returns: the target (="site-platform").'''
+    def target(self) -> str:
+        '''
+        :returns: the target (="site-platform").
+        '''
         return self._target
 
     @property
-    def config(self):
-        ''':returns: the FAB BuildConfig instance.
+    def config(self) -> BuildConfig:
+        '''
+        :returns: the FAB BuildConfig instance.
         :rtype: :py:class:`fab.BuildConfig`
         '''
         return self._config
 
     @property
-    def args(self):
-        ''':returns: the arg parse objects containing the user's
-            command line information.
+    def args(self) -> argparse.Namespace:
+        '''
+        :returns: the arg parse objects containing the user's
+        command line information.
         '''
         return self._args
 
-    def define_site_platform_target(self):
-        '''This method defines the attributes site, platform (and
+    @property
+    def preprocess_flags_common(self) -> List[str]:
+        """
+        :returns: the list of all common preprocessor flags.
+        """
+        return self._preprocessor_flags_common
+
+    @property
+    def preprocess_flags_path(self) -> List[AddFlags]:
+        """
+        :returns: the list of all path-specific flags.
+        """
+        return self._preprocessor_flags_path
+
+    def define_site_platform_target(self) -> None:
+        '''
+        This method defines the attributes site, platform (and
         target=site-platform) based on the command line option --site
         and --platform (using $SITE and $PLATFORM as a default). If
         site or platform is missing and the corresponding environment
@@ -153,8 +186,9 @@ class BafBase:
         else:
             self._target = f"{self._site}_{self._platform}"
 
-    def site_specific_setup(self):
-        '''Imports a site-specific config file. The location is based
+    def site_specific_setup(self) -> None:
+        '''
+        Imports a site-specific config file. The location is based
         on the attribute target (which is set to be site-platform).
         '''
         try:
@@ -170,13 +204,17 @@ class BafBase:
         # The constructor handles everything.
         self._site_config = config_module.Config()
 
-    def define_command_line_options(self, parser=None):
-        '''Defines command line options. Can be overwritten by a derived
+    def define_command_line_options(
+            self,
+            parser: Optional[argparse.ArgumentParser] = None
+            ) -> argparse.ArgumentParser:
+        '''
+        Defines command line options. Can be overwritten by a derived
         class which can provide its own instance (to easily allow for a
         different description).
+
         :param parser: optional a pre-defined argument parser. If not, a
             new instance will be created.
-        :type argparse: Optional[:py:class:`argparse.ArgumentParser`]
         '''
 
         if not parser:
@@ -203,6 +241,9 @@ class BafBase:
             '--ld', '-ld', type=str, default="$LD",
             help="Name of the linker to use")
 
+        parser.add_argument(
+            '--nprocs', '-n', type=int, default=1,
+            help="Number of processes (default is 1)")
         parser.add_argument(
             '--mpi', '-mpi', default=True, action="store_true",
             help="Enable MPI")
@@ -236,15 +277,16 @@ class BafBase:
                       f"'{valid_profiles}'."))
         return parser
 
-    def handle_command_line_options(self, parser):
-        '''Analyse the actual command line options using the specified parser.
+    def handle_command_line_options(self,
+                                    parser: argparse.ArgumentParser) -> None:
+        '''
+        Analyse the actual command line options using the specified parser.
         The base implementation will handle the `--suite` parameter, and
         compiler/linker parameters (including the usage of environment
         variables). Needs to be overwritten to handle additional options
         specified by a derived script.
 
-        :param parser: the argument parser.
-        :type parser: :py:class:`argparse.ArgumentParser`
+        :param argparse.ArgumentParser parser: the argument parser.
         '''
         # pylint: disable=too-many-branches
         self._args = parser.parse_args(sys.argv[1:])
@@ -319,82 +361,164 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
-    def define_preprocessor_flags(self):
-        '''Top level function that sets preprocessor flags
-        by calling self.set_flags
+    def define_preprocessor_flags(self) -> None:
         '''
-        preprocessor_flags = []
-        self.set_flags(preprocessor_flags, self._preprocessor_flags)
+        Top level function that sets preprocessor flags. The base
+        implementation does nothing, should be overwritten.
+        '''
 
     def get_linker_flags(self) -> List[str]:
-        '''Base class for setting linker flags. This base implementation
-        for now just returns an empty list
+        '''
+        Base class for setting linker flags. This base implementation
+        for now just returns an empty list.
 
         :returns: list of flags for the linker.
         '''
         return []
 
-    def set_flags(self, list_of_flags, flag_group):
+    def add_preprocessor_flags(
+            self,
+            list_of_flags: Union[AddFlags, str, List[AddFlags], List[str]]
+            ) -> None:
+        """
+        This function appends a preprocessor flags to the internal list of
+        all preprocessor flags, which will be passed to Fab's various
+        preprocessing steps (for C, Fortran, and X90).
+
+        Each flag can be either a str, or a path-specific instance of
+        Fab's AddFlags object. For the convenience of the user, this function
+        also accepts a single flag or a list of flags.
+
+        No checking will be done if a flag is already in the list of flags.
+
+        :param list_of_flags: the preprocessor flag(s) to add. This can be
+            either a str or an AddFlags, and in each case either a single
+            item or a list.
+        """
+
+        # This convoluted test makes mypy happy
+        if isinstance(list_of_flags, AddFlags):
+            list_of_flags = [list_of_flags]
+        elif isinstance(list_of_flags, str):
+            list_of_flags = [list_of_flags]
+
+        # While Fab still distinguishes between path-specific and common
+        # flags, we have to sort these flags here:
         for flag in list_of_flags:
-            if flag not in flag_group:
-                flag_group.append(flag)
+            if isinstance(flag, AddFlags):
+                self._preprocessor_flags_path.append(flag)
+            else:
+                self._preprocessor_flags_common.append(flag)
 
-    def grab_files(self):
-        grab_folder(self.config, src="", dst_label="")
+    def grab_files_step(self) -> None:
+        '''
+        This should be overwritten by an application, since without this
+        there are no source files.
+        '''
+        raise RuntimeError("You have to overwrite `grab_files` to define "
+                           "the source code")
 
-    def find_source_files(self):
+    def find_source_files_step(self) -> None:
+        """
+        This function calls Fab's find_source_files, to identify and add
+        all source files to Fab's artefact store.
+        """
         find_source_files(self.config)
 
-    def preprocess_c(self, path_flags=None):
-        preprocess_c(self.config, common_flags=self._preprocessor_flags,
-                     path_flags=path_flags)
+    def preprocess_c_step(self, path_flags=None) -> None:
+        """
+        Calls Fab's preprocessing of all C files. It passes the
+        common and path-specific flags set using add_preprocessor_flags.
+        """
+        if not path_flags:
+            path_flags = []
+        preprocess_c(self.config,
+                     common_flags=self.preprocess_flags_common,
+                     path_flags=self.preprocess_flags_path + path_flags)
 
-    def preprocess_fortran(self, path_flags=None):
-        preprocess_fortran(self.config, common_flags=self._preprocessor_flags,
-                           path_flags=path_flags)
+    def preprocess_fortran_step(self, path_flags=None) -> None:
+        """
+        Calls Fab's preprocessing of all fortran files. It passes the
+        common and path-specific flags set using add_preprocessor_flags.
+        """
+        if not path_flags:
+            path_flags = []
+        preprocess_fortran(self.config,
+                           common_flags=self.preprocess_flags_common,
+                           path_flags=self.preprocess_flags_path+path_flags)
 
-    def analyse(self):
+    def analyse_step(self) -> None:
+        """
+        Calls Fab's analyse. It passes the config and root symbol for
+        Fab to analyze the source code dependencies.
+        """
         analyse(self.config, root_symbol=self._root_symbol)
 
-    def compile_c(self):
+    def compile_c_step(self) -> None:
+        """
+        Calls Fab's compile_c. It passes the config for Fab to compile
+        all C files. Optionally, common flags, path-specific flags and
+        alternative source can also be passed to Fab for compilation.
+        """
         compile_c(self.config)
 
-    def compile_fortran(self, path_flags=None):
-        compile_fortran(self.config, common_flags=self._compiler_flags,
+    def compile_fortran_step(self, path_flags=None) -> None:
+        """
+        Calls Fab's compile_fortran. It passes the config for Fab to
+        compile all Fortran files. Optionally, common flags, path-specific
+        flags and alternative source can also be passed to Fab for
+        compilation.
+        """
+        compile_fortran(self.config, common_flags=[],
                         path_flags=path_flags)
 
-    def archive_objects(self):
+    def archive_objects_step(self) -> None:
+        """
+        Calls Fab's archive_objects. At the moment, the config is passed
+        to Fab to create an object archive.
+        """
         archive_objects(self.config)
 
-    def link(self):
+    def link_step(self) -> None:
+        """
+        Calls Fab's link_exe. It passes the config and a list of required
+        library names set using get_linker_flags to Fab for linking.
+        """
         link_exe(self.config, libs=self.get_linker_flags())
 
-    def build(self):
-        # We need to use with to trigger the entrance/exit functionality,
+    def build(self) -> None:
+        """
+        This function defines the build process for Fab. Generally, a build
+        process involves grabbing and finding Fortran and C source files for
+        proprocessing, dependency analysis, compilation and linking.
+        """
+        # We need to use "with" to trigger the entrance/exit functionality,
         # but otherwise the config object is used from this object, so no
         # need to use it anywhere.
         with self._config as _:
-            self.grab_files()
-            self.find_source_files()
+            self.grab_files_step()
+            self.find_source_files_step()
             c_pragma_injector(self.config)
             self.define_preprocessor_flags()
-            self.preprocess_c()
-            self.preprocess_fortran()
-            self.analyse()
-            self.compile_c()
-            self.compile_fortran()
+            self.preprocess_c_step()
+            self.preprocess_fortran_step()
+            self.analyse_step()
+            self.compile_c_step()
+            self.compile_fortran_step()
             # Disable archiving due to
             # https://github.com/MetOffice/fab/issues/310
             # Archives can contain several versions of a file (with different)
             # hashes, meaning at link time an older version might be used,
             # even if a newer one is available.
             # self.archive_objects()
-            self.link()
+            self.link_step()
 
 
 # ==========================================================================
 if __name__ == "__main__":
-
+    '''
+    This tests the BafBase class using the command line.
+    '''
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
     baf_base = BafBase(name="command-line-test",

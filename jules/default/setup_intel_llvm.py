@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-'''
-This file contains a function that sets the default flags for all
-Intel llvm based compilers and linkers in the ToolRepository (ifx, icx).
+'''This file contains a function that sets the default flags for all
+Intel llvm based compilers in the ToolRepository (ifx, icx).
 
 This function gets called from the default site-specific config file
 '''
@@ -14,15 +13,13 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace) -> None:
+def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
     # pylint: disable=unused-argument, too-many-locals
-    '''
-    Defines the default flags for all Intel llvm compilers.
+    '''Defines the default flags for all Intel llvm compilers.
 
-    :param build_config: the Fab build config instance from which
-    required parameters can be taken.
-    :type build_config: :py:class:`fab.BuildConfig`
-    :param argparse.Namespace args: all command line options
+    :para build_config: the build config from which required parameters
+        can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()
@@ -30,10 +27,7 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace) -> Non
     ifx = cast(Compiler, ifx)
 
     if not ifx.is_available:
-        ifx = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-ifx")
-        ifx = cast(Compiler, ifx)
-        if not ifx.is_available:
-            return
+        return
 
     # The base flags
     # ==============
@@ -67,7 +61,7 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace) -> Non
     # =================
     # This will implicitly affect all ifx based linkers, e.g.
     # linker-mpif90-ifx will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, f"linker-{ifx.name}")
+    linker = tr.get_tool(Category.LINKER, "linker-ifx")
     linker = cast(Linker, linker)    # Make mypy happy
     # ATM we don't use a shell when running a tool, and as such
     # we can't directly use "$()" as parameter. So query these values using

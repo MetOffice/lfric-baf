@@ -22,7 +22,7 @@ class RosePicker(Tool):
     adding the required PYTHONPATH to the environment in case that rose_picker
     is not installed, but downloaded.
 
-    :param path: the path to the rose picker binary.
+    :param Path path: the path to the rose picker binary.
     '''
     def __init__(self, path: Path):
         super().__init__("rose_picker", exec_name=str(path))
@@ -30,8 +30,9 @@ class RosePicker(Tool):
         # when it is installed from the repository:
         self._pythonpath = path.parents[1] / "lib" / "python"
 
-    def check_available(self):
-        ''':returns: whether rose_picker works by running `rose_picker -help`.
+    def check_available(self) -> bool:
+        '''
+        :returns bool: whether rose_picker works by running `rose_picker -help`.
         '''
         try:
             self.run(additional_parameters="-help")
@@ -40,9 +41,13 @@ class RosePicker(Tool):
 
         return True
 
-    def run(self, *args, **kwargs):
-        '''This wrapper adds the required PYTHONPATH, and passes all
+    def run(self, *args, **kwargs) -> None:
+        '''
+        This wrapper adds the required PYTHONPATH, and passes all
         parameters through to the tool's run function.
+
+        :param Tuple args: arguments to pass to rose picker
+        :param Dict kwargs: arguments to pass to rose picker
         '''
         env = os.environ.copy()
         env["PYTHONPATH"] = (f"{env.get('PYTHONPATH', '')}:"
@@ -52,15 +57,17 @@ class RosePicker(Tool):
 
 
 # =============================================================================
-def get_rose_picker(tag: Optional[str] = "v2.0.0"):
-    '''Returns a Fab RosePicker tool. It can either be a version installed
+def get_rose_picker(tag: Optional[str] = "v2.0.0") -> RosePicker:
+    '''
+    Returns a Fab RosePicker tool. It can either be a version installed
     in the system, which is requested by setting tag to `system`, or a
     newly installed version via an FCM checkout. If there is already a
     checked-out version, it will be used (i.e. no repeated downloads are
     done).
 
-    :param tag: either the tag in the repository to use, or 'system' to
-        indicate to use a version installed in the system.
+    :param Optional[str] tag: either the tag in the repository to use,
+    or 'system' to indicate to use a version installed in the system
+    :returns RosePicker: a Fab RosePicker tool instance
     '''
 
     if tag.lower() == "system":
@@ -102,4 +109,7 @@ def get_rose_picker(tag: Optional[str] = "v2.0.0"):
 
 # =============================================================================
 if __name__ == "__main__":
+    '''
+    A small test for getting the rose picker tool.'
+    '''
     rose_picker = get_rose_picker("v2.0.0")

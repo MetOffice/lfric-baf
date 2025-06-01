@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
-'''This module contains a setup NIWA's XC-50
+'''
+This module contains a setup NIWA's XC-50
 '''
 
 import os
@@ -13,7 +14,8 @@ from default.config import Config as DefaultConfig
 
 
 class Config(DefaultConfig):
-    '''This config class sets specific flags for NIWA's XC-50
+    '''
+    This config class sets specific flags for NIWA's XC-50
     '''
 
     def __init__(self):
@@ -21,11 +23,16 @@ class Config(DefaultConfig):
         tr = ToolRepository()
         tr.set_default_compiler_suite("intel-classic")
 
-    def setup_cray(self, build_config: BuildConfig):
-        '''First call the base class to get all default options.
+    def setup_cray(self, build_config: BuildConfig) -> None:
+        '''
+        First call the base class to get all default options.
         See the file ../default/setup_cray.py for the current
-        default.
-        Very likely, linker options need to be changed:
+        default. Then the NIWA's XC-50 specific flags are added.
+        The linker is also updated. 
+
+        :param build_config: the Fab build config instance from which
+        required parameters can be taken.
+        :type build_config: :py:class:`fab.BuildConfig`
         '''
         super().setup_cray(build_config)
         tr = ToolRepository()

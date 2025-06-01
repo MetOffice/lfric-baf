@@ -61,9 +61,12 @@ from fparser.two.utils import walk
 
 
 # -----------------------------------------------------------------------------
-def remove_private(filename):
-    """Simple function that removes all private and protected declarations.
+def remove_private(filename: str) -> ParserFactory:
+    """
+    Simple function that removes all private and protected declarations.
+
     :param str filename: the file in which to remove private and protected
+    :return :py:class:`fparser.ParserFactory`: the modified parse tree
     """
     # Do not filter out comments, since this would remove UM-style
     # 'depends on' comments for dependencies that are otherwise not detected.

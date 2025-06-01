@@ -5,7 +5,8 @@
 #  which you should have received as part of this distribution
 # ##############################################################################
 
-'''A FAB build script for gravity_wave. It relies on the FabBase class
+'''
+A FAB build script for gravity_wave. It relies on the FabBase class
 contained in the infrastructure directory.
 '''
 
@@ -14,7 +15,8 @@ from extract_mixin import ExtractMixin
 
 
 class FabGravityWaveExtract(ExtractMixin, FabGravityWave):
-    '''This trivial class implements extraction for Gravity_wave. The mixin
+    '''
+    This trivial class implements extraction for Gravity_wave. The mixin
     Extract class overwrites the psyclone step (to insert its own
     step of removing private declarations first).
 

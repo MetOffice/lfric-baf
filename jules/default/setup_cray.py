@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-This file contains a function that sets the default flags for the NVIDIA
+This file contains a function that sets the default flags for the Cray
 compilers and linkers in the ToolRepository.
 
 This function gets called from the default site-specific config file
@@ -14,10 +14,10 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
+def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
     # pylint: disable=unused-argument
     '''
-    Defines the default flags for nvfortran.
+    Defines the default flags for ftn.
 
     :param build_config: the Fab build config instance from which
     required parameters can be taken.
@@ -26,24 +26,20 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
     '''
 
     tr = ToolRepository()
-    nvfortran = tr.get_tool(Category.FORTRAN_COMPILER, "nvfortran")
-    nvfortran = cast(Compiler, nvfortran)
+    ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ftn")
+    ftn = cast(Compiler, ftn)
 
-    if not nvfortran.is_available:
-        nvfortran = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-nvfortran")
-        nvfortran = cast(Compiler, nvfortran)
-        if not nvfortran.is_available:
-            return
+    if not ftn.is_available:
+        return
 
     # The base flags
     # ==============
-    flags = ["-Mextend",           # 132 characters line length
-             "-g", "-traceback",
-             "-r8",                # Default 8 bytes reals
-             "-O0",                # No optimisations
+    flags = ["-g", "-G0", "-m", "0",    # ?
+             "-M", "E664,E7208,E7212",  # ?
+             "-en",                     # Fortran standard
+             "-ef",                     # use lowercase module names!Important!
+             "-hnocaf",                 # Required for linking with C++
              ]
-
-    lib_flags = ["-c++libs"]
 
     # Handle accelerator options:
     if args.openacc or args.openmp:
@@ -54,38 +50,46 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
 
     if args.openacc:
         if host == "gpu":
-            flags.extend(["-acc=gpu", "-gpu=managed"])
-            lib_flags.extend(["-aclibs", "-cuda"])
+            flags.extend(["-h acc"])
         else:
             # CPU
-            flags.extend(["-acc=cpu"])
+            flags.extend(["-h acc"])
     elif args.openmp:
         if host == "gpu":
-            flags.extend(["-mp=gpu", "-gpu=managed"])
-            lib_flags.append("-cuda")
+            flags.extend([])
         else:
             # OpenMP on CPU, that's already handled by Fab
             pass
 
-    nvfortran.add_flags(flags, "base")
+    ftn.add_flags(flags, "base")
 
     # Full debug
     # ==========
-    nvfortran.add_flags(["-O0", "-fp-model=strict"], "full-debug")
+    ftn.add_flags(["-Ktrap=fp",    # floating point checking
+                   "-R", "bcdps",  # bounds, array shape, collapse,
+                                   # pointer, string checking
+                   "-O0"],         # No optimisation
+                  "full-debug")
+    if ftn.get_version() >= (15, 0):
+        ftn.add_flags(["-G0"], "full-debug")
+    else:
+        ftn.add_flags(["-Gfast"], "full-debug")
 
     # Fast debug
     # ==========
-    nvfortran.add_flags(["-O2", "-fp-model=strict"], "fast-debug")
+    ftn.add_flags(["-O2"], "fast-debug")
+    if ftn.get_version() >= (15, 0):
+        ftn.add_flags(["-G2"], "fast-debug")
+    else:
+        ftn.add_flags(["-Gfast"], "fast-debug")
 
     # Production
     # ==========
-    nvfortran.add_flags(["-O4"], "production")
+    ftn.add_flags(["-O3"], "production")
 
     # Set up the linker
     # =================
-    # This will implicitly affect all nvfortran based linkers, e.g.
-    # linker-mpif90-nvfortran will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, f"linker-{nvfortran.name}")
+    linker = tr.get_tool(Category.LINKER, "linker-crayftn-ftn")
     linker = cast(Linker, linker)
 
     # ATM we don't use a shell when running a tool, and as such
@@ -93,6 +97,7 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
     # Fab's shell tool (doesn't really matter which shell we get, so just
     # ask for the default):
     shell = tr.get_default(Category.SHELL)
+
     try:
         # We must remove the trailing new line, and create a list:
         nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
@@ -105,5 +110,9 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])
 
-    # Always link with C++ libs
-    linker.add_post_lib_flags(lib_flags)
+    linker.add_post_lib_flags("-lcraystdc++")
+
+    # Using the GNU compiler on Crays for now needs the additional
+    # flag -fallow-argument-mismatch to compile mpi_mod.f90
+    ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-gfortran")
+    ftn.add_flags("-fallow-argument-mismatch")
