@@ -87,31 +87,6 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
     # ==========
     ftn.add_flags(["-O3"], "production")
 
-    # Set up the linker
-    # =================
-    linker = tr.get_tool(Category.LINKER, "linker-crayftn-ftn")
-    linker = cast(Linker, linker)
-
-    # ATM we don't use a shell when running a tool, and as such
-    # we can't directly use "$()" as parameter. So query these values using
-    # Fab's shell tool (doesn't really matter which shell we get, so just
-    # ask for the default):
-    shell = tr.get_default(Category.SHELL)
-
-    try:
-        # We must remove the trailing new line, and create a list:
-        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                             capture_output=True).strip().split()
-    except RuntimeError:
-        nc_flibs = []
-
-    linker.add_lib_flags("netcdf", nc_flibs)
-    linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-    linker.add_lib_flags("xios", ["-lxios"])
-    linker.add_lib_flags("hdf5", ["-lhdf5"])
-
-    linker.add_post_lib_flags("-lcraystdc++")
-
     # Using the GNU compiler on Crays for now needs the additional
     # flag -fallow-argument-mismatch to compile mpi_mod.f90
     ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-gfortran")

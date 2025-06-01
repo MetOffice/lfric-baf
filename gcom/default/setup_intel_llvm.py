@@ -56,29 +56,3 @@ def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace):
     # Production
     # ==========
     ifx.add_flags(["-O3", "-xhost"], "production")
-
-    # Set up the linker
-    # =================
-    # This will implicitly affect all ifx based linkers, e.g.
-    # linker-mpif90-ifx will use these flags as well.
-    linker = tr.get_tool(Category.LINKER, "linker-ifx")
-    linker = cast(Linker, linker)    # Make mypy happy
-    # ATM we don't use a shell when running a tool, and as such
-    # we can't directly use "$()" as parameter. So query these values using
-    # Fab's shell tool (doesn't really matter which shell we get, so just
-    # ask for the default):
-    shell = tr.get_default(Category.SHELL)
-    try:
-        # We must remove the trailing new line, and create a list:
-        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                             capture_output=True).strip().split()
-    except RuntimeError:
-        nc_flibs = []
-
-    linker.add_lib_flags("netcdf", nc_flibs)
-    linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-    linker.add_lib_flags("xios", ["-lxios"])
-    linker.add_lib_flags("hdf5", ["-lhdf5"])
-
-    # Always link with C++ libs
-    linker.add_post_lib_flags(["-lstdc++"])
