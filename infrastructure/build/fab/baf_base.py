@@ -33,9 +33,9 @@ class BafBase:
     '''
     This is the base class for all FAB scripts.
 
-    :param str name: the name to be used for the workspace. Note that
+    :param name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
-    :param Optional[str] root_symbol:
+    :param root_symbol:
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
@@ -44,7 +44,7 @@ class BafBase:
         self._logger = logging.getLogger('fab')
         self._site = None
         self._platform = None
-        self._target = None
+        self._target = ""
 
         # The preprocessor flags to be used. One stores the common flags
         # (without path-specific component), the other the path-specific
@@ -69,7 +69,8 @@ class BafBase:
         self.handle_command_line_options(parser)
         # Now allow further site-customisations depending on
         # the command line arguments
-        self._site_config.handle_command_line_options(self.args)
+        if self._site_config:
+            self._site_config.handle_command_line_options(self.args)
 
         if root_symbol:
             self._root_symbol = root_symbol
@@ -90,9 +91,9 @@ class BafBase:
             self._site_config.update_toolbox(self._config)
 
     @property
-    def site(self) -> str:
+    def site(self) -> Optional[str]:
         '''
-        :returns: the site.
+        :returns: the site (or nonte if no site is specified)
         '''
         return self._site
 
@@ -104,16 +105,17 @@ class BafBase:
         return self._logger
 
     @property
-    def platform(self) -> str:
+    def platform(self) -> Optional[str]:
         '''
-        :returns: the platform.
+        :returns: the platform, or None if not specified.
         '''
         return self._platform
 
     @property
     def target(self) -> str:
         '''
-        :returns: the target (="site-platform").
+        :returns: the target (="site-platform"), or "default"
+            if nothing was specified.
         '''
         return self._target
 
@@ -392,8 +394,8 @@ class BafBase:
         No checking will be done if a flag is already in the list of flags.
 
         :param list_of_flags: the preprocessor flag(s) to add. This can be
-            either a str or an AddFlags, and in each case either a single
-            item or a list.
+            either a ``str`` or an ``AddFlags``, and in each case either a
+            single item or a list.
         """
 
         # This convoluted test makes mypy happy
@@ -425,7 +427,7 @@ class BafBase:
         """
         find_source_files(self.config)
 
-    def preprocess_c_step(self, path_flags=None) -> None:
+    def preprocess_c_step(self, path_flags: Optional[List[str]] = None) -> None:
         """
         Calls Fab's preprocessing of all C files. It passes the
         common and path-specific flags set using add_preprocessor_flags.
