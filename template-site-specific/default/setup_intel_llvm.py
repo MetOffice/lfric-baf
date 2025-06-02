@@ -22,7 +22,7 @@ def setup_intel_llvm(build_config: BuildConfig,
 
     :param build_config: the Fab build config instance from which
         required parameters can be taken.
-    :param args: all command line options
+    :param argparse.Namespace args: all command line options
     '''
 
     tr = ToolRepository()
@@ -38,21 +38,10 @@ def setup_intel_llvm(build_config: BuildConfig,
     # The base flags
     # ==============
     # The following flags will be applied to all modes:
-    ifx.add_flags(["-stand", "f08"],               "base")
     ifx.add_flags(["-g", "-traceback"],            "base")
-    # With -warn errors we get externals that are too long. While this
-    # is a (usually safe) warning, the long externals then causes the
-    # build to abort. So for now we cannot use `-warn errors`
-    ifx.add_flags(["-warn", "all"],                "base")
-
-    # By default turning interface warnings on causes "genmod" files to be
-    # created. This adds unnecessary files to the build so we disable that
-    # behaviour.
-    ifx.add_flags(["-gen-interfaces", "nosource"], "base")
 
     # Full debug
     # ==========
-    ifx.add_flags(["-check", "all", "-fpe0"], "full-debug")
     ifx.add_flags(["-O0", "-ftrapuv"],        "full-debug")
 
     # Fast debug
@@ -69,22 +58,9 @@ def setup_intel_llvm(build_config: BuildConfig,
     # linker-mpif90-ifx will use these flags as well.
     linker = tr.get_tool(Category.LINKER, f"linker-{ifx.name}")
     linker = cast(Linker, linker)    # Make mypy happy
-    # ATM we don't use a shell when running a tool, and as such
-    # we can't directly use "$()" as parameter. So query these values using
-    # Fab's shell tool (doesn't really matter which shell we get, so just
-    # ask for the default):
-    shell = tr.get_default(Category.SHELL)
-    try:
-        # We must remove the trailing new line, and create a list:
-        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                             capture_output=True).strip().split()
-    except RuntimeError:
-        nc_flibs = []
 
-    linker.add_lib_flags("netcdf", nc_flibs)
-    linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-    linker.add_lib_flags("xios", ["-lxios"])
-    linker.add_lib_flags("hdf5", ["-lhdf5"])
+    # Setup library info, e.g.:
+    # linker.add_lib_flags("yaxt", ["-L/some/path", "-lyaxt", "-lyaxt_c"])
 
-    # Always link with C++ libs
-    linker.add_post_lib_flags(["-lstdc++"])
+    # Add more flags to be always used, e.g.:
+    # linker.add_post_lib_flags(["-lstdc++"], "base")

@@ -38,35 +38,8 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
     # ==============
     flags = ["-Mextend",           # 132 characters line length
              "-g", "-traceback",
-             "-r8",                # Default 8 bytes reals
-             "-O0",                # No optimisations
              ]
 
-    lib_flags = ["-c++libs"]
-
-    # Handle accelerator options:
-    if args.openacc or args.openmp:
-        host = args.host.lower()
-    else:
-        # Neither openacc nor openmp specified
-        host = ""
-
-    if args.openacc:
-        if host == "gpu":
-            flags.extend(["-acc=gpu", "-gpu=managed"])
-            lib_flags.extend(["-aclibs", "-cuda"])
-        else:
-            # CPU
-            flags.extend(["-acc=cpu"])
-    elif args.openmp:
-        if host == "gpu":
-            flags.extend(["-mp=gpu", "-gpu=managed"])
-            lib_flags.append("-cuda")
-        else:
-            # OpenMP on CPU, that's already handled by Fab
-            pass
-
-    nvfortran.add_flags(flags, "base")
 
     # Full debug
     # ==========
@@ -87,22 +60,8 @@ def setup_nvidia(build_config: BuildConfig, args: argparse.Namespace) -> None:
     linker = tr.get_tool(Category.LINKER, f"linker-{nvfortran.name}")
     linker = cast(Linker, linker)
 
-    # ATM we don't use a shell when running a tool, and as such
-    # we can't directly use "$()" as parameter. So query these values using
-    # Fab's shell tool (doesn't really matter which shell we get, so just
-    # ask for the default):
-    shell = tr.get_default(Category.SHELL)
-    try:
-        # We must remove the trailing new line, and create a list:
-        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                             capture_output=True).strip().split()
-    except RuntimeError:
-        nc_flibs = []
-
-    linker.add_lib_flags("netcdf", nc_flibs)
-    linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-    linker.add_lib_flags("xios", ["-lxios"])
-    linker.add_lib_flags("hdf5", ["-lhdf5"])
+    # Setup library info, e.g.:
+    # linker.add_lib_flags("yaxt", ["-L/some/path", "-lyaxt", "-lyaxt_c"])
 
     # Always link with C++ libs
-    linker.add_post_lib_flags(lib_flags)
+    # linker.add_post_lib_flags(["-c++libs"], "base")

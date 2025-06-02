@@ -33,9 +33,7 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
 
     # The base flags
     # ==============
-    flags = ["-g", "-G0", "-m", "0",    # ?
-             "-M", "E664,E7208,E7212",  # ?
-             "-en",                     # Fortran standard
+    flags = ["-g", "-G0", "-m", "0",
              "-ef",                     # use lowercase module names!Important!
              "-hnocaf",                 # Required for linking with C++
              ]
@@ -91,27 +89,14 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
     linker = tr.get_tool(Category.LINKER, f"linker-{ftn.name}")
     linker = cast(Linker, linker)
 
-    # ATM we don't use a shell when running a tool, and as such
-    # we can't directly use "$()" as parameter. So query these values using
-    # Fab's shell tool (doesn't really matter which shell we get, so just
-    # ask for the default):
-    shell = tr.get_default(Category.SHELL)
+    # Setup library info, e.g.:
+    # linker.add_lib_flags("yaxt", ["-L/some/path", "-lyaxt", "-lyaxt_c"])
 
-    try:
-        # We must remove the trailing new line, and create a list:
-        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                             capture_output=True).strip().split()
-    except RuntimeError:
-        nc_flibs = []
-
-    linker.add_lib_flags("netcdf", nc_flibs)
-    linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-    linker.add_lib_flags("xios", ["-lxios"])
-    linker.add_lib_flags("hdf5", ["-lhdf5"])
-
-    linker.add_post_lib_flags("-lcraystdc++")
+    # Add more flags to be always used, e.g.:
+    # linker.add_post_lib_flags("-lcraystdc++")
 
     # Using the GNU compiler on Crays for now needs the additional
-    # flag -fallow-argument-mismatch to compile mpi_mod.f90
-    ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-gfortran")
-    ftn.add_flags("-fallow-argument-mismatch")
+    # flag -fallow-argument-mismatch to compile certain mpi codes.
+    # You can use:
+    # ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-gfortran")
+    # ftn.add_flags("-fallow-argument-mismatch")
