@@ -110,13 +110,13 @@ class JulesBuild(BafBase):
         # move inc files to the root for easy tool use
         root_inc_files(self.config)
 
-    def define_preprocessor_flags(self) -> None:
+    def define_preprocessor_flags_step(self) -> None:
         '''
         Defines the preprocessor flags.
         TODO: This uses a BAF private attribute, this must be
         done properly.
         '''
-        super().define_preprocessor_flags()
+        super().define_preprocessor_flags_step()
         self.add_preprocessor_flags(
             ["-P", "-DMPI_DUMMY", "-DNCDF_DUMMY", "-I$output"])
 

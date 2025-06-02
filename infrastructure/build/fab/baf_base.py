@@ -383,7 +383,7 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
-    def define_preprocessor_flags(self) -> None:
+    def define_preprocessor_flags_step(self) -> None:
         '''
         Top level function that sets preprocessor flags. The base
         implementation does nothing, should be overwritten.
@@ -533,8 +533,10 @@ class BafBase:
         with self._config as _:
             self.grab_files_step()
             self.find_source_files_step()
+            # This is a Fab function, which the user won't need to be
+            # able to overwrite.
             c_pragma_injector(self.config)
-            self.define_preprocessor_flags()
+            self.define_preprocessor_flags_step()
             self.preprocess_c_step()
             self.preprocess_fortran_step()
             self.analyse_step()
