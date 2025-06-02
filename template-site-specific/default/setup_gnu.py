@@ -34,18 +34,8 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace) -> None:
 
     # The base flags
     # ==============
-    gfortran.add_flags(
-        ['-ffree-line-length-none', '-Wall',
-         '-g', "-Werror=conversion",
-         '-Werror=character-truncation',
-         '-Werror=unused-value',
-         '-Werror=tabs',
-         '-std=f2008',
-         '-fdefault-real-8',
-         '-fdefault-double-8',
-         ],
+    gfortran.add_flags(['-ffree-line-length-none', '-Wall', '-g'],
         "base")
-
     runtime = ["-fcheck=all", "-ffpe-trap=invalid,zero,overflow"]
     init = ["-finit-integer=31173",  "-finit-real=snan",
             "-finit-logical=true", "-finit-character=85"]
@@ -72,23 +62,8 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace) -> None:
     linker = tr.get_tool(Category.LINKER, f"linker-{gfortran.name}")
     linker = cast(Linker, linker)
 
-    # ATM we don't use a shell when running a tool, and as such
-    # we can't directly use "$()" as parameter. So query these values using
-    # Fab's shell tool (doesn't really matter which shell we get, so just
-    # ask for the default):
-    shell = tr.get_default(Category.SHELL)
+    # Setup library info, e.g.:
+    # linker.add_lib_flags("yaxt", ["-L/some/path", "-lyaxt", "-lyaxt_c"])
 
-    try:
-        # We must remove the trailing new line, and create a list:
-        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
-                             capture_output=True).strip().split()
-    except RuntimeError:
-        nc_flibs = []
-
-    linker.add_lib_flags("netcdf", nc_flibs)
-    linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-    linker.add_lib_flags("xios", ["-lxios"])
-    linker.add_lib_flags("hdf5", ["-lhdf5"])
-
-    # Always link with C++ libs
-    linker.add_post_lib_flags(["-lstdc++"], "base")
+    # Add more flags to be always used, e.g.:
+    # linker.add_post_lib_flags(["-lstdc++"], "base")
