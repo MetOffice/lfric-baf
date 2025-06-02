@@ -14,14 +14,14 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_classic(build_config: BuildConfig, args: argparse.Namespace) -> None:
+def setup_intel_classic(build_config: BuildConfig,
+                        args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument, too-many-locals
     '''
     Defines the default flags for all Intel classic compilers and linkers.
 
     :param build_config: the Fab build config instance from which
-    required parameters can be taken.
-    :type build_config: :py:class:`fab.BuildConfig`
+        required parameters can be taken.
     :param argparse.Namespace args: all command line options
     '''
 

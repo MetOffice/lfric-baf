@@ -31,7 +31,8 @@ class Config:
     @property
     def args(self) -> argparse.Namespace:
         '''
-        :returns argparse.Namespace: the command line options specified by the user.
+        :returns argparse.Namespace: the command line options specified by
+            the user.
         '''
         return self._args
 

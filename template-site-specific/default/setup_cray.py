@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-'''This file contains a function that sets the default flags for the Cray
-compilers in the ToolRepository.
+'''
+This file contains a function that sets the default flags for the Cray
+compilers and linkers in the ToolRepository.
 
 This function gets called from the default site-specific config file
 '''
@@ -13,13 +14,15 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
+def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument
-    '''Defines the default flags for ftn.
+    '''
+    Defines the default flags for ftn.
 
-    :param build_config: the build config from which required parameters
-        can be taken.
-    :param args: all command line options
+    :param build_config: the Fab build config instance from which
+        required parameters can be taken.
+    :type build_config: :py:class:`fab.BuildConfig`
+    :param argparse.Namespace args: all command line options
     '''
 
     tr = ToolRepository()
@@ -31,11 +34,32 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
 
     # The base flags
     # ==============
-    flags = ["-g", "-G0", "-m", "0",    # 
+    flags = ["-g", "-G0", "-m", "0",
              "-ef",                     # use lowercase module names!Important!
              "-hnocaf",                 # Required for linking with C++
              ]
 
+    # Handle accelerator options:
+    if args.openacc or args.openmp:
+        host = args.host.lower()
+    else:
+        # Neither openacc nor openmp specified
+        host = ""
+
+    if args.openacc:
+        if host == "gpu":
+            flags.extend(["-h acc"])
+        else:
+            # CPU
+            flags.extend(["-h acc"])
+    elif args.openmp:
+        if host == "gpu":
+            flags.extend([])
+        else:
+            # OpenMP on CPU, that's already handled by Fab
+            pass
+
+    ftn.add_flags(flags, "base")
 
     # Full debug
     # ==========
@@ -68,7 +92,7 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace):
 
     # Setup library info, e.g.:
     # linker.add_lib_flags("yaxt", ["-L/some/path", "-lyaxt", "-lyaxt_c"])
-    
+
     # Add more flags to be always used, e.g.:
     # linker.add_post_lib_flags("-lcraystdc++")
 

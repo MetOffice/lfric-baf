@@ -14,7 +14,8 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace) -> None:
+def setup_intel_llvm(build_config: BuildConfig,
+                     args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument, too-many-locals
     '''
     Defines the default flags for all Intel llvm compilers.
