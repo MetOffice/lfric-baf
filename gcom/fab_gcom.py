@@ -109,13 +109,13 @@ class GcomBuild(BafBase):
                           source_root=self._source_root,
                           path_filters=path_filters)
 
-    def define_preprocessor_flags(self) -> None:
+    def define_preprocessor_flags_step(self) -> None:
         '''
         Defines the preprocessor flags.
         TODO: This uses a BAF private attribute, this must be
         done properly.
         '''
-        super().define_preprocessor_flags()
+        super().define_preprocessor_flags_step()
         self.add_preprocessor_flags([f"-I{self._source_root}/include",
                                      '-DGC_VERSION="7.6"',
                                      '-DGC_BUILD_DATE="20220111"',
