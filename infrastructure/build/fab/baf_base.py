@@ -206,12 +206,17 @@ class BafBase:
         on the attribute target (which is set to be site-platform).
         '''
         try:
-            config_module = import_module(f"{self.target}.config")
-        except ModuleNotFoundError:
+            # We need to add 'site_specific' to the path, so
+            # each config can import from 'default' (instead
+            # of having to use 'site_specific.default')
+            sys.path.append("site_specific")
+            config_name = f"site_specific.{self.target}.config"
+            config_module = import_module(config_name)
+        except ModuleNotFoundError as err:
             # We log a warning, but proceed, since there is no need to
             # have a site-specific file.
             self._logger.warning(f"Cannot find site-specific module "
-                                 f"'{self.target}.config'.")
+                                 f"'{config_name}': {err}.")
             self._site_config = None
             return
         self.logger.info(f"baf_base: Imported '{self.target}'")
