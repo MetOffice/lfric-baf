@@ -36,9 +36,10 @@ class JulesBuild(BafBase):
         self._revision = None
         super().__init__(name)
 
-    def define_command_line_options(self,
-                                    parser: Optional[argparse.ArgumentParser] = None
-                                    ) -> argparse.ArgumentParser:
+    def define_command_line_options(
+            self,
+            parser: Optional[argparse.ArgumentParser] = None
+            ) -> argparse.ArgumentParser:
         '''
         This adds a revision option to the command line options inherited
         from the base class.
@@ -56,7 +57,8 @@ class JulesBuild(BafBase):
             help="Sets the Jules revision to checkout.")
         return parser
 
-    def handle_command_line_options(self, parser: argparse.ArgumentParser) -> None:
+    def handle_command_line_options(self,
+                                    parser: argparse.ArgumentParser) -> None:
         '''
         Grab the requested (or default) Jules revision to use and
         store it in an attribute.
@@ -111,8 +113,6 @@ class JulesBuild(BafBase):
     def define_preprocessor_flags(self) -> None:
         '''
         Defines the preprocessor flags.
-        TODO: This uses a BAF private attribute, this must be
-        done properly.
         '''
         super().define_preprocessor_flags()
         self.set_flags(

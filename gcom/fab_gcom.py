@@ -112,8 +112,6 @@ class GcomBuild(BafBase):
     def define_preprocessor_flags(self) -> None:
         '''
         Defines the preprocessor flags.
-        TODO: This uses a BAF private attribute, this must be
-        done properly.
         '''
         super().define_preprocessor_flags()
         self.add_preprocessor_flags([f"-I{self._source_root}/include",
