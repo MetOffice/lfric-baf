@@ -22,7 +22,7 @@ def setup_intel_classic(build_config: BuildConfig,
 
     :param build_config: the Fab build config instance from which
         required parameters can be taken.
-    :param argparse.Namespace args: all command line options
+    :param args: all command line options
     '''
 
     tr = ToolRepository()

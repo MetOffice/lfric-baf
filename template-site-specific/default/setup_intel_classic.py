@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-'''This file contains a function that sets the default flags for all
+'''
+This file contains a function that sets the default flags for all
 Intel classic based compilers in the ToolRepository (ifort, icc).
 
 This function gets called from the default site-specific config file

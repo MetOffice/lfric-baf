@@ -20,9 +20,8 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace) -> None:
     Defines the default flags for all GNU compilers and linkers.
 
     :param build_config: the Fab build config instance from which
-    required parameters can be taken.
-    :type build_config: :py:class:`fab.BuildConfig`
-    :param argparse.Namespace args: all command line options
+        required parameters can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()
