@@ -1,5 +1,8 @@
 # LFRic-BAF
 
+THIS BRANCH IS FOR THE PSYCLONE CI ONLY
+It will be removed once BAF is available as a release or part of Fab.
+
 This repository contains the current state of BAF, the Build Architecture with
 Fab. BAF is an object-oriented command line interface on top of the UK Met Office
 build system Fab (https://github.com/MetOffice/fab). Fab itself is contained
