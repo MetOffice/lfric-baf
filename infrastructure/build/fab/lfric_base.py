@@ -323,7 +323,7 @@ class LFRicBase(BafBase):
                 config.artefact_store.add(ArtefactSet.FORTRAN_BUILD_FILES,
                                           out_file)
 
-    def get_rose_meta(self) -> Optional[Path]:
+    def get_rose_meta(self) -> Union[Path, None]:
         '''
         This method returns the path to the rose meta data config file.
         Currently, it returns none for the LFRic applications to overwrite
