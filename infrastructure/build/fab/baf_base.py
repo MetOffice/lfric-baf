@@ -14,6 +14,7 @@ import argparse
 from importlib import import_module
 import logging
 import os
+from pathlib import Path
 import sys
 from typing import List, Optional, Union
 
@@ -206,10 +207,12 @@ class BafBase:
         on the attribute target (which is set to be site-platform).
         '''
         try:
-            # We need to add 'site_specific' to the path, so
-            # each config can import from 'default' (instead
-            # of having to use 'site_specific.default')
-            sys.path.append("site_specific")
+            # We need to add the 'site_specific' directory to the path, so
+            # each config can import from 'default' (instead of having to
+            # use 'site_specific.default'). We must use the absolute path
+            # to support importing this base class from a different directory.
+            this_dir = Path(__file__).parent
+            sys.path.append(str(this_dir / "site_specific"))
             config_name = f"site_specific.{self.target}.config"
             config_module = import_module(config_name)
         except ModuleNotFoundError as err:
