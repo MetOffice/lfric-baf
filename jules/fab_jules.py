@@ -63,13 +63,13 @@ class JulesBuild(BafBase):
         Grab the requested (or default) Jules revision to use and
         store it in an attribute.
 
-        :param argparse.ArgumentParser parser: the argument parser.
+        :param parser: the argument parser.
         '''
 
         super().handle_command_line_options(parser)
         self._revision = self.args.revision
 
-    def grab_files(self) -> None:
+    def grab_files_step(self) -> None:
         '''
         Extracts all the required Jules source files from the repositories.
         '''
@@ -93,7 +93,7 @@ class JulesBuild(BafBase):
                     dst_label=dst_label,
                 )
 
-    def find_source_files(self):
+    def find_source_files_step(self):
         '''
         Finds all the Jules sources files to analyse.
         '''
@@ -110,15 +110,13 @@ class JulesBuild(BafBase):
         # move inc files to the root for easy tool use
         root_inc_files(self.config)
 
-    def define_preprocessor_flags(self) -> None:
+    def define_preprocessor_flags_step(self) -> None:
         '''
         Defines the preprocessor flags.
         '''
-        super().define_preprocessor_flags()
-        self.set_flags(
-            ["-P", "-DMPI_DUMMY", "-DNCDF_DUMMY", "-I$output"],
-            self._preprocessor_flags
-        )
+        super().define_preprocessor_flags_step()
+        self.add_preprocessor_flags(
+            ["-P", "-DMPI_DUMMY", "-DNCDF_DUMMY", "-I$output"])
 
     def get_linker_flags(self) -> List[str]:
         '''

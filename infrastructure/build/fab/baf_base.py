@@ -14,6 +14,7 @@ import argparse
 from importlib import import_module
 import logging
 import os
+from pathlib import Path
 import sys
 from typing import List, Optional, Union
 
@@ -205,12 +206,19 @@ class BafBase:
         on the attribute target (which is set to be site-platform).
         '''
         try:
-            config_module = import_module(f"{self.target}.config")
-        except ModuleNotFoundError:
+            # We need to add the 'site_specific' directory to the path, so
+            # each config can import from 'default' (instead of having to
+            # use 'site_specific.default'). We must use the absolute path
+            # to support importing this base class from a different directory.
+            this_dir = Path(__file__).parent
+            sys.path.append(str(this_dir / "site_specific"))
+            config_name = f"site_specific.{self.target}.config"
+            config_module = import_module(config_name)
+        except ModuleNotFoundError as err:
             # We log a warning, but proceed, since there is no need to
             # have a site-specific file.
             self._logger.warning(f"Cannot find site-specific module "
-                                 f"'{self.target}.config'.")
+                                 f"'{config_name}': {err}.")
             self._site_config = None
             return
         self.logger.info(f"baf_base: Imported '{self.target}'")
@@ -374,7 +382,7 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
-    def define_preprocessor_flags(self) -> None:
+    def define_preprocessor_flags_step(self) -> None:
         '''
         Top level function that sets preprocessor flags. The base
         implementation does nothing, should be overwritten.
@@ -525,8 +533,10 @@ class BafBase:
         with self._config as _:
             self.grab_files_step()
             self.find_source_files_step()
+            # This is a Fab function, which the user won't need to be
+            # able to overwrite.
             c_pragma_injector(self.config)
-            self.define_preprocessor_flags()
+            self.define_preprocessor_flags_step()
             self.preprocess_c_step()
             self.preprocess_fortran_step()
             self.analyse_step()

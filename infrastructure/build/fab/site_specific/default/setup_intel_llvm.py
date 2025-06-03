@@ -14,15 +14,15 @@ from fab.build_config import BuildConfig
 from fab.tools import Category, Compiler, Linker, ToolRepository
 
 
-def setup_intel_llvm(build_config: BuildConfig, args: argparse.Namespace) -> None:
+def setup_intel_llvm(build_config: BuildConfig,
+                     args: argparse.Namespace) -> None:
     # pylint: disable=unused-argument, too-many-locals
     '''
     Defines the default flags for all Intel llvm compilers.
 
     :param build_config: the Fab build config instance from which
-    required parameters can be taken.
-    :type build_config: :py:class:`fab.BuildConfig`
-    :param argparse.Namespace args: all command line options
+        required parameters can be taken.
+    :param args: all command line options
     '''
 
     tr = ToolRepository()

@@ -269,3 +269,37 @@ comments and changes the layout), but at the top of the file you will see the li
 	! 
 
 The `umscript.py` explicitly adds these comments to each file it processes.
+
+
+## Additional Documentation
+The directory template-site-specific contains a set of files that can be used
+as a template for a new application to support site-specific configuration.
+These files support intel-classic, intel-llvm, gnu, nvidia, and cray compilers,
+and have some typical compilation flags defined.
+
+A new application that wants to use this build system is expected to have its
+own copy of the site-specific files. It needs to make certain that the files
+from these directories can be imported by Python. In simple cases, it might
+be sufficient that the site-specific  (in this case a site called ``default``)
+are in the current directory, e.g.
+
+    $ ls -ld default/
+    drwxr-xr-x 4 joerg joerg 4096 May 15 16:33 default/
+    $ python -c "from default.config import Config"
+
+But this will fail if the current working directory of the build script is
+different and does not contain the site-specific directories. A more
+sophisticated solution is to modify ``PYTHONPATH`` so that the site-specific
+files can be imported from any directory. This can be achieved by using a
+simple shell wrapper script (assuming that ``APPS_DIR`` contains the
+absolute path to the application):
+
+    SITE_DIR=$APPS_DIR/infrastructure/build/fab
+    PYTHONPATH=$SITE_DIR:$PYTHONPATH $*
+
+In this example, a site called ``default`` in
+``$APPS_DIR/infrastructure/build/fab/default`` can be imported from
+any directory.
+
+Alternatively, ``sys.path`` could also be modified in the Python
+build script.

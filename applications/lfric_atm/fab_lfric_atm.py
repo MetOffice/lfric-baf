@@ -25,8 +25,8 @@ from fcm_extract import FcmExtract
 
 class FabLFRicAtm(LFRicBase):
 
-    def define_preprocessor_flags(self):
-        super().define_preprocessor_flags()
+    def define_preprocessor_flags_step(self):
+        super().define_preprocessor_flags_step()
 
         self.add_preprocessor_flags(
             ['-DUM_PHYSICS',
