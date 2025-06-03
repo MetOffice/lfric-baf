@@ -14,13 +14,16 @@ and a platform name. For example, The UK Met Office traditionally
 uses ``meto`` as site name, and then a different platform name, e.g.
 ``xc40`` or ``ex1a``. BAF uses a specific setup directory based on the
 concatenation of these names. In the example above, this would be
-``meto_xc40`` or ``meta_ex1a``. These names can be specified as command
-line option (see :ref:`Command Line Options<command_line_options>`).
+``site_specific/meto_xc40`` or ``site_specific/meto_ex1a``.
+The site and platform can be specified as command line option (see
+:ref:`Command Line Options<command_line_options>`). All these
+directories are stored under the ``site_specific`` directories
+to keep the directory structure cleaner.
 
-If no site name is specified, ``default`` is used. And similarly,
-if no platform is specified, ``default`` is also used (resulting
-e.g. in ``meto-default`` etc). If neither site nor platform is specified,
-the name ``default`` is used.
+If no site name is specified, ``default`` is used as site. And
+similarly, if no platform is specified, ``default`` is used as platform
+(resulting e.g. in ``site_specific/meto-default`` etc). If neither site
+nor platform is specified, the name ``site_specific/default`` is used.
 
 .. _use_default_configuration:
 
@@ -35,6 +38,7 @@ setup done by the default.
 .. code-block:: python
 
     from default.config import Config as DefaultConfig
+
     class Config(DefaultConfig):
         '''Make intel-classic the default compiler
         '''
