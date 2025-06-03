@@ -3,7 +3,10 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+
+# We modify the pythonpath, so config scripts can import without
+# the use of 'site_specific' and relative paths
+SPHINXBUILD   = PYTHONPATH=../infrastructure/build/fab/site_specific/:$$PYTHONPATH sphinx-build
 PAPER         =
 BUILDDIR      = _build
 

@@ -203,7 +203,7 @@ class BafBase:
     def site_specific_setup(self) -> None:
         '''
         Imports a site-specific config file. The location is based
-        on the attribute target (which is set to be site-platform).
+        on the attribute target (which is set to be site_platform).
         '''
         try:
             # We need to add the 'site_specific' directory to the path, so

@@ -66,8 +66,9 @@ Site-specific Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After defining the site and platform, a site- and platform-specific
 configuration script is executed (if available). BAF will try to 
-import a module called ``config`` from the path specified with
-the target name (see :ref:`above<site_and_platform>`).
+import a module called ``config`` from the path
+``"site_specific/{target}"`` (see :ref:`above<site_and_platform>`
+for the definition of ``target``).
 If this is successful, it creates an instance of the ``Config``
 class from the module. This all happens here:
 
@@ -76,7 +77,7 @@ class from the module. This all happens here:
 
 Remember if no site- and no platform-name is specified,
 it will import the ``Config`` class from the directory
-called ``default``. 
+called ``site_specific/default``.
 
 Chapter :ref:`site_specific_config`
 describes this class in more detail. An example for the usage
@@ -127,7 +128,7 @@ executed, the method with the same name in the site-specific
 config file will also be called. It gets the argument namespace
 information from Python's ArgumentParser as argument:
 
-.. automethod:: default.config.Config.handle_command_line_options
+.. automethod:: site_specific.default.config.Config.handle_command_line_options
     :noindex:
 
 This can be used for further site-specific modifications, e.g.
@@ -295,14 +296,13 @@ objects. Example usage:
 This class is described in more details in the
 :ref:`Tools Section<fcm_extract>`.
 
-``define_preprocessor_flags``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-TODO: the ``_step`` is missing!
+``define_preprocessor_flags_step``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This method is called before preprocessing, and it allows the application
 to specify all flags required for preprocessing all C, and Fortran files.
 
-.. automethod:: baf_base.BafBase.define_preprocessor_flags
+.. automethod:: baf_base.BafBase.define_preprocessor_flags_step
     :noindex:
 
 BAF provides its own method of adding preprocessor flags:
