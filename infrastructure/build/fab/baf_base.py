@@ -110,6 +110,13 @@ class BafBase:
             self._site_config.update_toolbox(self._config)
 
     @property
+    def root_symbol(self) -> str:
+        '''
+        :returns: the root symbol.
+        '''
+        return self._root_symbol
+
+    @property
     def site(self) -> str:
         '''
         :returns: the site.
@@ -536,7 +543,7 @@ class BafBase:
         Fab to analyze the source code dependencies.
         """
         if self._link_target == "executable":
-            analyse(self.config, root_symbol=self._root_symbol)
+            analyse(self.config, root_symbol=self.root_symbol)
         else:
             analyse(self.config, root_symbol=None)
 
