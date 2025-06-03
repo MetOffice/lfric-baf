@@ -16,7 +16,7 @@ import logging
 import os
 from pathlib import Path
 import sys
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Iterable
 
 from fab.build_config import AddFlags, BuildConfig
 from fab.steps.analyse import analyse
@@ -24,7 +24,7 @@ from fab.steps.archive_objects import archive_objects
 from fab.steps.c_pragma_injector import c_pragma_injector
 from fab.steps.compile_c import compile_c
 from fab.steps.compile_fortran import compile_fortran
-from fab.steps.find_source_files import find_source_files
+from fab.steps.find_source_files import find_source_files, Exclude, Include
 from fab.steps.link import link_exe, link_shared_object
 from fab.steps.preprocess import preprocess_c, preprocess_fortran
 from fab.tools import Category, ToolBox, ToolRepository
@@ -508,12 +508,18 @@ class BafBase:
         raise RuntimeError("You have to overwrite `grab_files` to define "
                            "the source code")
 
-    def find_source_files_step(self) -> None:
+    def find_source_files_step(
+            self,
+            path_filters: Optional[Iterable[Union[Exclude, Include]]] = None
+            ) -> None:
         """
         This function calls Fab's find_source_files, to identify and add
         all source files to Fab's artefact store.
+
+        :param path_filters: optional list of path filters to be passed to
+        Fab find_source_files, default is None.
         """
-        find_source_files(self.config)
+        find_source_files(self.config, path_filters=path_filters)
 
     def preprocess_c_step(self) -> None:
         """
