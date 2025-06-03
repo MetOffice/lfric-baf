@@ -515,27 +515,23 @@ class BafBase:
         """
         find_source_files(self.config)
 
-    def preprocess_c_step(self, path_flags=None) -> None:
+    def preprocess_c_step(self) -> None:
         """
         Calls Fab's preprocessing of all C files. It passes the
         common and path-specific flags set using add_preprocessor_flags.
         """
-        if not path_flags:
-            path_flags = []
         preprocess_c(self.config,
                      common_flags=self.preprocess_flags_common,
-                     path_flags=self.preprocess_flags_path + path_flags)
+                     path_flags=self.preprocess_flags_path)
 
-    def preprocess_fortran_step(self, path_flags=None) -> None:
+    def preprocess_fortran_step(self) -> None:
         """
         Calls Fab's preprocessing of all fortran files. It passes the
         common and path-specific flags set using add_preprocessor_flags.
         """
-        if not path_flags:
-            path_flags = []
         preprocess_fortran(self.config,
                            common_flags=self.preprocess_flags_common,
-                           path_flags=self.preprocess_flags_path+path_flags)
+                           path_flags=self.preprocess_flags_path)
 
     def analyse_step(self) -> None:
         """
