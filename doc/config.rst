@@ -32,7 +32,7 @@ Default configuration
 It is strongly recommended for each application to have a default
 configuration file, which will define for example compiler profiles,
 and typical compiler flags. Any site-specific configuration file
-should then inherit from this default, but can then enhance the
+should then inherit from this default, but can also enhance the
 setup done by the default.
 
 .. code-block:: python
@@ -115,7 +115,7 @@ the ``ToolBox``.
 .. automethod:: site_specific.default.config.Config.update_toolbox
     :noindex:
 
-Here an example of defining the appropriate compilation profiles
+Here is an example of defining the appropriate compilation profiles
 for all compilers and linkers:
 
 .. code-block:: python

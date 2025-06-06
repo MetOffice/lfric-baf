@@ -66,7 +66,7 @@ def get_rose_picker(tag: Optional[str] = "v2.0.0") -> RosePicker:
     done).
 
     :param Optional[str] tag: either the tag in the repository to use,
-    or 'system' to indicate to use a version installed in the system
+        or 'system' to indicate to use a version installed in the system
     :returns RosePicker: a Fab RosePicker tool instance
     '''
 

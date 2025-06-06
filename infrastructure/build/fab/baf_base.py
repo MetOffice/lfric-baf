@@ -38,7 +38,8 @@ class BafBase:
         the name of the compiler will be added to it.
     :param link_target: what target should be created. Must be one of
         "executable" (default), "static-library", or "shared-library"
-    :param root_symbol:
+    :param root_symbol: the name of the main program source file.
+        Needed when an executable is to be built.
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
@@ -105,7 +106,7 @@ class BafBase:
     @property
     def site(self) -> Optional[str]:
         '''
-        :returns: the site (or nonte if no site is specified)
+        :returns: the site, or None if no site is specified.
         '''
         return self._site
 
@@ -506,8 +507,11 @@ class BafBase:
 
     def link_step(self) -> None:
         """
-        Calls Fab's link_exe. It passes the config and a list of required
-        library names set using get_linker_flags to Fab for linking.
+        Calls Fab's archive_objects for creating static libraries, or
+        link_shared_object for creating shared libraries, or link_exe for
+        creating executable binaries. The outputs will be placed in the Fab
+        workspace, either using the name or root_symbol passed to the Fab
+        build config.
         """
         if self._link_target == "static-library":
             out_path = self.config.project_workspace / f"lib{self._name}.a"
