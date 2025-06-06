@@ -29,6 +29,13 @@ In order to use the build procedure below, you need to have:
   Installation of PSyclone and fparser is described below, you need at least
   PSyclone 3.0 and fparser 0.2, older versions will result in build failures.
 
+For the documentation, you need to additionally install:
+- sphinx
+- sphinx_design (??)
+- sphinx-autodoc-typehints (??)
+- autoapi (??)
+
+
 The build scripts support current LFRic trunk. Depending on LFRic version,
 additional directories might need to be listed or be removed.
 
