@@ -297,23 +297,25 @@ class BafBase:
             help="Name of the linker to use")
         parser.add_argument(
             '--fflags', '-fflags', type=str, default=None,
-            help="Flags to be used by the Fortran compiler. These take "
-                 "precedence over $FFLAGS and compiler flags added to the "
-                 "compiler in default or site-specific settings, but give "
-                 "way to path-specific flags set in compile_fortran_step "
-                 "in the application script.")
+            help="Flags to be used by the Fortran compiler. The command line "
+                 "flags are appended after compiler flags defined in a "
+                 "site-specific setup and after getting flags from the "
+                 "environment variable $FFLAGS. Therefore, this can be used "
+                 "to overwrite certain flags.")
         parser.add_argument(
             '--cflags', '-cflags', type=str, default=None,
-            help="Flags to be used by the C compiler. These take precedence "
-                 "over $CFLAGS and compiler flags added to the compiler in "
-                 "default or site-specific settings, but give way to "
-                 "path-specific flags set in compile_c_step in the "
-                 "application script.")
+            help="Flags to be used by the C compiler. The command line "
+                 "flags are appended after compiler flags defined in a "
+                 "site-specific setup and after getting flags from the "
+                 "environment variable $CFLAGS. Therefore, this can be used "
+                 "to overwrite certain flags.")
         parser.add_argument(
             '--ldflags', '-ldflags', type=str, default=None,
-            help="Flags to be used by the linker. These take precedence "
-                 "over $LDFLAGS, and the flags and libararies added to the "
-                 "linker in default or site-specific settings.")
+            help="Flags to be used by the linker. The command line "
+                 "flags are appended after linker flags defined in a "
+                 "site-specific setup and after getting flags from the "
+                 "environment variable $LDFLAGS. Therefore, this can be used "
+                 "to overwrite certain flags.")
 
         parser.add_argument(
             '--nprocs', '-n', type=int, default=1,
@@ -435,20 +437,47 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
+        try:
+            # If the user specified Fortran compiler flags in the
+            # environment variable FFLAGS, add them to the list of flags
+            # to be used by the Fortran compiler.
+            self._fortran_compiler_flags_commandline = \
+                os.environ.get("FFLAGS").split()
+        except:
+            pass
+
+        try:
+            # If the user specified C compiler flags in the
+            # environment variable CFLAGS, add them to the list of flags
+            # to be used by the C compiler.
+            self._c_compiler_flags_commandline = \
+                os.environ.get("CFLAGS").split()
+        except:
+            pass
+
+        try:
+            # If the user specified linker flags in the
+            # environment variable LDFLAGS, add them to the list of flags
+            # to be used by the linker.
+            self._linker_flags_commandline = \
+                os.environ.get("LDFLAGS").split()
+        except:
+            pass
+
         if self.args.fflags:
             # If the user specified Fortran compiler flags, add them
             # to the list of flags to be used by the Fortran compiler.
-            self._fortran_compiler_flags_commandline = \
+            self._fortran_compiler_flags_commandline += \
                 self.args.fflags.split()
         if self.args.cflags:
             # If the user specified C compiler flags, add them
             # to the list of flags to be used by the C compiler.
-            self._c_compiler_flags_commandline = \
+            self._c_compiler_flags_commandline += \
                 self.args.cflags.split()
         if self.args.ldflags:
             # If the user specified linker flags, add them
             # to the list of flags to be used by the linker.
-            self._linker_flags_commandline = \
+            self._linker_flags_commandline += \
                 self.args.ldflags.split()
 
     def define_preprocessor_flags_step(self) -> None:
@@ -522,7 +551,6 @@ class BafBase:
         find_source_files(self.config, path_filters=path_filters)
 
     def preprocess_c_step(self) -> None:
-
         """
         Calls Fab's preprocessing of all C files. It passes the
         common and path-specific flags set using add_preprocessor_flags.
