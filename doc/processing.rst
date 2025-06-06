@@ -338,35 +338,22 @@ class (TODO: link to fab). Example code:
 ``preprocess_c_step``
 ~~~~~~~~~~~~~~~~~~~~~
 There is usually no reason to overwrite this method. It will use
-the preprocessor flags defined in the previous step and preprocess
+the preprocessor flags defined in the previous
+``define_preprocessor_flags_step`` and preprocess
 all C files.
 
 .. automethod:: baf_base.BafBase.preprocess_c_step
     :noindex:
 
-While the method takes an optional parameter for path-specific flags,
-the BAF method of providing the flags in the
-``define_preprocessor_flags`` is the recommended way to go, since it
-makes sure that all preprocess steps will be using a consistent set
-of flags.
-
-
 ``preprocess_fortran_step``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There is usually no reason to overwrite this method. It will use
 the preprocessor flags defined in the previous
-``define_all_preprocessor_flags`` step and preprocess
+``define_preprocessor_flags_step`` and preprocess
 all Fortran files.
 
 .. automethod:: baf_base.BafBase.preprocess_fortran_step
     :noindex:
-
-While the method takes an optional parameter for path-specific flags,
-the BAF method of providing the flags in the
-``define_preprocessor_flags`` is the recommended way to go, since it
-makes sure that all preprocess steps will be using a consistent set
-of flags.
-
 
 ``analyse_step``
 ~~~~~~~~~~~~~~~~
@@ -386,8 +373,9 @@ application to overwrite this step.
 
 ``compile_fortran_step``
 ~~~~~~~~~~~~~~~~~~~~~~~~
-This step compiles all Fortran files. There is usually no reason for an
-application to overwrite this step.
+This step compiles all Fortran files. As it takes a list of path-specific
+flags as an argument, child classes can overwrite this method to pass
+additional path-specific flags.
 
 .. automethod:: baf_base.BafBase.compile_fortran_step
     :noindex:

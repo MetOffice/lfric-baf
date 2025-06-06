@@ -587,12 +587,15 @@ class BafBase:
         compile_c(self.config,
                   common_flags=self.c_compiler_flags_commandline)
 
-    def compile_fortran_step(self, path_flags=None) -> None:
+    def compile_fortran_step(self, path_flags: Optional[List[AddFlags]] = None) -> None:
         """
         Calls Fab's compile_fortran. It passes the config for Fab to
         compile all Fortran files. Optionally, common flags, path-specific
         flags and alternative source can also be passed to Fab for
         compilation.
+
+        :param path_flags: optional list of path-specific flags to be passed
+            to Fab compile_fortran, default is None.
         """
         compile_fortran(self.config, 
                         common_flags=self.fortran_compiler_flags_commandline,

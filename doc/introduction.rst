@@ -39,11 +39,11 @@ description of the all options:
 
 .. parsed-literal::
 
-    usage: baf_base.py [-h] [--suite SUITE] [--available-compilers] [--fc FC] [--cc CC] [--ld LD] [--nprocs NPROCS] [--mpi] [--no-mpi] [--openmp] [--no-openmp] [--openacc]
-                       [--host HOST] [--site SITE] [--platform PLATFORM] [--profile PROFILE]
-    
+    usage: baf_base.py [-h] [--suite SUITE] [--available-compilers] [--fc FC] [--cc CC] [--ld LD] [--fflags FFLAGS] [--cflags CFLAGS] [--ldflags LDFLAGS] [--nprocs NPROCS] [--mpi] [--no-mpi]
+                      [--openmp] [--no-openmp] [--openacc] [--host HOST] [--site SITE] [--platform PLATFORM] [--profile PROFILE]
+
     A Baf-based build system. Note that if --suite is specified, this will change the default for compiler and linker
-    
+
     options:
       -h, --help            show this help message and exit
       --suite SUITE, -v SUITE
@@ -53,6 +53,15 @@ description of the all options:
       --fc FC, -fc FC       Name of the Fortran compiler to use (default: $FC)
       --cc CC, -cc CC       Name of the C compiler to use (default: $CC)
       --ld LD, -ld LD       Name of the linker to use (default: $LD)
+      --fflags FFLAGS, -fflags FFLAGS
+                            Flags to be used by the Fortran compiler. The command line flags are appended after compiler flags defined in a site-specific setup and after getting flags from
+                            the environment variable $FFLAGS. Therefore, this can be used to overwrite certain flags. (default: None)
+      --cflags CFLAGS, -cflags CFLAGS
+                            Flags to be used by the C compiler. The command line flags are appended after compiler flags defined in a site-specific setup and after getting flags from the
+                            environment variable $CFLAGS. Therefore, this can be used to overwrite certain flags. (default: None)
+      --ldflags LDFLAGS, -ldflags LDFLAGS
+                            Flags to be used by the linker. The command line flags are appended after linker flags defined in a site-specific setup and after getting flags from the
+                            environment variable $LDFLAGS. Therefore, this can be used to overwrite certain flags. (default: None)
       --nprocs NPROCS, -n NPROCS
                             Number of processes (default is 1) (default: 1)
       --mpi, -mpi           Enable MPI (default: True)
