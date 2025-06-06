@@ -31,7 +31,7 @@ class Config(DefaultConfig):
         The linker is also updated. 
 
         :param build_config: the Fab build config instance from which
-        required parameters can be taken.
+            required parameters can be taken.
         :type build_config: :py:class:`fab.BuildConfig`
         '''
         super().setup_cray(build_config)

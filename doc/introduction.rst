@@ -2,17 +2,18 @@ Introduction to BAF
 ===================
 BAF, short for Build Architecture with Fab, is a command line interface
 to the Fab build system. It is written in Python, and provides a pre-defined
-framework for building binary files. It adds the following features:
+framework for building binary files and libraries. It adds the following
+features:
 
 - It is object-oriented, making it easy to re-use and extend build scripts.
 - It is driven by a command line interface. All options required for a build
-  can be specified via command line options. For backwards compatibility,
+  can be specified via command line options. For backward compatibility,
   it will use certain environment variables as default if they are defined.
 - It supports site-specific configuration.
 - It is very easy to extend.
 
 Creating a build script using BAF will require writing a Python script,
-and building an executable means executing this Python script.
+and building an executable or library means executing this Python script.
 BAF is just a wrapper around Fab, which on one hands makes it easier
 to write scripts from scratch, but also means that if required the full
 power of the Fab build system can be used.

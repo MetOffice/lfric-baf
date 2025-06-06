@@ -170,33 +170,33 @@ phases need to be inserted into the build process, this can be done
 by overwriting the corresponding steps, see :ref:`new_build_phase`
 for an example.
 
-The naming of the steps follow the Fab naming, but adds a ``_step``
+The naming of the steps follows the Fab naming, but adds a ``_step``
 as suffix to distinguish the methods from the Fab functions.
 Typically, an application will need to overwrite at least some
 of these methods (for example to specify the source files).
 This will require either adding calls to Fab methods, or just
-calling the base-class. Details will be provided in each section.
+calling the base-class. Details will be provided in each section below.
 
 ``grab_files_step``
 ~~~~~~~~~~~~~~~~~~~
 This step is responsible for copying the required source files
-into the Fab work space (under the source folder). The base class
-itself should not be called, it will raise an exception, since any
-script must specify where to get the source code from. Typically,
+into the Fab work space (under the source folder). This method's template
+in the base class should not be called, otherwise it will raise an exception,
+since any script must specify where to get the source code from. Typically,
 in this step various Fab functions are used to get the source files:
 
 ``grab_folder``
     Fab's ``grab_folder`` recursively copies a file directory into the fab
     work space. It requires that the source files have been made available
-    previously, e.g. either as a local working copy, or a checkout from
-    a repository
+    already, e.g. either as a local working copy, or a checkout from
+    a repository.
 
 ``git_checkout``
     Fab's ``git_checkout`` checks out a git repository, and puts the files
     into the working directory.
 
 ``svn_export``, ``svn_checkout``
-    Fab provides these two interfaces to svn, and similarly to
+    Fab provides these two interfaces to svn, and similar to
     ``git_checkout`` these will either export or checkout a Subversion
     repository.
 
@@ -252,8 +252,8 @@ This step will not affect any files, it will just set up Fab's
 ``ArtefactStore`` to be aware of the available source files.
 
 Often, suites will provide FCM configuration that include a long list
-of files to exclude (and include) to avoid duplicated files into a
-complex build environment based on many source repositories.
+of files to exclude (and include) to avoid adding duplicated files
+into a complex build environment based on many source repositories.
 
 .. code-block::
 

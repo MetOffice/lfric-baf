@@ -258,7 +258,7 @@ class LFRicBase(BafBase):
         excluding the unit tests. Finally, it calls the templaterator_step.
 
         :param path_filters: optional list of path filters to be passed to
-        Fab find_source_files, default is None.
+            Fab find_source_files, default is None.
         :type path_filters: Optional[Iterable[Exclude, Include]]
         '''
         self.configurator_step()
@@ -376,7 +376,7 @@ class LFRicBase(BafBase):
     def get_psyclone_config(self) -> List[str]:
         '''
         :returns: the command line options to pick the right
-        PSyclone config file.
+            PSyclone config file.
         :rtype: List[str]
         '''
         return ["--config", self._psyclone_config]
@@ -384,8 +384,8 @@ class LFRicBase(BafBase):
     def get_additional_psyclone_options(self) -> List[str]:
         '''
         :returns: Additional PSyclone command line options. This
-        basic version checks if profiling using Tau or Vernier is enabled,
-        and if so, adds the kernel profiling flags to PSyclone.
+            basic version checks if profiling using Tau or Vernier is enabled,
+            and if so, adds the kernel profiling flags to PSyclone.
         :rtype: List[str]
         '''
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]

@@ -18,3 +18,15 @@ Configurator
 ------------
 
 .. autofunction:: lfric_common.configurator
+
+
+Templaterator
+-------------
+
+.. autofunction:: templaterator.Templaterator
+
+
+Rose Picker
+-----------
+
+.. autofunction:: rose_picker_tool.RosePicker

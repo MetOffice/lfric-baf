@@ -60,7 +60,7 @@ class Config(DefaultConfig):
         include and linking flags.
 
         :param argparse.Namespace args: the command line options added in
-        the site configs
+            the site configs
         '''
 
         super().handle_command_line_options(args)

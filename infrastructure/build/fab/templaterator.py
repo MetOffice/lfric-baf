@@ -18,7 +18,7 @@ class Templaterator(Tool):
     It can check whether the templaterator is available and
     creates command line options for it to run.
 
-    :param Path path: the path to the templaterator binary.
+    :param Path exec_name: the path to the templaterator binary.
     '''
     def __init__(self, exec_name: Path):
         super().__init__(exec_name.name, exec_name=str(exec_name))
@@ -26,7 +26,7 @@ class Templaterator(Tool):
     def check_available(self) -> bool:
         '''
         :returns bool: whether templaterator works by running
-        `Templaterator -help`.
+            `Templaterator -help`.
         '''
         try:
             super().run(additional_parameters="-h")
@@ -46,7 +46,7 @@ class Templaterator(Tool):
         :param Path input_template: the path to the input template.
         :param Path output_file: the output file path.
         :param Dict key_values: the keys and values for the keys to
-        define as a dictionary.
+            define as a dictionary.
         '''
         replace = [f"-s {key}={value}" for key, value in key_values.items()]
         params = [input_template, "-o", output_file]+replace
