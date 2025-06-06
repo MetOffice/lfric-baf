@@ -21,7 +21,7 @@ from typing import List, Optional, Iterable, Union
 from fab.artefacts import ArtefactSet, SuffixFilter
 from fab.build_config import BuildConfig
 from fab.steps.analyse import analyse
-from fab.steps.find_source_files import find_source_files, Exclude, Include
+from fab.steps.find_source_files import Exclude, Include
 from fab.steps.psyclone import psyclone, preprocess_x90
 from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
@@ -247,8 +247,7 @@ class LFRicBase(BafBase):
                         "infrastructure" / "build" / "psyclone" / "psydata"
                         / dir, dst_label='psydata')
 
-    def find_source_files_step(
-            self,
+    def find_source_files_step(self,
             path_filters: Optional[Iterable[Union[Exclude, Include]]] = None
             ) -> None:
         '''
@@ -265,9 +264,8 @@ class LFRicBase(BafBase):
 
         if path_filters is None:
             path_filters = []
-        find_source_files(self.config,
-                          path_filters=([Exclude('unit-test', '/test/')] +
-                                        path_filters))
+        path_filters.append(Exclude('unit-test', '/test/'))
+        super().find_source_files_step(path_filters=path_filters)
 
         self.templaterator_step(self.config)
 
