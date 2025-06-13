@@ -95,7 +95,7 @@ class BafBase:
         else:
             self._root_symbol = name
 
-        label = f"{name}-{self.args.profile}-$compiler"
+        label = self.define_project_name(name=name)
         self._config = BuildConfig(tool_box=self._tool_box,
                                    project_label=label,
                                    verbose=True,
@@ -107,6 +107,16 @@ class BafBase:
 
         if self._site_config:
             self._site_config.update_toolbox(self._config)
+
+    def define_project_name(self, name: str) -> str:
+        '''
+        This method defines the project name, i.e. the directory name to
+        use in the Fab workspace. It defaults to `name-profile-compiler`.
+
+        :returns:the project name
+        '''
+        label = f"{name}-{self.args.profile}-$compiler"
+        return label
 
     @property
     def root_symbol(self) -> str:
@@ -588,7 +598,10 @@ class BafBase:
         compile_c(self.config,
                   common_flags=self.c_compiler_flags_commandline)
 
-    def compile_fortran_step(self, path_flags: Optional[List[AddFlags]] = None) -> None:
+    def compile_fortran_step(
+            self,
+            path_flags: Optional[List[AddFlags]] = None
+            ) -> None:
         """
         Calls Fab's compile_fortran. It passes the config for Fab to
         compile all Fortran files. Optionally, common flags, path-specific
@@ -598,7 +611,7 @@ class BafBase:
         :param path_flags: optional list of path-specific flags to be passed
             to Fab compile_fortran, default is None.
         """
-        compile_fortran(self.config, 
+        compile_fortran(self.config,
                         common_flags=self.fortran_compiler_flags_commandline,
                         path_flags=path_flags)
 
@@ -628,7 +641,7 @@ class BafBase:
                                flags=self.linker_flags_commandline)
         else:
             # Binary:
-            link_exe(self.config, libs=self.get_linker_flags(), 
+            link_exe(self.config, libs=self.get_linker_flags(),
                      flags=self.linker_flags_commandline)
 
     def build(self) -> None:
