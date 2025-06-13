@@ -52,7 +52,7 @@ class BafBase:
             raise ValueError(f"Invalid parameter '{link_target}', must be "
                              f"one of '{', '.join(valid_targets)}'.")
         self._link_target = link_target
-        self._logger = logging.getLogger('fab')
+        self._logger = logging.getLogger("baf")
         self._site = None
         self._platform = None
         # Save the name to use as library name (if required)
@@ -677,7 +677,7 @@ class BafBase:
 # ==========================================================================
 if __name__ == "__main__":
     # This tests the BafBase class using the command line.
-    logger = logging.getLogger('fab')
+    logger = logging.getLogger("baf")
     logger.setLevel(logging.DEBUG)
     baf_base = BafBase(name="command-line-test",
                        root_symbol=None)
