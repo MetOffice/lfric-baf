@@ -113,7 +113,9 @@ class BafBase:
         This method defines the project name, i.e. the directory name to
         use in the Fab workspace. It defaults to `name-profile-compiler`.
 
-        :returns:the project name
+        :param name: the base name of the project as specified by the caller.
+
+        :returns: the project name
         '''
         label = f"{name}-{self.args.profile}-$compiler"
         return label
@@ -557,7 +559,7 @@ class BafBase:
         all source files to Fab's artefact store.
 
         :param path_filters: optional list of path filters to be passed to
-        Fab find_source_files, default is None.
+            Fab find_source_files, default is None.
         """
         find_source_files(self.config, path_filters=path_filters)
 
