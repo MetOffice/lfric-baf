@@ -454,7 +454,7 @@ class BafBase:
             # to be used by the Fortran compiler.
             self._fortran_compiler_flags_commandline = \
                 os.environ.get("FFLAGS").split()
-        except:
+        except AttributeError:
             pass
 
         try:
@@ -463,7 +463,7 @@ class BafBase:
             # to be used by the C compiler.
             self._c_compiler_flags_commandline = \
                 os.environ.get("CFLAGS").split()
-        except:
+        except AttributeError:
             pass
 
         try:
@@ -472,7 +472,7 @@ class BafBase:
             # to be used by the linker.
             self._linker_flags_commandline = \
                 os.environ.get("LDFLAGS").split()
-        except:
+        except AttributeError:
             pass
 
         if self.args.fflags:
