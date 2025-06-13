@@ -136,6 +136,33 @@ it might add additional flags for the compiler or linker.
 :ref:`handling_new_command_line_options` shows an example of
 doing this.
 
+Defining project name
+~~~~~~~~~~~~~~~~~~~~~
+By default, Baf will use ``"{name}-{self.args.profile}-$compiler"``
+as the name for the project directory, i.e. the name of the
+project as specified in the constructor, followed by the compilation
+profile and compiler name (``$compiler`` is a Python template parameter
+and will be replaced by Fab).
+
+A user script can overwrite ``define_project_name`` and define a
+different name:
+
+.. automethod:: baf_base.BafBase.define_project_name
+    :noindex:
+
+Here an example where ``-mpi`` is added if MPI has been
+enabled on the command line. It calls the base class to
+add the compilation profile and compiler name.
+
+.. code-block:: python
+
+    def define_project_name(self, name: str) -> str:
+
+        if self.args.mpi:
+            name = name + "-mpi"
+        return super().define_project_name(name)
+
+
 ``BuildConfig`` creation
 ~~~~~~~~~~~~~~~~~~~~~~~~
 After parsing the command line options, BAF will first

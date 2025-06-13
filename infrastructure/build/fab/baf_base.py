@@ -52,7 +52,7 @@ class BafBase:
             raise ValueError(f"Invalid parameter '{link_target}', must be "
                              f"one of '{', '.join(valid_targets)}'.")
         self._link_target = link_target
-        self._logger = logging.getLogger('fab')
+        self._logger = logging.getLogger("baf")
         self._site = None
         self._platform = None
         # Save the name to use as library name (if required)
@@ -95,7 +95,7 @@ class BafBase:
         else:
             self._root_symbol = name
 
-        label = f"{name}-{self.args.profile}-$compiler"
+        label = self.define_project_name(name=name)
         self._config = BuildConfig(tool_box=self._tool_box,
                                    project_label=label,
                                    verbose=True,
@@ -107,6 +107,18 @@ class BafBase:
 
         if self._site_config:
             self._site_config.update_toolbox(self._config)
+
+    def define_project_name(self, name: str) -> str:
+        '''
+        This method defines the project name, i.e. the directory name to
+        use in the Fab workspace. It defaults to `name-profile-compiler`.
+
+        :param name: the base name of the project as specified by the caller.
+
+        :returns: the project name
+        '''
+        label = f"{name}-{self.args.profile}-$compiler"
+        return label
 
     @property
     def root_symbol(self) -> str:
@@ -444,7 +456,7 @@ class BafBase:
             # to be used by the Fortran compiler.
             self._fortran_compiler_flags_commandline = \
                 os.environ.get("FFLAGS").split()
-        except:
+        except AttributeError:
             pass
 
         try:
@@ -453,7 +465,7 @@ class BafBase:
             # to be used by the C compiler.
             self._c_compiler_flags_commandline = \
                 os.environ.get("CFLAGS").split()
-        except:
+        except AttributeError:
             pass
 
         try:
@@ -462,7 +474,7 @@ class BafBase:
             # to be used by the linker.
             self._linker_flags_commandline = \
                 os.environ.get("LDFLAGS").split()
-        except:
+        except AttributeError:
             pass
 
         if self.args.fflags:
@@ -547,7 +559,7 @@ class BafBase:
         all source files to Fab's artefact store.
 
         :param path_filters: optional list of path filters to be passed to
-        Fab find_source_files, default is None.
+            Fab find_source_files, default is None.
         """
         find_source_files(self.config, path_filters=path_filters)
 
@@ -588,7 +600,10 @@ class BafBase:
         compile_c(self.config,
                   common_flags=self.c_compiler_flags_commandline)
 
-    def compile_fortran_step(self, path_flags: Optional[List[AddFlags]] = None) -> None:
+    def compile_fortran_step(
+            self,
+            path_flags: Optional[List[AddFlags]] = None
+            ) -> None:
         """
         Calls Fab's compile_fortran. It passes the config for Fab to
         compile all Fortran files. Optionally, common flags, path-specific
@@ -598,7 +613,7 @@ class BafBase:
         :param path_flags: optional list of path-specific flags to be passed
             to Fab compile_fortran, default is None.
         """
-        compile_fortran(self.config, 
+        compile_fortran(self.config,
                         common_flags=self.fortran_compiler_flags_commandline,
                         path_flags=path_flags)
 
@@ -628,7 +643,7 @@ class BafBase:
                                flags=self.linker_flags_commandline)
         else:
             # Binary:
-            link_exe(self.config, libs=self.get_linker_flags(), 
+            link_exe(self.config, libs=self.get_linker_flags(),
                      flags=self.linker_flags_commandline)
 
     def build(self) -> None:
@@ -664,7 +679,7 @@ class BafBase:
 # ==========================================================================
 if __name__ == "__main__":
     # This tests the BafBase class using the command line.
-    logger = logging.getLogger('fab')
+    logger = logging.getLogger("baf")
     logger.setLevel(logging.DEBUG)
     baf_base = BafBase(name="command-line-test",
                        root_symbol=None)
