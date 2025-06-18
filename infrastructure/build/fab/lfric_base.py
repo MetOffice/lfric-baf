@@ -39,11 +39,18 @@ class LFRicBase(BafBase):
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
+    :param root_symbol: the name of the main program. Defaults to `name`
+        if not specified.
+
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name: str):
+    def __init__(self, name: str, root_symbol: Optional[str] = None):
 
         super().__init__(name)
+        # If the user wants to overwrite the default root symbol (which
+        # is `name`):
+        if root_symbol:
+            self.set_root_symbol(root_symbol)
 
         this_file = Path(__file__)
         # The root directory of the LFRic Core
