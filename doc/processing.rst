@@ -9,10 +9,9 @@ build script can overwrite methods to customise the build process.
 The full class documentation is at the end of this chapter.
 
 The constructor sets up ultimately the Fab ``BuildConfig`` for the build.
-It takes two arguments - the name of the application, and
-optional the name of the root symbol for a binary to be compiled,
-i.e. the program name of a Fortran Program unit. If no
-root symbol is specified, the name will be used as root symbol.
+It takes the name of the application as argument. The name of the application
+will be used when creating the name of the build directory (see XX),
+and it is also the default ``root_symbol`` if the script creates an exectuable.
 
 The actual build is then started calling the ``build`` method
 of the created script. A typical outline of a BAF-based build script is
