@@ -39,12 +39,11 @@ class LFRicBase(BafBase):
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
-    :param Optional[str] root_symbol:
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name: str, root_symbol: Optional[str] = None):
+    def __init__(self, name: str):
 
-        super().__init__(name, root_symbol=root_symbol)
+        super().__init__(name)
 
         this_file = Path(__file__)
         # The root directory of the LFRic Core
@@ -247,7 +246,8 @@ class LFRicBase(BafBase):
                         "infrastructure" / "build" / "psyclone" / "psydata"
                         / dir, dst_label='psydata')
 
-    def find_source_files_step(self,
+    def find_source_files_step(
+            self,
             path_filters: Optional[Iterable[Union[Exclude, Include]]] = None
             ) -> None:
         '''
@@ -339,7 +339,7 @@ class LFRicBase(BafBase):
         '''
         self.preprocess_x90_step()
         self.psyclone_step()
-        analyse(self.config, root_symbol=self._root_symbol,
+        analyse(self.config, root_symbol=self.root_symbol,
                 ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
                                  'xios', 'mod_wait'])
 
@@ -435,5 +435,4 @@ if __name__ == "__main__":
     # This tests the LFRicBase class using the command line.
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
-    lfric_base = LFRicBase(name="command-line-test",
-                           root_symbol=None)
+    lfric_base = LFRicBase(name="command-line-test")
