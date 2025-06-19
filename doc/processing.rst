@@ -65,11 +65,18 @@ property getters can be used to access the values:
 Site-specific Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 After defining the site and platform, a site- and platform-specific
-configuration script is executed (if available). BAF will try to 
-import a module called ``config`` from the path
+configuration script is executed (if available). By default, BAF will
+try to import a module called ``config`` from the path
 ``"site_specific/{target}"`` (see :ref:`above<site_and_platform>`
-for the definition of ``target``).
-If this is successful, it creates an instance of the ``Config``
+for the definition of ``target``), relative to the directory
+in which the application script is located. By overwriting the method
+``setup_site_specific_location`` an application can setup its
+own directories by adding paths to ``sys.path``.
+
+.. automethod:: baf_base.BafBase.setup_site_specific_location
+    :noindex:
+
+If the import is successful, BAF creates an instance of the ``Config``
 class from the module. This all happens here:
 
 .. automethod:: baf_base.BafBase.site_specific_setup

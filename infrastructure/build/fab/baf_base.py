@@ -219,8 +219,9 @@ class BafBase:
         configurations to the Python search path. This implementation will
         search the call tree to find the first call that's not from Fab,
         i.e. the user script. It then adds ``site_specific`` and
-        ``site_specific/default`` to the path. An application can overwrite
-        this method to point at directories elsewhere.
+        ``site_specific/default`` to the directory in which the user script
+        is located. An application can overwrite this method to change this
+        behaviour and point at site-specific directories elsewhere.
         '''
         my_base_dir = Path(__file__).parent
         for caller in inspect.stack():
@@ -288,7 +289,9 @@ class BafBase:
     def site_specific_setup(self) -> None:
         '''
         Imports a site-specific config file. The location is based
-        on the attribute target (which is set to be site_platform).
+        on the attribute ``target`` (which is set to be ``{site}_{platform}"
+        based on the command line options, and the path is specified
+        in ``setup_site_specific_location``).
         '''
         self.setup_site_specific_location()
         try:
