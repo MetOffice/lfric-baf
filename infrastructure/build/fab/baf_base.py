@@ -12,6 +12,7 @@ only modify very few settings to have a working FAB build script.
 
 import argparse
 from importlib import import_module
+import inspect
 import logging
 import os
 from pathlib import Path
@@ -215,6 +216,40 @@ class BafBase:
         """
         return self._linker_flags_commandline
 
+    def setup_site_specific_location(self):
+        '''
+        This method adds the required directories for site-specific
+        configurations to the Python search path. This implementation will
+        search the call tree to find the first call that's not from Fab,
+        i.e. the user script. It then adds ``site_specific`` and
+        ``site_specific/default`` to the directory in which the user script
+        is located. An application can overwrite this method to change this
+        behaviour and point at site-specific directories elsewhere.
+        '''
+        my_base_dir = Path(__file__).parent
+        for caller in inspect.stack():
+            dir_caller = Path(caller[1]).parent
+            if not my_base_dir.samefile(dir_caller):
+                # This is required in case that the script is not
+                # called from the script directory, but site_specific
+                # is in the directory of the script.
+                sys.path.insert(0, str(dir_caller))
+                break
+        else:
+            # All callers are in this directory? Add a warning, and
+            # setup `dir_caller` to . (which is already added to the
+            # path, so it doesn't need to be added), so site-specific
+            # will be added below.
+            dir_caller = Path(".")
+            self.logger.warning(f"Could not find caller directory, "
+                                f"defaulting to '.'.")
+
+        # We need to add the 'site_specific' directory to the path, so
+        # each config can import from 'default' (instead of having to
+        # use 'site_specific.default', which would hard-code the name
+        # `site_specific` in more scripts).
+        sys.path.insert(0, str(dir_caller / "site_specific"))
+
     def define_site_platform_target(self) -> None:
         '''
         This method defines the attributes site, platform (and
@@ -257,15 +292,12 @@ class BafBase:
     def site_specific_setup(self) -> None:
         '''
         Imports a site-specific config file. The location is based
-        on the attribute target (which is set to be site_platform).
+        on the attribute ``target`` (which is set to be ``{site}_{platform}"
+        based on the command line options, and the path is specified
+        in ``setup_site_specific_location``).
         '''
+        self.setup_site_specific_location()
         try:
-            # We need to add the 'site_specific' directory to the path, so
-            # each config can import from 'default' (instead of having to
-            # use 'site_specific.default'). We must use the absolute path
-            # to support importing this base class from a different directory.
-            this_dir = Path(__file__).parent
-            sys.path.append(str(this_dir / "site_specific"))
             config_name = f"site_specific.{self.target}.config"
             config_module = import_module(config_name)
         except ModuleNotFoundError as err:
@@ -275,7 +307,7 @@ class BafBase:
                                  f"'{config_name}': {err}.")
             self._site_config = None
             return
-        self.logger.info(f"baf_base: Imported '{self.target}'")
+        self.logger.info(f"baf_base: Imported '{config_module.__file__}'.")
         # The constructor handles everything.
         self._site_config = config_module.Config()
 

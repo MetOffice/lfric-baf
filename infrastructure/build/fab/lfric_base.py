@@ -16,6 +16,7 @@ import inspect
 import logging
 import os
 from pathlib import Path
+import sys
 from typing import List, Optional, Iterable, Union
 
 from fab.artefacts import ArtefactSet, SuffixFilter
@@ -147,6 +148,22 @@ class LFRicBase(BafBase):
         :rtype: Path
         '''
         return self._lfric_apps_root
+
+    def setup_site_specific_location(self):
+        '''
+        This method adds the required directories for site-specific
+        configurations to the Python search path. We want to add the
+        directory where this lfric_base class is located, and not the
+        directory in which the application script is (which is what
+        baf base would set up).
+        '''
+        this_dir = Path(__file__).parent
+        sys.path.insert(0, str(this_dir))
+        # We need to add the 'site_specific' directory to the path, so
+        # each config can import from 'default' (instead of having to
+        # use 'site_specific.default', which would hard-code the name
+        # `site_specific` in more scripts).
+        sys.path.insert(0, str(this_dir / "site_specific"))
 
     def define_preprocessor_flags_step(self) -> None:
         '''
