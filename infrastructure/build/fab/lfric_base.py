@@ -385,7 +385,7 @@ class LFRicBase(BafBase):
             PSyclone config file.
         :rtype: List[str]
         '''
-        return ["--config", self._psyclone_config]
+        return ["--config", str(self._psyclone_config)]
 
     def get_additional_psyclone_options(self) -> List[str]:
         '''
