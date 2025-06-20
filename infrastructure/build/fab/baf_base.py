@@ -38,14 +38,11 @@ class BafBase:
         the name of the compiler will be added to it.
     :param link_target: what target should be created. Must be one of
         "executable" (default), "static-library", or "shared-library"
-    :param root_symbol: the name of the main program source file.
-        Needed when an executable is to be built.
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  name: str,
-                 link_target: Optional[str] = "executable",
-                 root_symbol: Optional[str] = None):
+                 link_target: Optional[str] = "executable"):
         link_target = link_target.lower()
         valid_targets = ["executable", "static-library", "shared-library"]
         if link_target not in valid_targets:
@@ -58,6 +55,9 @@ class BafBase:
         # Save the name to use as library name (if required)
         self._name = name
         self._target = ""
+        # Set the given name as root symbol, it can be set explicitly
+        # using set_root_symbol()
+        self._root_symbol = [name]
 
         # The preprocessor flags to be used. One stores the common flags
         # (without path-specific component), the other the path-specific
@@ -90,11 +90,6 @@ class BafBase:
         if self._site_config:
             self._site_config.handle_command_line_options(self.args)
 
-        if root_symbol:
-            self._root_symbol = root_symbol
-        else:
-            self._root_symbol = name
-
         label = self.define_project_name(name=name)
         self._config = BuildConfig(tool_box=self._tool_box,
                                    project_label=label,
@@ -120,10 +115,22 @@ class BafBase:
         label = f"{name}-{self.args.profile}-$compiler"
         return label
 
-    @property
-    def root_symbol(self) -> str:
+    def set_root_symbol(self, root_symbol: Union[List[str], str]) -> None:
+        '''Defines the root symbol. It defaults to the name given in
+        the constructor.
+
+        :param name: the root symbol to use when creating a binary
+            (unused otherwise).
         '''
-        :returns: the root symbol.
+        if isinstance(root_symbol, str):
+            self._root_symbol = [root_symbol]
+        else:
+            self._root_symbol = root_symbol
+
+    @property
+    def root_symbol(self) -> List[str]:
+        '''
+        :returns: the list of root symbols.
         '''
         return self._root_symbol
 
@@ -450,32 +457,15 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
-        try:
-            # If the user specified Fortran compiler flags in the
-            # environment variable FFLAGS, add them to the list of flags
-            # to be used by the Fortran compiler.
-            self._fortran_compiler_flags_commandline = \
-                os.environ.get("FFLAGS").split()
-        except AttributeError:
-            pass
-
-        try:
-            # If the user specified C compiler flags in the
-            # environment variable CFLAGS, add them to the list of flags
-            # to be used by the C compiler.
-            self._c_compiler_flags_commandline = \
-                os.environ.get("CFLAGS").split()
-        except AttributeError:
-            pass
-
-        try:
-            # If the user specified linker flags in the
-            # environment variable LDFLAGS, add them to the list of flags
-            # to be used by the linker.
-            self._linker_flags_commandline = \
-                os.environ.get("LDFLAGS").split()
-        except AttributeError:
-            pass
+        # If the user specified compiler flags in the
+        # environment variables CFLAGS, FFLAGS, LDFLAGS, add them to the
+        # list of flags to be used by the corresponding tools.
+        self._fortran_compiler_flags_commandline = \
+            os.environ.get("FFLAGS", "").split()
+        self._c_compiler_flags_commandline = \
+            os.environ.get("CFLAGS", "").split()
+        self._linker_flags_commandline = \
+            os.environ.get("LDFLAGS", "").split()
 
         if self.args.fflags:
             # If the user specified Fortran compiler flags, add them
@@ -681,5 +671,4 @@ if __name__ == "__main__":
     # This tests the BafBase class using the command line.
     logger = logging.getLogger("baf")
     logger.setLevel(logging.DEBUG)
-    baf_base = BafBase(name="command-line-test",
-                       root_symbol=None)
+    baf_base = BafBase(name="command-line-test")

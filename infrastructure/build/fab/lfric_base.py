@@ -39,12 +39,19 @@ class LFRicBase(BafBase):
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
-    :param Optional[str] root_symbol:
+    :param root_symbol: the symbol (or list of symbols) of the main
+        programs. Defaults to the parameter `name` if not specified.
+
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name: str, root_symbol: Optional[str] = None):
+    def __init__(self, name: str,
+                 root_symbol: Optional[Union[List[str], str]] = None):
 
-        super().__init__(name, root_symbol=root_symbol)
+        super().__init__(name)
+        # If the user wants to overwrite the default root symbol (which
+        # is `name`):
+        if root_symbol:
+            self.set_root_symbol(root_symbol)
 
         this_file = Path(__file__)
         # The root directory of the LFRic Core
@@ -247,7 +254,8 @@ class LFRicBase(BafBase):
                         "infrastructure" / "build" / "psyclone" / "psydata"
                         / dir, dst_label='psydata')
 
-    def find_source_files_step(self,
+    def find_source_files_step(
+            self,
             path_filters: Optional[Iterable[Union[Exclude, Include]]] = None
             ) -> None:
         '''
@@ -339,7 +347,7 @@ class LFRicBase(BafBase):
         '''
         self.preprocess_x90_step()
         self.psyclone_step()
-        analyse(self.config, root_symbol=self._root_symbol,
+        analyse(self.config, root_symbol=self.root_symbol,
                 ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
                                  'xios', 'mod_wait'])
 
@@ -377,7 +385,7 @@ class LFRicBase(BafBase):
             PSyclone config file.
         :rtype: List[str]
         '''
-        return ["--config", self._psyclone_config]
+        return ["--config", str(self._psyclone_config)]
 
     def get_additional_psyclone_options(self) -> List[str]:
         '''
@@ -435,5 +443,4 @@ if __name__ == "__main__":
     # This tests the LFRicBase class using the command line.
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
-    lfric_base = LFRicBase(name="command-line-test",
-                           root_symbol=None)
+    lfric_base = LFRicBase(name="command-line-test")
