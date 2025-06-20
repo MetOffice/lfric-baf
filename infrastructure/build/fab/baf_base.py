@@ -457,32 +457,15 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
-        try:
-            # If the user specified Fortran compiler flags in the
-            # environment variable FFLAGS, add them to the list of flags
-            # to be used by the Fortran compiler.
-            self._fortran_compiler_flags_commandline = \
-                os.environ.get("FFLAGS").split()
-        except AttributeError:
-            pass
-
-        try:
-            # If the user specified C compiler flags in the
-            # environment variable CFLAGS, add them to the list of flags
-            # to be used by the C compiler.
-            self._c_compiler_flags_commandline = \
-                os.environ.get("CFLAGS").split()
-        except AttributeError:
-            pass
-
-        try:
-            # If the user specified linker flags in the
-            # environment variable LDFLAGS, add them to the list of flags
-            # to be used by the linker.
-            self._linker_flags_commandline = \
-                os.environ.get("LDFLAGS").split()
-        except AttributeError:
-            pass
+        # If the user specified compiler flags in the
+        # environment variables CFLAGS, FFLAGS, LDFLAGS, add them to the
+        # list of flags to be used by the corresponding tools.
+        self._fortran_compiler_flags_commandline = \
+            os.environ.get("FFLAGS", "").split()
+        self._c_compiler_flags_commandline = \
+            os.environ.get("CFLAGS", "").split()
+        self._linker_flags_commandline = \
+            os.environ.get("LDFLAGS", "").split()
 
         if self.args.fflags:
             # If the user specified Fortran compiler flags, add them
