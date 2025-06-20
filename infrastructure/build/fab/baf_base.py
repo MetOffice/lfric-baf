@@ -58,7 +58,7 @@ class BafBase:
         self._target = ""
         # Set the given name as root symbol, it can be set explicitly
         # using set_root_symbol()
-        self._root_symbol = name
+        self._root_symbol = [name]
 
         # The preprocessor flags to be used. One stores the common flags
         # (without path-specific component), the other the path-specific
@@ -116,19 +116,22 @@ class BafBase:
         label = f"{name}-{self.args.profile}-$compiler"
         return label
 
-    def set_root_symbol(self, root_symbol: str) -> None:
+    def set_root_symbol(self, root_symbol: Union[List[str], str]) -> None:
         '''Defines the root symbol. It defaults to the name given in
         the constructor.
 
         :param name: the root symbol to use when creating a binary
             (unused otherwise).
         '''
-        self._root_symbol = root_symbol
+        if isinstance(root_symbol, str):
+            self._root_symbol = [root_symbol]
+        else:
+            self._root_symbol = root_symbol
 
     @property
-    def root_symbol(self) -> str:
+    def root_symbol(self) -> List[str]:
         '''
-        :returns: the root symbol.
+        :returns: the list of root symbols.
         '''
         return self._root_symbol
 
@@ -486,32 +489,15 @@ class BafBase:
             ld = tr.get_tool(Category.LINKER, self.args.ld)
             self._tool_box.add_tool(ld)
 
-        try:
-            # If the user specified Fortran compiler flags in the
-            # environment variable FFLAGS, add them to the list of flags
-            # to be used by the Fortran compiler.
-            self._fortran_compiler_flags_commandline = \
-                os.environ.get("FFLAGS").split()
-        except AttributeError:
-            pass
-
-        try:
-            # If the user specified C compiler flags in the
-            # environment variable CFLAGS, add them to the list of flags
-            # to be used by the C compiler.
-            self._c_compiler_flags_commandline = \
-                os.environ.get("CFLAGS").split()
-        except AttributeError:
-            pass
-
-        try:
-            # If the user specified linker flags in the
-            # environment variable LDFLAGS, add them to the list of flags
-            # to be used by the linker.
-            self._linker_flags_commandline = \
-                os.environ.get("LDFLAGS").split()
-        except AttributeError:
-            pass
+        # If the user specified compiler flags in the
+        # environment variables CFLAGS, FFLAGS, LDFLAGS, add them to the
+        # list of flags to be used by the corresponding tools.
+        self._fortran_compiler_flags_commandline = \
+            os.environ.get("FFLAGS", "").split()
+        self._c_compiler_flags_commandline = \
+            os.environ.get("CFLAGS", "").split()
+        self._linker_flags_commandline = \
+            os.environ.get("LDFLAGS", "").split()
 
         if self.args.fflags:
             # If the user specified Fortran compiler flags, add them

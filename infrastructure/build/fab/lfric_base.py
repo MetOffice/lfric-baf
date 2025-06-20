@@ -40,12 +40,13 @@ class LFRicBase(BafBase):
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
-    :param root_symbol: the name of the main program. Defaults to `name`
-        if not specified.
+    :param root_symbol: the symbol (or list of symbols) of the main
+        programs. Defaults to the parameter `name` if not specified.
 
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name: str, root_symbol: Optional[str] = None):
+    def __init__(self, name: str,
+                 root_symbol: Optional[Union[List[str], str]] = None):
 
         super().__init__(name)
         # If the user wants to overwrite the default root symbol (which
@@ -401,7 +402,7 @@ class LFRicBase(BafBase):
             PSyclone config file.
         :rtype: List[str]
         '''
-        return ["--config", self._psyclone_config]
+        return ["--config", str(self._psyclone_config)]
 
     def get_additional_psyclone_options(self) -> List[str]:
         '''
