@@ -57,7 +57,7 @@ class BafBase:
         self._target = ""
         # Set the given name as root symbol, it can be set explicitly
         # using set_root_symbol()
-        self._root_symbol = name
+        self._root_symbol = [name]
 
         # The preprocessor flags to be used. One stores the common flags
         # (without path-specific component), the other the path-specific
@@ -115,19 +115,22 @@ class BafBase:
         label = f"{name}-{self.args.profile}-$compiler"
         return label
 
-    def set_root_symbol(self, root_symbol: str) -> None:
+    def set_root_symbol(self, root_symbol: Union[List[str], str]) -> None:
         '''Defines the root symbol. It defaults to the name given in
         the constructor.
 
         :param name: the root symbol to use when creating a binary
             (unused otherwise).
         '''
-        self._root_symbol = root_symbol
+        if isinstance(root_symbol, str):
+            self._root_symbol = [root_symbol]
+        else:
+            self._root_symbol = root_symbol
 
     @property
-    def root_symbol(self) -> str:
+    def root_symbol(self) -> List[str]:
         '''
-        :returns: the root symbol.
+        :returns: the list of root symbols.
         '''
         return self._root_symbol
 

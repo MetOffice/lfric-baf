@@ -11,6 +11,7 @@ contained in the infrastructure directory.
 
 import logging
 import os
+from typing import List, Union
 
 from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
@@ -23,6 +24,19 @@ from fcm_extract import FcmExtract
 
 
 class FabLfricInputs(LFRicBase):
+    '''
+    This class builds LFRic inputs. Since LFRic inputs builds
+    different binaries in the same tree, it explicitly adds
+    the list of target symbols to build.
+
+    :param name: The name of the project directory.
+    :param root_symbol: The symbol of the main program(s) to be
+        created.
+    '''
+
+    def __init__(self, name: str, root_symbol: Union[str, List[str]]):
+        super().__init__(name)
+        self.set_root_symbol(root_symbol)
 
     def define_preprocessor_flags_step(self):
         super().define_preprocessor_flags_step()
