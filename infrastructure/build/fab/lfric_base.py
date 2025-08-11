@@ -21,6 +21,7 @@ from typing import List, Optional, Iterable, Union
 
 from fab.artefacts import ArtefactSet, SuffixFilter
 from fab.build_config import BuildConfig
+from fab.fab_base.fab_base import FabBase
 from fab.steps.analyse import analyse
 from fab.steps.find_source_files import Exclude, Include
 from fab.steps.psyclone import psyclone, preprocess_x90
@@ -28,13 +29,12 @@ from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
 from fab.util import input_to_output_fpath
 
-from baf_base import BafBase
 from lfric_common import configurator
 from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
 
 
-class LFRicBase(BafBase):
+class LFRicBase(FabBase):
     '''
     This is the base class for all LFRic FAB scripts.
 
@@ -113,7 +113,7 @@ class LFRicBase(BafBase):
             ) -> argparse.ArgumentParser:
         '''
         This adds LFRic specific command line options to the base class
-        define_command_line_option. Currently, --rose_piker, --vernier
+        define_command_line_option. Currently, --rose_picker, --vernier
         and --precision options are added.
 
         :param parser: optional a pre-defined argument parser.
