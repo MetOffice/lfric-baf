@@ -30,7 +30,7 @@ class FabLFRicAtm(LFRicBase):
 
         self.add_preprocessor_flags(
             ['-DUM_PHYSICS',
-             '-DCOUPLED', '-DUSE_MPI=YES'])
+             '-DUSE_MPI=YES'])
 
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
@@ -79,7 +79,6 @@ class FabLFRicAtm(LFRicBase):
                 'science/gungho/source',
                 'science/physics_schemes/source',
                 'science/shared/source/',
-                'interfaces/coupled_interface/source/',
                 'interfaces/jules_interface/source/',
                 'interfaces/physics_schemes_interface/source/',
                 'interfaces/socrates_interface/source/',
