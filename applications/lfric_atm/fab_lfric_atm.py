@@ -147,18 +147,20 @@ class FabLFRicAtm(LFRicBase):
         if jules_extract_cfg.exists():
             extract_cfg.append(FcmExtract(jules_extract_cfg))
 
+        science_root = self.config.source_root / 'science'
         path_filters = []
         for extract in extract_cfg:
             for section, source_file_info in extract.items():
                 for (list_type, list_of_paths) in source_file_info:
                     if list_type == "exclude":
-                        for path in list_of_paths:
-                            path_filters.append(Exclude(f'{section}/{path}'))
+                        path_filters.append(Exclude(science_root / section))
                     else:
-                        for path in list_of_paths:
-                            path_filters.append(Include(f'{section}/{path}'))
-        for i in path_filters:
-            print("PATHFILTERS", str(i))
+                        # Remove the 'src' which is the first part of the name
+                        new_paths = [i.relative_to(i.parents[-2])
+                                     for i in list_of_paths]
+                        for path in new_paths:
+                            path_filters.append(Include(science_root /
+                                                        section / path))
         super().find_source_files_step(path_filters=path_filters)
 
     def get_rose_meta(self):
