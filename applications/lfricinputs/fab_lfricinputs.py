@@ -121,9 +121,9 @@ class FabLfricInputs(LFRicBase):
 
         path_filters = []
         
-        fcm-make_dir = (self.lfric_apps_root / "applications" /
+        fcm_make_dir = (self.lfric_apps_root / "applications" /
                         "lfricinputs" / "fcm-make")
-        if fcm-make_dir.exists():
+        if fcm_make_dir.exists():
 
             shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
                                          "lfricinputs" / "fcm-make" / "util" /
