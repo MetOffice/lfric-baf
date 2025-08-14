@@ -43,7 +43,7 @@ class FabLfricInputs(LFRicBase):
 
         self.add_preprocessor_flags(
             ['-DUM_PHYSICS',
-             '-DCOUPLED', '-DUSE_MPI=YES'])
+             '-DUSE_MPI=YES'])
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
                       AddFlags(match="$source/shumlib/*",
@@ -116,41 +116,47 @@ class FabLfricInputs(LFRicBase):
                    dst_label="shumlib")
 
     def find_source_files_step(self):
+        # for backward compatibility
         """Based on $LFRIC_APPS_ROOT/applications/lfricinputs/fcm-make"""
 
-        shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
-                                     "lfricinputs" / "fcm-make" / "util" /
-                                     "common" / "extract-shumlib.cfg")
-        shumlib_root = self.config.source_root / 'science'
         path_filters = []
-        for section, source_file_info in shumlib_extract.items():
-            for (list_type, list_of_paths) in source_file_info:
-                if list_type == "exclude":
-                    path_filters.append(Exclude(shumlib_root / section))
-                else:
-                    for path in list_of_paths:
-                        path_filters.append(Include(shumlib_root /
-                                                    section / path))
+        
+        fcm-make_dir = (self.lfric_apps_root / "applications" /
+                        "lfricinputs" / "fcm-make")
+        if fcm-make_dir.exists():
 
-        infra_extract = FcmExtract(self.lfric_apps_root / "applications" /
-                                   "lfricinputs" / "fcm-make" / "util" /
-                                   "common" / "extract-lfric-core.cfg")
+            shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
+                                         "lfricinputs" / "fcm-make" / "util" /
+                                         "common" / "extract-shumlib.cfg")
+            shumlib_root = self.config.source_root / 'science'
+            for section, source_file_info in shumlib_extract.items():
+                for (list_type, list_of_paths) in source_file_info:
+                    if list_type == "exclude":
+                        path_filters.append(Exclude(shumlib_root / section))
+                    else:
+                        for path in list_of_paths:
+                            path_filters.append(Include(shumlib_root /
+                                                        section / path))
 
-        infra_extract.update(FcmExtract(self.lfric_apps_root /
-                                        "applications" / "lfricinputs" /
-                                        "fcm-make" / "util" /
-                                        "common" / "extract-lfric-apps.cfg"))
+            infra_extract = FcmExtract(self.lfric_apps_root / "applications" /
+                                       "lfricinputs" / "fcm-make" / "util" /
+                                       "common" / "extract-lfric-core.cfg")
 
-        for section, source_file_info in infra_extract.items():
-            for (list_type, list_of_paths) in source_file_info:
-                if list_type == "exclude":
-                    path_filters.append(
-                        Exclude(self.config.source_root / section))
-                else:
-                    for path in list_of_paths:
-                        print("TTT", self.config.source_root/path)
+            infra_extract.update(FcmExtract(self.lfric_apps_root /
+                                            "applications" / "lfricinputs" /
+                                            "fcm-make" / "util" /
+                                            "common" / "extract-lfric-apps.cfg"))
+
+            for section, source_file_info in infra_extract.items():
+                for (list_type, list_of_paths) in source_file_info:
+                    if list_type == "exclude":
                         path_filters.append(
-                            Include(self.config.source_root / path))
+                            Exclude(self.config.source_root / section))
+                    else:
+                        for path in list_of_paths:
+                            print("TTT", self.config.source_root/path)
+                            path_filters.append(
+                                Include(self.config.source_root / path))
 
         super().find_source_files_step(path_filters=path_filters)
 
