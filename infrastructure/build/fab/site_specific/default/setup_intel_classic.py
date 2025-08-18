@@ -103,6 +103,7 @@ def setup_intel_classic(build_config: BuildConfig,
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])
+    linker.add_lib_flags("shumlib", ["-lshum"])
 
     # Always link with C++ libs
     linker.add_post_lib_flags(["-lstdc++"])

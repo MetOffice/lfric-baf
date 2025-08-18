@@ -37,6 +37,8 @@ class FabLfricInputs(LFRicBase):
     def __init__(self, name: str, root_symbol: Union[str, List[str]]):
         super().__init__(name)
         self.set_root_symbol(root_symbol)
+        self._fcm_make_dir = (self.lfric_apps_root / "applications" /
+                                "lfricinputs" / "fcm-make")
 
     def define_preprocessor_flags_step(self):
         super().define_preprocessor_flags_step()
@@ -88,6 +90,16 @@ class FabLfricInputs(LFRicBase):
 
         self.add_preprocessor_flags(path_flags)
 
+    def get_linker_flags(self) -> List[str]:
+        '''
+        This method adds shumlib to the lfric_base class get_linker_flags return. 
+
+        :returns: list of flags for the linker.
+        :rtype: List[str]
+        '''
+        libs = ['shumlib', ]
+        return libs + super().get_linker_flags()
+
     def grab_files_step(self):
         super().grab_files_step()
         dirs = ['applications/lfricinputs/source/',
@@ -111,9 +123,10 @@ class FabLfricInputs(LFRicBase):
             except:
                 # for backward compatibility
                 continue
-
-        fcm_export(self.config, src="fcm:shumlib.xm_tr",
-                   dst_label="shumlib")
+        
+        if self._fcm_make_dir.exists():
+            fcm_export(self.config, src="fcm:shumlib.xm_tr",
+                    dst_label="shumlib")
 
     def find_source_files_step(self):
         # for backward compatibility
@@ -121,9 +134,7 @@ class FabLfricInputs(LFRicBase):
 
         path_filters = []
         
-        fcm_make_dir = (self.lfric_apps_root / "applications" /
-                        "lfricinputs" / "fcm-make")
-        if fcm_make_dir.exists():
+        if self._fcm_make_dir.exists():
 
             shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
                                          "lfricinputs" / "fcm-make" / "util" /
