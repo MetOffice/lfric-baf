@@ -175,6 +175,16 @@ class FabLfricInputs(LFRicBase):
         return (self.lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
 
+    def analyse_step(self):
+        '''
+        The method adds lfric_inputs specific list of dependencies to ignore.
+        '''
+        lfric_inputs_ignore_mod_deps = ['c_shum_byteswap.c', 'f_shum_ff_status_mod',
+                                        'f_shum_field_mod', 'f_shum_fieldsfile_mod',
+                                        'f_shum_file_mod', 'f_shum_fixed_length_header_indices_mod',
+                                        'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod']
+        super().analyse_step(ignore_mod_deps=lfric_inputs_ignore_mod_deps)
+
 
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
