@@ -396,7 +396,7 @@ class LFRicBase(BafBase):
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
 
-        psyclone(self.config, kernel_roots=[self.config.build_output],
+        psyclone(self.config, kernel_roots=[(self.config.build_output / "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args)
