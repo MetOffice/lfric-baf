@@ -128,6 +128,13 @@ class FabLfricInputs(LFRicBase):
             fcm_export(self.config, src="fcm:shumlib.xm_tr",
                     dst_label="shumlib")
 
+        # Copy the optimisation scripts into a separate directory if it exists
+        optimisation_dir = (self.lfric_apps_root / "applications" /
+                            "lfricinputs" / "optimisation")
+        if optimisation_dir.exists():
+            grab_folder(self.config, src=optimisation_dir,
+                        dst_label='optimisation')
+
     def find_source_files_step(self):
         # for backward compatibility
         """Based on $LFRIC_APPS_ROOT/applications/lfricinputs/fcm-make"""
