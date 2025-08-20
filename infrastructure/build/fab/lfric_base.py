@@ -27,14 +27,14 @@ from fab.steps.psyclone import psyclone, preprocess_x90
 from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
 from fab.util import input_to_output_fpath
-from fab.fab_base import FabBase
 
+from baf_base import BafBase
 from lfric_common import configurator
 from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
 
 
-class LFRicBase(FabBase):
+class LFRicBase(BafBase):
     '''
     This is the base class for all LFRic FAB scripts.
 
