@@ -18,8 +18,8 @@ from lfric_base import LFRicBase
 
 class FabMeshTool(LFRicBase):
 
-    def grab_files(self):
-        super().grab_files()
+    def grab_files_step(self):
+        super().grab_files_step()
         dirs = ['mesh_tools/source/']
 
         # pylint: disable=redefined-builtin
