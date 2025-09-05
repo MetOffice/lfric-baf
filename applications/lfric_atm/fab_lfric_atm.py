@@ -10,6 +10,7 @@ contained in the infrastructure directory.
 '''
 
 import logging
+from typing import List
 
 from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
