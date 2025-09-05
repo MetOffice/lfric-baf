@@ -18,6 +18,7 @@ if [[ ! -d $ROOT_DIR/components ]]; then
 fi
 
 FAB_DIR=$ROOT_DIR/infrastructure/build/fab
+FAB_SUBMODULE_DIR=$ROOT_DIR/fab/source
 PSYCLONE_BUILD_DIR=$ROOT_DIR/infrastructure/build/psyclone
 
-PYTHONPATH=$FAB_DIR:$PSYCLONE_BUILD_DIR:$PYTHONPATH $*
+PYTHONPATH=$FAB_DIR:$FAB_SUBMODULE_DIR:$PSYCLONE_BUILD_DIR:$PYTHONPATH $*

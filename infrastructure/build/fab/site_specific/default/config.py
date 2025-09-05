@@ -90,7 +90,7 @@ class Config:
         Vernier profiling flags, which are site-specific.
 
         :param argparse.Namespace args: the command line options added in
-        the site configs
+            the site configs
         '''
         # Keep a copy of the args, so they can be used when
         # initialising compilers

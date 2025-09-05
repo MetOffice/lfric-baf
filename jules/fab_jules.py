@@ -113,8 +113,6 @@ class JulesBuild(BafBase):
     def define_preprocessor_flags_step(self) -> None:
         '''
         Defines the preprocessor flags.
-        TODO: This uses a BAF private attribute, this must be
-        done properly.
         '''
         super().define_preprocessor_flags_step()
         self.add_preprocessor_flags(

@@ -16,12 +16,13 @@ import inspect
 import logging
 import os
 from pathlib import Path
+import sys
 from typing import List, Optional, Iterable, Union
 
 from fab.artefacts import ArtefactSet, SuffixFilter
 from fab.build_config import BuildConfig
 from fab.steps.analyse import analyse
-from fab.steps.find_source_files import find_source_files, Exclude, Include
+from fab.steps.find_source_files import Exclude, Include
 from fab.steps.psyclone import psyclone, preprocess_x90
 from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
@@ -39,12 +40,19 @@ class LFRicBase(BafBase):
 
     :param str name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
-    :param Optional[str] root_symbol:
+    :param root_symbol: the symbol (or list of symbols) of the main
+        programs. Defaults to the parameter `name` if not specified.
+
     '''
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, name: str, root_symbol: Optional[str] = None):
+    def __init__(self, name: str,
+                 root_symbol: Optional[Union[List[str], str]] = None):
 
-        super().__init__(name, root_symbol=root_symbol)
+        super().__init__(name)
+        # If the user wants to overwrite the default root symbol (which
+        # is `name`):
+        if root_symbol:
+            self.set_root_symbol(root_symbol)
 
         this_file = Path(__file__)
         # The root directory of the LFRic Core
@@ -140,6 +148,22 @@ class LFRicBase(BafBase):
         :rtype: Path
         '''
         return self._lfric_apps_root
+
+    def setup_site_specific_location(self):
+        '''
+        This method adds the required directories for site-specific
+        configurations to the Python search path. We want to add the
+        directory where this lfric_base class is located, and not the
+        directory in which the application script is (which is what
+        baf base would set up).
+        '''
+        this_dir = Path(__file__).parent
+        sys.path.insert(0, str(this_dir))
+        # We need to add the 'site_specific' directory to the path, so
+        # each config can import from 'default' (instead of having to
+        # use 'site_specific.default', which would hard-code the name
+        # `site_specific` in more scripts).
+        sys.path.insert(0, str(this_dir / "site_specific"))
 
     def define_preprocessor_flags_step(self) -> None:
         '''
@@ -258,16 +282,15 @@ class LFRicBase(BafBase):
         excluding the unit tests. Finally, it calls the templaterator_step.
 
         :param path_filters: optional list of path filters to be passed to
-        Fab find_source_files, default is None.
+            Fab find_source_files, default is None.
         :type path_filters: Optional[Iterable[Exclude, Include]]
         '''
         self.configurator_step()
 
         if path_filters is None:
             path_filters = []
-        find_source_files(self.config,
-                          path_filters=([Exclude('unit-test', '/test/')] +
-                                        path_filters))
+        path_filters.append(Exclude('unit-test', '/test/'))
+        super().find_source_files_step(path_filters=path_filters)
 
         self.templaterator_step(self.config)
 
@@ -341,7 +364,7 @@ class LFRicBase(BafBase):
         '''
         self.preprocess_x90_step()
         self.psyclone_step()
-        analyse(self.config, root_symbol=self._root_symbol,
+        analyse(self.config, root_symbol=self.root_symbol,
                 ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
                                  'xios', 'mod_wait'])
 
@@ -376,16 +399,16 @@ class LFRicBase(BafBase):
     def get_psyclone_config(self) -> List[str]:
         '''
         :returns: the command line options to pick the right
-        PSyclone config file.
+            PSyclone config file.
         :rtype: List[str]
         '''
-        return ["--config", self._psyclone_config]
+        return ["--config", str(self._psyclone_config)]
 
     def get_additional_psyclone_options(self) -> List[str]:
         '''
         :returns: Additional PSyclone command line options. This
-        basic version checks if profiling using Tau or Vernier is enabled,
-        and if so, adds the kernel profiling flags to PSyclone.
+            basic version checks if profiling using Tau or Vernier is enabled,
+            and if so, adds the kernel profiling flags to PSyclone.
         :rtype: List[str]
         '''
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
@@ -437,5 +460,4 @@ if __name__ == "__main__":
     # This tests the LFRicBase class using the command line.
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
-    lfric_base = LFRicBase(name="command-line-test",
-                           root_symbol=None)
+    lfric_base = LFRicBase(name="command-line-test")
