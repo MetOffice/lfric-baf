@@ -30,7 +30,10 @@ class FabLFRicAtm(LFRicBase):
 
         self.add_preprocessor_flags(
             ['-DUM_PHYSICS',
-             '-DUSE_MPI=YES'])
+             '-DLFRIC',
+             '-DUSSPPREC_32B',
+             '-DLSPREC_32B',
+             '-DUSE_MPI=YES',])
 
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
@@ -41,8 +44,6 @@ class FabLFRicAtm(LFRicBase):
                                       '-I$source/science/shumlib/\
                                         shum_thread_utils/src',
                                       '-I$relative'],),
-                      AddFlags(match="$source/*",
-                               flags=['-DLFRIC']),
                       AddFlags(match="$source/atmosphere_service/*",
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
@@ -73,10 +74,21 @@ class FabLFRicAtm(LFRicBase):
                       ]
         self.add_preprocessor_flags(path_flags)
 
+    def get_linker_flags(self) -> List[str]:
+        '''
+        This method adds shumlib to the lfric_base class get_linker_flags return. 
+
+        :returns: list of flags for the linker.
+        :rtype: List[str]
+        '''
+        libs = ['shumlib', ]
+        return libs + super().get_linker_flags()
+
     def grab_files_step(self):
         super().grab_files_step()
         dirs = ['applications/lfric_atm/source',
                 'science/gungho/source',
+                'interfaces/coupled_interface/source',
                 'science/physics_schemes/source',
                 'science/shared/source/',
                 'interfaces/jules_interface/source/',
@@ -165,6 +177,16 @@ class FabLFRicAtm(LFRicBase):
     def get_rose_meta(self):
         return (self.lfric_apps_root / 'applications/lfric_atm' / 'rose-meta' /
                 'lfric-lfric_atm' / 'HEAD' / 'rose-meta.conf')
+
+    def analyse_step(self):
+        '''
+        The method adds lfric_atm specific list of dependencies to ignore.
+        This list of shumlib may be used by developers during debugging.
+        '''
+        lfric_atm_ignore_mod_deps = ['c_shum_byteswap.o', 'f_shum_is_nan_mod',
+                                        'f_shum_field_mod', 'f_shum_is_inf_mod',
+                                        'f_shum_file_mod', 'f_shum_is_denormal_mod']
+        super().analyse_step(ignore_mod_deps=lfric_atm_ignore_mod_deps)
 
     def compile_fortran_step(self):
         fc = self.config.tool_box[Category.FORTRAN_COMPILER]
