@@ -253,7 +253,8 @@ class LFRicBase(BafBase):
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
                                                mpi=self.config.mpi,
-                                               openmp=self.config.openmp)
+                                               openmp=self.config.openmp,
+                                               enforce_fortran_linker=True)
         if (self.args.vernier or
                 "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             # Profiling. Grab the required psydata directory as well:
@@ -365,8 +366,8 @@ class LFRicBase(BafBase):
         self.preprocess_x90_step()
         self.psyclone_step()
         analyse(self.config, root_symbol=self.root_symbol,
-                ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
-                                 'xios', 'mod_wait'])
+                ignore_dependencies=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
+                                     'xios', 'mod_wait'])
 
     def preprocess_x90_step(self) -> None:
         """
