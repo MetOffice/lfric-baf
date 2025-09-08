@@ -108,6 +108,7 @@ class Config(DefaultConfig):
         linker.add_lib_flags("xios", ["-lxios"])
         linker.add_lib_flags("hdf5", ["-lhdf5"])
         linker.add_lib_flags("shumlib", ["-lshum"])
+        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c", "-lvernier"])
 
         # Always link with C++ libs
         linker.add_post_lib_flags(["-lstdc++"])

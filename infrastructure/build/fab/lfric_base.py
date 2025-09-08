@@ -207,7 +207,12 @@ class LFRicBase(FabBase):
         # build/tests.mk - for mpi unit tests, not used atm
         mpi_tests_flags = ['-DUSE_MPI=YES']
 
-        self.add_preprocessor_flags(precision_flags+['-DUSE_XIOS'])
+        preprocessor_flags = precision_flags+['-DUSE_XIOS']
+        
+        if self.args.vernier:
+            preprocessor_flags.append('-DVERNIER')
+
+        self.add_preprocessor_flags(preprocessor_flags)
         # -DUSE_XIOS is not found in makefile but in fab run_config and
         # driver_io_mod.F90
 
@@ -257,12 +262,15 @@ class LFRicBase(FabBase):
                 "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             # Profiling. Grab the required psydata directory as well:
             if self.args.vernier:
-                try:
-                    linker.get_lib_flags("vernier")
-                except RuntimeError:
-                    raise RuntimeError(f"The linker{linker} does not have "
-                                       f"linker flags for Vernier.")
-                dir = "vernier"
+            # Turned off vernier_psy.f90 grabbing for now to wait for it
+            # to be updated
+                pass
+#                try:
+#                    linker.get_lib_flags("vernier")
+#                except RuntimeError:
+#                    raise RuntimeError(f"The linker{linker} does not have "
+#                                       f"linker flags for Vernier.")
+#                dir = "vernier"
 
             else:
                 dir = "tau"
@@ -370,6 +378,8 @@ class LFRicBase(FabBase):
             ignore_dependencies = []
         ignore_dependencies += ['netcdf', 'MPI', 'yaxt',
                             'pfunit_mod', 'xios', 'mod_wait']
+        if self.args.vernier:
+            ignore_dependencies.append('vernier_mod')
         analyse(self.config, root_symbol=self.root_symbol,
                 ignore_dependencies=ignore_dependencies)
 
@@ -419,8 +429,10 @@ class LFRicBase(FabBase):
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
                                                mpi=self.config.mpi)
-        if (self.args.vernier or
-                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        # Turned off vernier_psy profiling to wait for vernier_psy.f90 update
+#        if (self.args.vernier or
+#                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        if ("tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             return ["--profile", "kernels"]
         return []
 
