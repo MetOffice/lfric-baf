@@ -262,16 +262,7 @@ class LFRicBase(FabBase):
                 "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             # Profiling. Grab the required psydata directory as well:
             if self.args.vernier:
-            # Turned off vernier_psy.f90 grabbing for now to wait for it
-            # to be updated
-                pass
-#                try:
-#                    linker.get_lib_flags("vernier")
-#                except RuntimeError:
-#                    raise RuntimeError(f"The linker{linker} does not have "
-#                                       f"linker flags for Vernier.")
-#                dir = "vernier"
-
+                dir = "vernier"
             else:
                 dir = "tau"
             grab_folder(self.config, src=self.lfric_core_root /
