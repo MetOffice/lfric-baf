@@ -420,8 +420,11 @@ class LFRicBase(FabBase):
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
                                                mpi=self.config.mpi)
-        if (self.args.vernier or
-                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        #Turned off psyclone profiling for vernier for vernier error:
+        #character buffer exhausted.
+#        if (self.args.vernier or
+#                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        if ("tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             return ["--profile", "kernels"]
         return []
 
