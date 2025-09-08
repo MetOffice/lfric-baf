@@ -210,7 +210,7 @@ class LFRicBase(FabBase):
         preprocessor_flags = precision_flags+['-DUSE_XIOS']
         
         if self.args.vernier:
-            preprocessor_flags.append('-DVERNIER')
+            preprocessor_flags += ['-DTIMING_ON','-DVERNIER']
 
         self.add_preprocessor_flags(preprocessor_flags)
         # -DUSE_XIOS is not found in makefile but in fab run_config and
@@ -420,10 +420,8 @@ class LFRicBase(FabBase):
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
                                                mpi=self.config.mpi)
-        # Turned off vernier_psy profiling to wait for vernier_psy.f90 update
-#        if (self.args.vernier or
-#                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
-        if ("tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        if (self.args.vernier or
+                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             return ["--profile", "kernels"]
         return []
 
