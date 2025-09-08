@@ -186,11 +186,11 @@ class FabLfricInputs(LFRicBase):
         '''
         The method adds lfric_inputs specific list of dependencies to ignore.
         '''
-        lfric_inputs_ignore_mod_deps = ['c_shum_byteswap.o', 'f_shum_ff_status_mod',
+        lfric_inputs_ignore_dependencies = ['c_shum_byteswap.o', 'f_shum_ff_status_mod',
                                         'f_shum_field_mod', 'f_shum_fieldsfile_mod',
                                         'f_shum_file_mod', 'f_shum_fixed_length_header_indices_mod',
                                         'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod']
-        super().analyse_step(ignore_mod_deps=lfric_inputs_ignore_mod_deps)
+        super().analyse_step(ignore_dependencies=lfric_inputs_ignore_dependencies)
 
 
 # -----------------------------------------------------------------------------

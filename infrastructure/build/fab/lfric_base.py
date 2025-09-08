@@ -355,7 +355,7 @@ class LFRicBase(FabBase):
 
     def analyse_step(
         self,
-        ignore_mod_deps: Optional[Iterable[str]] = None
+        ignore_dependencies: Optional[Iterable[str]] = None
         ) -> None:
         '''
         The method overwrites the base class analyse_step.
@@ -366,12 +366,12 @@ class LFRicBase(FabBase):
         '''
         self.preprocess_x90_step()
         self.psyclone_step()
-        if ignore_mod_deps is None:
-            ignore_mod_deps = []
-        ignore_mod_deps += ['netcdf', 'MPI', 'yaxt',
+        if ignore_dependencies is None:
+            ignore_dependencies = []
+        ignore_dependencies += ['netcdf', 'MPI', 'yaxt',
                             'pfunit_mod', 'xios', 'mod_wait']
         analyse(self.config, root_symbol=self.root_symbol,
-                ignore_mod_deps=ignore_mod_deps)
+                ignore_dependencies=ignore_dependencies)
 
     def preprocess_x90_step(self) -> None:
         """
