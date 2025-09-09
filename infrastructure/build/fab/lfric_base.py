@@ -207,6 +207,7 @@ class LFRicBase(FabBase):
         # build/tests.mk - for mpi unit tests, not used atm
         mpi_tests_flags = ['-DUSE_MPI=YES']
 
+        # core/components/lfric-xios/build/import.mk
         preprocessor_flags = precision_flags+['-DUSE_XIOS']
         
         if self.args.vernier:
@@ -367,8 +368,11 @@ class LFRicBase(FabBase):
         self.psyclone_step()
         if ignore_dependencies is None:
             ignore_dependencies = []
-        ignore_dependencies += ['netcdf', 'MPI', 'yaxt',
-                            'pfunit_mod', 'xios', 'mod_wait']
+        # core/infrastructure/build/import.mk
+        ignore_dependencies += ['netcdf', 'mpi', 'mpi_f08',
+                                'yaxt', 'mod_oasis']
+        # core/components/lfric-xios/build/import.mk
+        ignore_dependencies += ['xios', 'icontext', 'mod_wait']
         if self.args.vernier:
             ignore_dependencies.append('vernier_mod')
         analyse(self.config, root_symbol=self.root_symbol,

@@ -33,8 +33,7 @@ class FabLFRicAtm(LFRicBase):
             ['-DUM_PHYSICS',
              '-DLFRIC',
              '-DUSSPPREC_32B',
-             '-DLSPREC_32B',
-             '-DUSE_MPI=YES',])
+             '-DLSPREC_32B',])
 
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),

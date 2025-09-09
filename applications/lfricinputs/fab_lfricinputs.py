@@ -43,49 +43,14 @@ class FabLfricInputs(LFRicBase):
     def define_preprocessor_flags_step(self):
         super().define_preprocessor_flags_step()
 
-        self.add_preprocessor_flags(
-            ['-DUM_PHYSICS',
-             '-DUSE_MPI=YES'])
-        path_flags = [AddFlags(match="$source/science/jules/*",
-                               flags=['-DUM_JULES', '-I$output']),
-                      AddFlags(match="$source/shumlib/*",
+        # for backward compatibility of building shumlib from source
+        path_flags = [AddFlags(match="$source/shumlib/*",
                                flags=['-DSHUMLIB_LIBNAME=libshum',
                                       '-I$output',
                                       '-I$source/shumlib/common/src',
                                       '-I$source/shumlib/'
                                       'shum_thread_utils/src',
                                       '-I$relative'],),
-                      AddFlags(match="$source/*",
-                               flags=['-DLFRIC']),
-                      AddFlags(match="$source/atmosphere_service/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      AddFlags(match="$source/boundary_layer/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      AddFlags(match="$source/large_scale_precipitation/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      AddFlags(match="$source/free_tracers/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      # for backward compatibility
-                      AddFlags(match="$source/science/um/*",
-                               flags=['-I$relative/include',
-                                      '-I/$source/science/'
-                                      'um/include/other/',
-                                      '-I$source/science/'
-                                      'shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
                       ]
 
         self.add_preprocessor_flags(path_flags)
@@ -103,11 +68,8 @@ class FabLfricInputs(LFRicBase):
     def grab_files_step(self):
         super().grab_files_step()
         dirs = ['applications/lfricinputs/source/',
-                'interfaces/jules_interface/source/',
-                'interfaces/physics_schemes_interface/source/',
-                'interfaces/socrates_interface/source/',
-                'science/physics_schemes/source',
                 'science/gungho/source',
+                'science/shared/source/',
                 # for backward compatibility
                 'science/um_physics_interface/source/',
                 'science/jules_interface/source/',
