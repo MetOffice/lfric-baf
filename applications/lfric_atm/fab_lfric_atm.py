@@ -90,7 +90,7 @@ class FabLFRicAtm(LFRicBase):
                 'science/gungho/source',
                 'science/physics_schemes/source',
                 'science/shared/source/',
-                'interfaces/coupled_interface/source',
+                'interfaces/coupled_interface/source/',
                 'interfaces/jules_interface/source/',
                 'interfaces/physics_schemes_interface/source/',
                 'interfaces/socrates_interface/source/',
