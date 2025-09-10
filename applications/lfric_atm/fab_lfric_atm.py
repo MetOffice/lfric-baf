@@ -88,9 +88,9 @@ class FabLFRicAtm(LFRicBase):
         super().grab_files_step()
         dirs = ['applications/lfric_atm/source',
                 'science/gungho/source',
-                'interfaces/coupled_interface/source',
                 'science/physics_schemes/source',
                 'science/shared/source/',
+                'interfaces/coupled_interface/source',
                 'interfaces/jules_interface/source/',
                 'interfaces/physics_schemes_interface/source/',
                 'interfaces/socrates_interface/source/',
