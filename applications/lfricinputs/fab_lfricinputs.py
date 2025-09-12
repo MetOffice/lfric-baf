@@ -37,65 +37,39 @@ class FabLfricInputs(LFRicBase):
     def __init__(self, name: str, root_symbol: Union[str, List[str]]):
         super().__init__(name)
         self.set_root_symbol(root_symbol)
+        self._fcm_make_dir = (self.lfric_apps_root / "applications" /
+                                "lfricinputs" / "fcm-make")
 
     def define_preprocessor_flags_step(self):
         super().define_preprocessor_flags_step()
 
-        self.add_preprocessor_flags(
-            ['-DUM_PHYSICS',
-             '-DCOUPLED', '-DUSE_MPI=YES'])
-        path_flags = [AddFlags(match="$source/science/jules/*",
-                               flags=['-DUM_JULES', '-I$output']),
-                      AddFlags(match="$source/shumlib/*",
+        # for backward compatibility of building shumlib from source
+        path_flags = [AddFlags(match="$source/shumlib/*",
                                flags=['-DSHUMLIB_LIBNAME=libshum',
                                       '-I$output',
                                       '-I$source/shumlib/common/src',
                                       '-I$source/shumlib/'
                                       'shum_thread_utils/src',
                                       '-I$relative'],),
-                      AddFlags(match="$source/*",
-                               flags=['-DLFRIC']),
-                      AddFlags(match="$source/atmosphere_service/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      AddFlags(match="$source/boundary_layer/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      AddFlags(match="$source/large_scale_precipitation/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      AddFlags(match="$source/free_tracers/*",
-                               flags=['-I$relative/include',
-                                      '-I$source/science/shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
-                      # for backward compatibility
-                      AddFlags(match="$source/science/um/*",
-                               flags=['-I$relative/include',
-                                      '-I/$source/science/'
-                                      'um/include/other/',
-                                      '-I$source/science/'
-                                      'shumlib/common/src',
-                                      '-I$source/science/shumlib/'
-                                      'shum_thread_utils/src',]),
                       ]
 
         self.add_preprocessor_flags(path_flags)
 
+    def get_linker_flags(self) -> List[str]:
+        '''
+        This method adds shumlib to the lfric_base class get_linker_flags return. 
+
+        :returns: list of flags for the linker.
+        :rtype: List[str]
+        '''
+        libs = ['shumlib', ]
+        return libs + super().get_linker_flags()
+
     def grab_files_step(self):
         super().grab_files_step()
         dirs = ['applications/lfricinputs/source/',
-                'interfaces/jules_interface/source/',
-                'interfaces/physics_schemes_interface/source/',
-                'interfaces/socrates_interface/source/',
-                'science/physics_schemes/source',
                 'science/gungho/source',
+                'science/shared/source/',
                 # for backward compatibility
                 'science/um_physics_interface/source/',
                 'science/jules_interface/source/',
@@ -111,52 +85,74 @@ class FabLfricInputs(LFRicBase):
             except:
                 # for backward compatibility
                 continue
+        
+        if self._fcm_make_dir.exists():
+            fcm_export(self.config, src="fcm:shumlib.xm_tr",
+                    dst_label="shumlib")
 
-        fcm_export(self.config, src="fcm:shumlib.xm_tr",
-                   dst_label="shumlib")
+        # Copy the optimisation scripts into a separate directory if it exists
+        optimisation_dir = (self.lfric_apps_root / "applications" /
+                            "lfricinputs" / "optimisation")
+        if optimisation_dir.exists():
+            grab_folder(self.config, src=optimisation_dir,
+                        dst_label='optimisation')
 
     def find_source_files_step(self):
+        # for backward compatibility
         """Based on $LFRIC_APPS_ROOT/applications/lfricinputs/fcm-make"""
 
-        shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
-                                     "lfricinputs" / "fcm-make" / "util" /
-                                     "common" / "extract-shumlib.cfg")
-        shumlib_root = self.config.source_root / 'science'
         path_filters = []
-        for section, source_file_info in shumlib_extract.items():
-            for (list_type, list_of_paths) in source_file_info:
-                if list_type == "exclude":
-                    path_filters.append(Exclude(shumlib_root / section))
-                else:
-                    for path in list_of_paths:
-                        path_filters.append(Include(shumlib_root /
-                                                    section / path))
+        
+        if self._fcm_make_dir.exists():
 
-        infra_extract = FcmExtract(self.lfric_apps_root / "applications" /
-                                   "lfricinputs" / "fcm-make" / "util" /
-                                   "common" / "extract-lfric-core.cfg")
+            shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
+                                         "lfricinputs" / "fcm-make" / "util" /
+                                         "common" / "extract-shumlib.cfg")
+            shumlib_root = self.config.source_root / 'science'
+            for section, source_file_info in shumlib_extract.items():
+                for (list_type, list_of_paths) in source_file_info:
+                    if list_type == "exclude":
+                        path_filters.append(Exclude(shumlib_root / section))
+                    else:
+                        for path in list_of_paths:
+                            path_filters.append(Include(shumlib_root /
+                                                        section / path))
 
-        infra_extract.update(FcmExtract(self.lfric_apps_root /
-                                        "applications" / "lfricinputs" /
-                                        "fcm-make" / "util" /
-                                        "common" / "extract-lfric-apps.cfg"))
+            infra_extract = FcmExtract(self.lfric_apps_root / "applications" /
+                                       "lfricinputs" / "fcm-make" / "util" /
+                                       "common" / "extract-lfric-core.cfg")
 
-        for section, source_file_info in infra_extract.items():
-            for (list_type, list_of_paths) in source_file_info:
-                if list_type == "exclude":
-                    path_filters.append(
-                        Exclude(self.config.source_root / section))
-                else:
-                    for path in list_of_paths:
-                        print("TTT", self.config.source_root/path)
+            infra_extract.update(FcmExtract(self.lfric_apps_root /
+                                            "applications" / "lfricinputs" /
+                                            "fcm-make" / "util" /
+                                            "common" / "extract-lfric-apps.cfg"))
+
+            for section, source_file_info in infra_extract.items():
+                for (list_type, list_of_paths) in source_file_info:
+                    if list_type == "exclude":
                         path_filters.append(
-                            Include(self.config.source_root / path))
+                            Exclude(self.config.source_root / section))
+                    else:
+                        for path in list_of_paths:
+                            print("TTT", self.config.source_root/path)
+                            path_filters.append(
+                                Include(self.config.source_root / path))
 
         super().find_source_files_step(path_filters=path_filters)
 
     def get_rose_meta(self):
         return (self.lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
+
+    def analyse_step(self):
+        '''
+        The method adds lfric_inputs specific list of dependencies to ignore.
+        '''
+        lfric_inputs_ignore_dependencies = ['c_shum_byteswap.o', 'f_shum_ff_status_mod',
+                                        'f_shum_field_mod', 'f_shum_fieldsfile_mod',
+                                        'f_shum_file_mod', 'f_shum_fixed_length_header_indices_mod',
+                                        'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod']
+        super().analyse_step(ignore_dependencies=lfric_inputs_ignore_dependencies)
 
 
 # -----------------------------------------------------------------------------

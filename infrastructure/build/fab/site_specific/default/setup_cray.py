@@ -108,6 +108,8 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
     linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
     linker.add_lib_flags("xios", ["-lxios"])
     linker.add_lib_flags("hdf5", ["-lhdf5"])
+    linker.add_lib_flags("shumlib", ["-lshum"])
+    linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c", "-lvernier"])
 
     linker.add_post_lib_flags("-lcraystdc++")
 

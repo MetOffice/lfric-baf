@@ -21,6 +21,7 @@ from typing import List, Optional, Iterable, Union
 
 from fab.artefacts import ArtefactSet, SuffixFilter
 from fab.build_config import BuildConfig
+from fab.fab_base.fab_base import FabBase
 from fab.steps.analyse import analyse
 from fab.steps.find_source_files import Exclude, Include
 from fab.steps.psyclone import psyclone, preprocess_x90
@@ -28,13 +29,12 @@ from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
 from fab.util import input_to_output_fpath
 
-from baf_base import BafBase
 from lfric_common import configurator
 from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
 
 
-class LFRicBase(BafBase):
+class LFRicBase(FabBase):
     '''
     This is the base class for all LFRic FAB scripts.
 
@@ -113,7 +113,7 @@ class LFRicBase(BafBase):
             ) -> argparse.ArgumentParser:
         '''
         This adds LFRic specific command line options to the base class
-        define_command_line_option. Currently, --rose_piker, --vernier
+        define_command_line_option. Currently, --rose_picker, --vernier
         and --precision options are added.
 
         :param parser: optional a pre-defined argument parser.
@@ -207,7 +207,13 @@ class LFRicBase(BafBase):
         # build/tests.mk - for mpi unit tests, not used atm
         mpi_tests_flags = ['-DUSE_MPI=YES']
 
-        self.add_preprocessor_flags(precision_flags+['-DUSE_XIOS'])
+        # core/components/lfric-xios/build/import.mk
+        preprocessor_flags = precision_flags+['-DUSE_XIOS']
+        
+        if self.args.vernier:
+            preprocessor_flags += ['-DTIMING_ON','-DVERNIER']
+
+        self.add_preprocessor_flags(preprocessor_flags)
         # -DUSE_XIOS is not found in makefile but in fab run_config and
         # driver_io_mod.F90
 
@@ -237,7 +243,6 @@ class LFRicBase(BafBase):
                 'components/inventory/source/',
                 'components/science/source/',
                 'components/lfric-xios/source/',
-                'components/coupling/source/',
                 ]
 
         # pylint: disable=redefined-builtin
@@ -258,13 +263,7 @@ class LFRicBase(BafBase):
                 "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             # Profiling. Grab the required psydata directory as well:
             if self.args.vernier:
-                try:
-                    linker.get_lib_flags("vernier")
-                except RuntimeError:
-                    raise RuntimeError(f"The linker{linker} does not have "
-                                       f"linker flags for Vernier.")
                 dir = "vernier"
-
             else:
                 dir = "tau"
             grab_folder(self.config, src=self.lfric_core_root /
@@ -354,7 +353,10 @@ class LFRicBase(BafBase):
         '''
         return None
 
-    def analyse_step(self) -> None:
+    def analyse_step(
+        self,
+        ignore_dependencies: Optional[Iterable[str]] = None
+        ) -> None:
         '''
         The method overwrites the base class analyse_step.
         For LFRic, it first runs the preprocess_x90_step and then runs
@@ -364,9 +366,17 @@ class LFRicBase(BafBase):
         '''
         self.preprocess_x90_step()
         self.psyclone_step()
+        if ignore_dependencies is None:
+            ignore_dependencies = []
+        # core/infrastructure/build/import.mk
+        ignore_dependencies += ['netcdf', 'mpi', 'mpi_f08',
+                                'yaxt', 'mod_oasis']
+        # core/components/lfric-xios/build/import.mk
+        ignore_dependencies += ['xios', 'icontext', 'mod_wait']
+        if self.args.vernier:
+            ignore_dependencies.append('vernier_mod')
         analyse(self.config, root_symbol=self.root_symbol,
-                ignore_mod_deps=['netcdf', 'MPI', 'yaxt', 'pfunit_mod',
-                                 'xios', 'mod_wait'])
+                ignore_dependencies=ignore_dependencies)
 
     def preprocess_x90_step(self) -> None:
         """
@@ -391,7 +401,7 @@ class LFRicBase(BafBase):
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
 
-        psyclone(self.config, kernel_roots=[self.config.build_output],
+        psyclone(self.config, kernel_roots=[(self.config.build_output / "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args)
@@ -414,8 +424,11 @@ class LFRicBase(BafBase):
         compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
         linker = self.config.tool_box.get_tool(Category.LINKER,
                                                mpi=self.config.mpi)
-        if (self.args.vernier or
-                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        #Turned off psyclone profiling for vernier for vernier error:
+        #character buffer exhausted.
+#        if (self.args.vernier or
+#                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
+        if ("tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
             return ["--profile", "kernels"]
         return []
 

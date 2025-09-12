@@ -10,6 +10,7 @@ contained in the infrastructure directory.
 '''
 
 import logging
+from typing import List
 
 from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
@@ -30,7 +31,9 @@ class FabLFRicAtm(LFRicBase):
 
         self.add_preprocessor_flags(
             ['-DUM_PHYSICS',
-             '-DCOUPLED', '-DUSE_MPI=YES'])
+             '-DLFRIC',
+             '-DUSSPPREC_32B',
+             '-DLSPREC_32B',])
 
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
@@ -41,8 +44,6 @@ class FabLFRicAtm(LFRicBase):
                                       '-I$source/science/shumlib/\
                                         shum_thread_utils/src',
                                       '-I$relative'],),
-                      AddFlags(match="$source/*",
-                               flags=['-DLFRIC']),
                       AddFlags(match="$source/atmosphere_service/*",
                                flags=['-I$relative/include',
                                       '-I$source/science/shumlib/common/src',
@@ -72,6 +73,16 @@ class FabLFRicAtm(LFRicBase):
                                         shum_thread_utils/src',]),
                       ]
         self.add_preprocessor_flags(path_flags)
+
+    def get_linker_flags(self) -> List[str]:
+        '''
+        This method adds shumlib to the lfric_base class get_linker_flags return. 
+
+        :returns: list of flags for the linker.
+        :rtype: List[str]
+        '''
+        libs = ['shumlib', ]
+        return libs + super().get_linker_flags()
 
     def grab_files_step(self):
         super().grab_files_step()
@@ -166,6 +177,16 @@ class FabLFRicAtm(LFRicBase):
     def get_rose_meta(self):
         return (self.lfric_apps_root / 'applications/lfric_atm' / 'rose-meta' /
                 'lfric-lfric_atm' / 'HEAD' / 'rose-meta.conf')
+
+    def analyse_step(self):
+        '''
+        The method adds lfric_atm specific list of dependencies to ignore.
+        This list of shumlib may be used by developers during debugging.
+        '''
+        lfric_atm_ignore_dependencies = ['c_shum_byteswap.o', 'f_shum_is_nan_mod',
+                                        'f_shum_field_mod', 'f_shum_is_inf_mod',
+                                        'f_shum_file_mod', 'f_shum_is_denormal_mod']
+        super().analyse_step(ignore_dependencies=lfric_atm_ignore_dependencies)
 
     def compile_fortran_step(self):
         fc = self.config.tool_box[Category.FORTRAN_COMPILER]
