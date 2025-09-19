@@ -76,7 +76,7 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
 
     # Fast debug
     # ==========
-    ftn.add_flags(["-O2"], "fast-debug")
+    ftn.add_flags(["-O2", "-hflex_mp=strict"], "fast-debug")
     if ftn.get_version() >= (15, 0):
         ftn.add_flags(["-G2"], "fast-debug")
     else:
@@ -84,7 +84,7 @@ def setup_cray(build_config: BuildConfig, args: argparse.Namespace) -> None:
 
     # Production
     # ==========
-    ftn.add_flags(["-O3"], "production")
+    ftn.add_flags(["-O3", "-hipa3", "-m", "3"], "production")
 
     # Set up the linker
     # =================

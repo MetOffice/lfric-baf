@@ -34,7 +34,7 @@ class Config(DefaultConfig):
         ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ftn")
 
         # Update the linker. This is what the default sets up
-        # (except NetCDF, which is normally defined using nf-config
+        # (except NetCDF, which is normally defined using nf-config)
         linker = tr.get_tool(Category.LINKER, "linker-crayftn-ftn")
         linker = cast(Linker, linker)   # make mypy happy
 
@@ -42,9 +42,3 @@ class Config(DefaultConfig):
         # these flags for now until the transition to pkg-config
         linker.add_lib_flags("netcdf", ["-lnetcdff", "-lnetcdf",
                                         "-lnetcdf", "-lm"])
-        # That's pretty much the default:
-        linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-        linker.add_lib_flags("xios", ["-lxios"])
-        linker.add_lib_flags("hdf5", ["-lhdf5"])
-        linker.add_lib_flags("shumlib", ["-lshum"])
-        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c", "-lvernier"])
