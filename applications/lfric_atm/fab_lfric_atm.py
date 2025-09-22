@@ -16,13 +16,110 @@ from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
 from fab.build_config import AddFlags
 from fab.steps.find_source_files import Exclude, Include
-from fab.tools import Category
+from fab.tools import Category, Compiler
 
 from lfric_base import LFRicBase
 from get_revision import GetRevision
 
 from fcm_extract import FcmExtract
 
+
+#TODO FAB #313
+def get_lfric_atm_compile_fortran_specific_flags(fortran_compiler: Compiler,
+                                                 profile: str) -> List[AddFlags]:
+    '''
+    This function sets the lfric_atm compile_fortran specific flags based on
+    compiler suite. Since compiler suite is a site decision, these flags actually
+    would better not be set here. The Fab ticket #313 is going to address this.
+
+    :param fortran_compiler: the fortran compiler being used for lfric_atm
+    :param profile: the profile chosen for lfric_atm
+    :returns: a list of path specific flags to be passed to compile_fortran step
+    '''
+    no_omp: List[str] = []
+    no_externals: List[str] = []
+    path_flags: List[AddFlags] = []
+
+    if fortran_compiler.suite == "intel-classic":
+        no_omp = ["-qno-openmp"]
+        um_physics = ["-r8"]
+        no_externals = ["-warn", "noexternals"]
+        # Some SOCRATES functions do not currently declare interfaces
+        # This avoids a warning-turned-error about missing interfaces
+    elif fortran_compiler.suite == "cray":
+        um_physics = ["-s", "real64"]
+        ovewrite_debug_optimisation = []
+        if profile == "fast-debug":
+            ovewrite_debug_optimisation = ["-O0", "-G0"]
+            path_flags += [AddFlags(match='$output/*parcel_ascent_5a*',
+                                    flags=["-s", "real64", "-hvector0"]),
+                           AddFlags(match='$output/large_scale_precipitation/*',
+                                    flags=["-O2", "-hfp0", "-hflex_mp=strict"])]
+        if profile == "production":
+            ovewrite_debug_optimisation = ["-O0"]
+            path_flags += [AddFlags(match='$output/gravity_wave_drag/*',
+                                    flags=["-O2", "-hflex_mp=strict"]),
+                           AddFlags(match='$output/*parcel_ascent_5a*',
+                                    flags=["-s", "real64", "-hvector0"]),
+                           AddFlags(match='$output/large_scale_precipitation/*',
+                                    flags=["-O3", "-hipa3", "-hflex_mp=conservative"])]
+        path_flags += [AddFlags(match='$output/*ukca_emiss_mode_mod*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*ukca_step_control_mod*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*aerosol_ukca_alg_mod_psy*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*bl_exp_alg_mod_psy*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*bl_imp_alg_mod_psy*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*conv_comorph_alg_mod_psy*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*conv_comorph_kernel_mod*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*conv_gr_alg_mod_psy*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*gungho_model_mod*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*init_aerosol_fields_alg_mod_psy*',
+                                flags=ovewrite_debug_optimisation),
+                       AddFlags(match='$output/*jules_extra_kernel_mod*',
+                                flags=ovewrite_debug_optimisation),]
+    else:
+        no_omp = ["-fno-openmp"]
+        um_physics = ["-fdefault-real-8"]
+    path_flags += [
+        AddFlags(match='$output/science/um/atmosphere/large_scale_precipitation/*',
+        flags=no_omp),
+        AddFlags(match="$output/science/*", flags=um_physics),
+        # jules and socrates are extracted in the science folder
+        AddFlags(match="$output/legacy/*", flags=um_physics),
+        AddFlags(match="$output/AC_assimilation/*", flags=um_physics),
+        AddFlags(match="$output/aerosols/*", flags=um_physics),
+        AddFlags(match="$output/atmosphere_service/*", flags=um_physics),
+        AddFlags(match="$output/boundary_layer/*", flags=um_physics),
+        AddFlags(match="$output/carbon/*", flags=um_physics),
+        AddFlags(match="$output/convection/*", flags=um_physics),
+        AddFlags(match="$output/diffusion_and_filtering/*", flags=um_physics),
+        AddFlags(match="$output/dynamics/*", flags=um_physics),
+        AddFlags(match="$output/dynamics_advection/*", flags=um_physics),
+        AddFlags(match="$output/electric/*", flags=um_physics),
+        AddFlags(match="$output/free_tracers/*", flags=um_physics),
+        AddFlags(match="$output/gravity_wave_drag/*", flags=um_physics),
+        AddFlags(match="$output/idealised/*", flags=um_physics),
+        AddFlags(match="$output/large_scale_cloud/*", flags=um_physics),
+        AddFlags(match="$output/large_scale_precipitation/*",
+                    flags=um_physics),
+        AddFlags(match="$output/PWS_diagnostics/*", flags=um_physics),
+        AddFlags(match="$output/radiation_control/*", flags=um_physics),
+        AddFlags(match="$output/stochastic_physics/*", flags=um_physics),
+        AddFlags(match="$output/tracer_advection/*", flags=um_physics),
+        AddFlags(match="$output/science/socrates/radiance_core/*",
+                    flags=no_externals),
+        AddFlags(match="$output/science/socrates/interface_core/*",
+                    flags=no_externals)]
+    
+    return path_flags
 
 class FabLFRicAtm(LFRicBase):
 
@@ -190,47 +287,8 @@ class FabLFRicAtm(LFRicBase):
 
     def compile_fortran_step(self):
         fc = self.config.tool_box[Category.FORTRAN_COMPILER]
-        # TODO: needs a better solution, we are still hardcoding compilers here
-        if fc.suite == "intel-classic":
-            no_omp = "-qno-openmp"
-            real8 = "-r8"
-            no_externals = ["-warn", "noexternals"]
-            # Some SOCRATES functions do not currently declare interfaces
-            # This avoids a warning-turned-error about missing interfaces
-        else:
-            no_omp = "-fno-openmp"
-            real8 = "-fdefault-real-8"
-            no_externals = []
-        path_flags = [AddFlags(
-            '$output/science/um/atmosphere/large_scale_precipitation/*',
-            [no_omp]),
-            AddFlags(match="$output/science/*", flags=[real8]),
-            # jules and socrates are extracted in the science folder
-            AddFlags(match="$output/legacy/*", flags=[real8]),
-            AddFlags(match="$output/AC_assimilation/*", flags=[real8]),
-            AddFlags(match="$output/aerosols/*", flags=[real8]),
-            AddFlags(match="$output/atmosphere_service/*", flags=[real8]),
-            AddFlags(match="$output/boundary_layer/*", flags=[real8]),
-            AddFlags(match="$output/carbon/*", flags=[real8]),
-            AddFlags(match="$output/convection/*", flags=[real8]),
-            AddFlags(match="$output/diffusion_and_filtering/*", flags=[real8]),
-            AddFlags(match="$output/dynamics/*", flags=[real8]),
-            AddFlags(match="$output/dynamics_advection/*", flags=[real8]),
-            AddFlags(match="$output/electric/*", flags=[real8]),
-            AddFlags(match="$output/free_tracers/*", flags=[real8]),
-            AddFlags(match="$output/gravity_wave_drag/*", flags=[real8]),
-            AddFlags(match="$output/idealised/*", flags=[real8]),
-            AddFlags(match="$output/large_scale_cloud/*", flags=[real8]),
-            AddFlags(match="$output/large_scale_precipitation/*",
-                     flags=[real8]),
-            AddFlags(match="$output/PWS_diagnostics/*", flags=[real8]),
-            AddFlags(match="$output/radiation_control/*", flags=[real8]),
-            AddFlags(match="$output/stochastic_physics/*", flags=[real8]),
-            AddFlags(match="$output/tracer_advection/*", flags=[real8]),
-            AddFlags(match="$output/science/socrates/radiance_core/*",
-                     flags=no_externals),
-            AddFlags(match="$output/science/socrates/interface_core/*",
-                     flags=no_externals)]
+        profile = self.config.profile
+        path_flags = get_lfric_atm_compile_fortran_specific_flags(fc, profile)
         super().compile_fortran_step(path_flags=path_flags)
 
 
