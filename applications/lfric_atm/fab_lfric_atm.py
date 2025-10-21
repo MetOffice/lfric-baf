@@ -21,10 +21,10 @@ from fab.tools import Category, Compiler
 from lfric_base import LFRicBase
 from get_revision import GetRevision
 
-from fcm_extract import FcmExtract
+from fcm_configuration import FcmConfiguration
 
 
-#TODO FAB #313
+# TODO FAB #313
 def get_lfric_atm_compile_fortran_specific_flags(fortran_compiler: Compiler,
                                                  profile: str) -> List[AddFlags]:
     '''
@@ -118,7 +118,7 @@ def get_lfric_atm_compile_fortran_specific_flags(fortran_compiler: Compiler,
                     flags=no_externals),
         AddFlags(match="$output/science/socrates/interface_core/*",
                     flags=no_externals)]
-    
+
     return path_flags
 
 class FabLFRicAtm(LFRicBase):
@@ -227,33 +227,33 @@ class FabLFRicAtm(LFRicBase):
     def find_source_files_step(self):
         """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
 
-        extract_cfg = [FcmExtract(self.lfric_apps_root / "build" / "extract" /
-                                  "extract.cfg")]
+        extract_cfg = [FcmConfiguration(self.lfric_apps_root / "build" /
+                                        "extract" / "extract.cfg")]
 
         socrates_extract_cfg = (self.lfric_apps_root / "interfaces" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
         if socrates_extract_cfg.exists():
-            extract_cfg.append(FcmExtract(socrates_extract_cfg))
+            extract_cfg.append(FcmConfiguration(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "interfaces" /
                              "jules_interface" / "build" /
                              "extract.cfg")
         if jules_extract_cfg.exists():
-            extract_cfg.append(FcmExtract(jules_extract_cfg))
+            extract_cfg.append(FcmConfiguration(jules_extract_cfg))
 
         # for backward compatibility
         socrates_extract_cfg = (self.lfric_apps_root / "science" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
         if socrates_extract_cfg.exists():
-            extract_cfg.append(FcmExtract(socrates_extract_cfg))
+            extract_cfg.append(FcmConfiguration(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "science" /
                              "jules_interface" / "build" /
                              "extract.cfg")
         if jules_extract_cfg.exists():
-            extract_cfg.append(FcmExtract(jules_extract_cfg))
+            extract_cfg.append(FcmConfiguration(jules_extract_cfg))
 
         science_root = self.config.source_root / 'science'
         path_filters = []

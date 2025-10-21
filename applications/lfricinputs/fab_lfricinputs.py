@@ -20,7 +20,7 @@ from fab.steps.find_source_files import Exclude, Include
 
 from lfric_base import LFRicBase
 
-from fcm_extract import FcmExtract
+from fcm_configuration import FcmConfiguration
 
 
 class FabLfricInputs(LFRicBase):
@@ -85,7 +85,7 @@ class FabLfricInputs(LFRicBase):
             except:
                 # for backward compatibility
                 continue
-        
+
         if self._fcm_make_dir.exists():
             fcm_export(self.config, src="fcm:shumlib.xm_tr",
                     dst_label="shumlib")
@@ -102,12 +102,12 @@ class FabLfricInputs(LFRicBase):
         """Based on $LFRIC_APPS_ROOT/applications/lfricinputs/fcm-make"""
 
         path_filters = []
-        
+
         if self._fcm_make_dir.exists():
 
-            shumlib_extract = FcmExtract(self.lfric_apps_root / "applications" /
-                                         "lfricinputs" / "fcm-make" / "util" /
-                                         "common" / "extract-shumlib.cfg")
+            shumlib_extract = FcmConfiguration(
+                self.lfric_apps_root / "applications" / "lfricinputs" /
+                "fcm-make" / "util" / "common" / "extract-shumlib.cfg")
             shumlib_root = self.config.source_root / 'science'
             for section, source_file_info in shumlib_extract.items():
                 for (list_type, list_of_paths) in source_file_info:
@@ -118,14 +118,13 @@ class FabLfricInputs(LFRicBase):
                             path_filters.append(Include(shumlib_root /
                                                         section / path))
 
-            infra_extract = FcmExtract(self.lfric_apps_root / "applications" /
-                                       "lfricinputs" / "fcm-make" / "util" /
-                                       "common" / "extract-lfric-core.cfg")
+            infra_extract = FcmConfiguration(
+                self.lfric_apps_root / "applications" / "lfricinputs" /
+                "fcm-make" / "util" / "common" / "extract-lfric-core.cfg")
 
-            infra_extract.update(FcmExtract(self.lfric_apps_root /
-                                            "applications" / "lfricinputs" /
-                                            "fcm-make" / "util" /
-                                            "common" / "extract-lfric-apps.cfg"))
+            infra_extract.update(FcmConfiguration(
+                self.lfric_apps_root / "applications" / "lfricinputs" /
+                "fcm-make" / "util" / "common" / "extract-lfric-apps.cfg"))
 
             for section, source_file_info in infra_extract.items():
                 for (list_type, list_of_paths) in source_file_info:

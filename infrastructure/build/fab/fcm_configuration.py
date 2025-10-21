@@ -10,7 +10,7 @@ import re
 import sys
 
 
-class FcmExtract(dict):
+class FcmConfiguration(dict):
     '''
     A simple class that reads in an fcm extract.cfg file and stores
     the information about excluded and included file to be used in FAB.
@@ -86,7 +86,7 @@ def main():
     '''
     Simple wrapper to avoid pylint errors.
     '''
-    fe = FcmExtract(sys.argv[1])
+    fe = FcmConfiguration(sys.argv[1])
     print("Sections", fe.keys())
     for section, list_of_paths in fe.items():
         print("SECTION:", section, list_of_paths)
