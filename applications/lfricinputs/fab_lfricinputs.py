@@ -11,19 +11,15 @@ contained in the infrastructure directory.
 
 import logging
 import os
-from typing import List, Union
+from typing import Iterable, List, Optional, Union
 
-from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
 from fab.build_config import AddFlags
-from fab.steps.find_source_files import Exclude, Include
 
 from lfric_base import LFRicBase
 
-from fcm_configuration import FcmConfiguration
 
-
-class FabLfricInputs(LFRicBase):
+class FabLFRicInputs(LFRicBase):
     '''
     This class builds LFRic inputs. Since LFRic inputs builds
     different binaries in the same tree, it explicitly adds
@@ -37,8 +33,6 @@ class FabLfricInputs(LFRicBase):
     def __init__(self, name: str, root_symbol: Union[str, List[str]]):
         super().__init__(name)
         self.set_root_symbol(root_symbol)
-        self._fcm_make_dir = (self.lfric_apps_root / "applications" /
-                                "lfricinputs" / "fcm-make")
 
     def define_preprocessor_flags_step(self):
         super().define_preprocessor_flags_step()
@@ -57,7 +51,8 @@ class FabLfricInputs(LFRicBase):
 
     def get_linker_flags(self) -> List[str]:
         '''
-        This method adds shumlib to the lfric_base class get_linker_flags return. 
+        This method adds shumlib to the lfric_base class get_linker_flags
+        return.
 
         :returns: list of flags for the linker.
         :rtype: List[str]
@@ -70,25 +65,13 @@ class FabLfricInputs(LFRicBase):
         dirs = ['applications/lfricinputs/source/',
                 'science/gungho/source',
                 'science/shared/source/',
-                # for backward compatibility
-                'science/um_physics_interface/source/',
-                'science/jules_interface/source/',
-                'science/socrates_interface/source/',
                 ]
 
         # pylint: disable=redefined-builtin
         for dir in dirs:
-            try:
-                grab_folder(self.config,
-                            src=self.lfric_apps_root / dir,
-                            dst_label='')
-            except:
-                # for backward compatibility
-                continue
-
-        if self._fcm_make_dir.exists():
-            fcm_export(self.config, src="fcm:shumlib.xm_tr",
-                    dst_label="shumlib")
+            grab_folder(self.config,
+                        src=self.lfric_apps_root / dir,
+                        dst_label='')
 
         # Copy the optimisation scripts into a separate directory if it exists
         optimisation_dir = (self.lfric_apps_root / "applications" /
@@ -97,61 +80,23 @@ class FabLfricInputs(LFRicBase):
             grab_folder(self.config, src=optimisation_dir,
                         dst_label='optimisation')
 
-    def find_source_files_step(self):
-        # for backward compatibility
-        """Based on $LFRIC_APPS_ROOT/applications/lfricinputs/fcm-make"""
-
-        path_filters = []
-
-        if self._fcm_make_dir.exists():
-
-            shumlib_extract = FcmConfiguration(
-                self.lfric_apps_root / "applications" / "lfricinputs" /
-                "fcm-make" / "util" / "common" / "extract-shumlib.cfg")
-            shumlib_root = self.config.source_root / 'science'
-            for section, source_file_info in shumlib_extract.items():
-                for (list_type, list_of_paths) in source_file_info:
-                    if list_type == "exclude":
-                        path_filters.append(Exclude(shumlib_root / section))
-                    else:
-                        for path in list_of_paths:
-                            path_filters.append(Include(shumlib_root /
-                                                        section / path))
-
-            infra_extract = FcmConfiguration(
-                self.lfric_apps_root / "applications" / "lfricinputs" /
-                "fcm-make" / "util" / "common" / "extract-lfric-core.cfg")
-
-            infra_extract.update(FcmConfiguration(
-                self.lfric_apps_root / "applications" / "lfricinputs" /
-                "fcm-make" / "util" / "common" / "extract-lfric-apps.cfg"))
-
-            for section, source_file_info in infra_extract.items():
-                for (list_type, list_of_paths) in source_file_info:
-                    if list_type == "exclude":
-                        path_filters.append(
-                            Exclude(self.config.source_root / section))
-                    else:
-                        for path in list_of_paths:
-                            print("TTT", self.config.source_root/path)
-                            path_filters.append(
-                                Include(self.config.source_root / path))
-
-        super().find_source_files_step(path_filters=path_filters)
-
     def get_rose_meta(self):
         return (self.lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
 
-    def analyse_step(self):
+    def analyse_step(self,
+                     ignore_dependencies: Optional[Iterable[str]] = None
+                     ):
         '''
         The method adds lfric_inputs specific list of dependencies to ignore.
         '''
-        lfric_inputs_ignore_dependencies = ['c_shum_byteswap.o', 'f_shum_ff_status_mod',
-                                        'f_shum_field_mod', 'f_shum_fieldsfile_mod',
-                                        'f_shum_file_mod', 'f_shum_fixed_length_header_indices_mod',
-                                        'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod']
-        super().analyse_step(ignore_dependencies=lfric_inputs_ignore_dependencies)
+        inputs_ignore_dependencies = ['c_shum_byteswap.o', 'f_shum_ff_status_mod',
+                                      'f_shum_field_mod', 'f_shum_fieldsfile_mod',
+                                      'f_shum_file_mod', 'f_shum_fixed_length_header_indices_mod',
+                                      'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod']
+        if ignore_dependencies:
+            inputs_ignore_dependencies.extend(ignore_dependencies)
+        super().analyse_step(ignore_dependencies=inputs_ignore_dependencies)
 
 
 # -----------------------------------------------------------------------------
@@ -159,7 +104,7 @@ if __name__ == '__main__':
 
     logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
-    fab_lfric_inputs = FabLfricInputs(name="lfric_inputs", root_symbol=[
+    fab_lfric_inputs = FabLFRicInputs(name="lfric_inputs", root_symbol=[
         'um2lfric', 'lfric2um', 'scintelapi'])
     fab_lfric_inputs.build()
     executable_folder_path = fab_lfric_inputs.config.project_workspace

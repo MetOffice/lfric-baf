@@ -15,13 +15,14 @@ from typing import List
 from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
 from fab.build_config import AddFlags
-from fab.steps.find_source_files import Exclude, Include
 from fab.tools import Category, Compiler
 
 from lfric_base import LFRicBase
 from get_revision import GetRevision
 
 from fcm_configuration import FcmConfiguration
+
+logger = logging.getLogger(__name__)
 
 
 # TODO FAB #313
@@ -208,16 +209,13 @@ class FabLFRicAtm(LFRicBase):
                 continue
 
         gr = GetRevision("../../dependencies.sh")
-        xm = "xm"
         for lib, revision in gr.items():
-            # Shumlib has no src directory
-            if lib == "shumlib":
-                src = ""
-            else:
-                src = "/src"
-            print(f'fcm:{lib}.{xm}_tr{src}', f'science/{lib}', revision)
-            fcm_export(self.config, src=f'fcm:{lib}.{xm}_tr/{src}',
-                       dst_label=f'science/{lib}', revision=revision)
+            # We only need the src directories for the build
+            fcm_src = f'fcm:{lib}.xm_tr/src'
+            logger.info(f"Extracting {fcm_src} to 'science/{lib}/src', "
+                        f"revision {revision}")
+            fcm_export(self.config, src=fcm_src,
+                    dst_label=f'science/{lib}/src', revision=revision)
 
         # Copy the optimisation scripts into a separate directory
         dir = 'applications/lfric_atm/optimisation'
@@ -227,48 +225,46 @@ class FabLFRicAtm(LFRicBase):
     def find_source_files_step(self):
         """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
 
-        extract_cfg = [FcmConfiguration(self.lfric_apps_root / "build" /
-                                        "extract" / "extract.cfg")]
+        science_root = self.config.source_root / 'science'
+        fcm_config_list: List[Tuple[str, FcmConfiguration]]
+        fcm_config_list = [FcmConfiguration(self.lfric_apps_root / "build" /
+                                            "extract" / "extract.cfg",
+                                            science_root)]
 
         socrates_extract_cfg = (self.lfric_apps_root / "interfaces" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
         if socrates_extract_cfg.exists():
-            extract_cfg.append(FcmConfiguration(socrates_extract_cfg))
+            fcm_config_list.append(FcmConfiguration(socrates_extract_cfg,
+                                                    science_root))
 
         jules_extract_cfg = (self.lfric_apps_root / "interfaces" /
                              "jules_interface" / "build" /
                              "extract.cfg")
         if jules_extract_cfg.exists():
-            extract_cfg.append(FcmConfiguration(jules_extract_cfg))
+            fcm_config_list.append(FcmConfiguration(jules_extract_cfg,
+                                                    science_root))
 
         # for backward compatibility
         socrates_extract_cfg = (self.lfric_apps_root / "science" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
         if socrates_extract_cfg.exists():
-            extract_cfg.append(FcmConfiguration(socrates_extract_cfg))
+            fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "science" /
                              "jules_interface" / "build" /
                              "extract.cfg")
         if jules_extract_cfg.exists():
-            extract_cfg.append(FcmConfiguration(jules_extract_cfg))
+            fcm_config_list.append(FcmConfiguration(jules_extract_cfg,
+                                                    science_root))
 
         science_root = self.config.source_root / 'science'
         path_filters = []
-        for extract in extract_cfg:
-            for section, source_file_info in extract.items():
-                for (list_type, list_of_paths) in source_file_info:
-                    if list_type == "exclude":
-                        path_filters.append(Exclude(science_root / section))
-                    else:
-                        # Remove the 'src' which is the first part of the name
-                        new_paths = [i.relative_to(i.parents[-2])
-                                     for i in list_of_paths]
-                        for path in new_paths:
-                            path_filters.append(Include(science_root /
-                                                        section / path))
+        for extract_cfg in fcm_config_list:
+            for section, source_file_info in extract_cfg.items():
+                path_filters.extend(extract_cfg.get_include_exclude_list(section))
+
         super().find_source_files_step(path_filters=path_filters)
 
     def get_rose_meta(self):
