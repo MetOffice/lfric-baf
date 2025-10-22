@@ -8,7 +8,7 @@ from collections import defaultdict
 import logging
 from pathlib import Path
 import re
-from typing import Dict, List, Union
+from typing import Dict, Iterable, List, Union
 
 from fab.steps.find_source_files import Include, Exclude
 
@@ -35,20 +35,7 @@ class FcmConfiguration():
     recommended to just change the order in the extract.cfg files, so
     that the most-specific matches are at the end.
 
-    Note that Fab Include/Exclude classes only use a sub-string tests.
-    For example, a line like:
-
-        extract.path-excl[casim] = / # everything
-
-    Would actually ignore any file containing 'casim'. Therefore, it is
-    required to add a `root_path`, which is the path where the suite is
-    checked out in. This `root_path` will be added when specifying the
-    matching pattern, e.g. if `root_path="science/casim/src"` the above
-    line becomes `science/casim/src`  (and if specific files will be ignored,
-    these also use the root_path) to avoid mismatches.
-
     :param filename: the name of the fcm extract file to read.
-    :param root_path: the path under which the suite is checked out.
     '''
 
     # Some static regular expressions:
@@ -60,14 +47,12 @@ class FcmConfiguration():
     re_incl = re.compile(r"^ *extract\.path-incl\[(.*)\] *= *(.*) *$")
 
     def __init__(self,
-                 filename: Path,
-                 root_path: Path) -> None:
+                 filename: Path) -> None:
         # py#lint: disable=too-many-branches, too-many-statements
         # py#lint: disable=too-many-locals
         self._sections: Dict[str, List[Union[Exclude, Include]]]
         self._sections = defaultdict(list)
         super().__init__()
-        self._root_path = root_path
         # Read the files, remove comments and empty lines, and handle '\'
         with filename.open(mode="r", encoding="utf8") as f_in:
             current_line = []
@@ -120,19 +105,42 @@ class FcmConfiguration():
                 list_of_paths = grp.group(2).split(" ")
                 self._sections[section].append((line_type, list_of_paths))
 
+    def get_all_sections(self) -> Iterable[str]:
+        """
+        :returns: the list of all sections defined in the FCM Extract file.
+        """
+        return list(self._sections.keys())
+
     def get_include_exclude_list(
             self,
-            section: str) -> list[Union[Exclude, Include]]:
+            section: str,
+            root_path: Path,
+            ) -> list[Union[Exclude, Include]]:
         '''
         Converts the information from the read fcm file into a list of
         Include/Exclude directives.
+
+        Note that Fab Include/Exclude classes only use a sub-string tests.
+        For example, a line like:
+
+            extract.path-excl[casim] = / # everything
+
+        would actually ignore any file containing 'casim'. Therefore, it is
+        required to add a `root_path`, which is the path where the suite is
+        checked out in. This `root_path` will be added when specifying the
+        matching pattern, e.g. if `root_path="science/casim/src"` the above
+        line becomes `science/casim/src`  (and if specific files will be
+        ignored, these also use the `root_path`) to avoid mismatches.
+
+        :param section: the name of the section to convert into an
+            Include/Exclude list.
+        :param root_path: the path under which the suite is checked out.
 
         :returns: a list with the corresponding include/exclude instances.
         '''
 
         path_filters: list[Union[Exclude, Include]] = []
         source_file_info = self._sections[section]
-        section_path = Path(section)
         InOrExClass: Union[Exclude, Include]
         for (list_type, list_of_paths) in source_file_info:
             if list_type == "exclude":
@@ -144,7 +152,6 @@ class FcmConfiguration():
                     # Appending Path("something") and  "/" using Path results
                     # in just "/", so instead add an empty string
                     path = ""
-                path_filters.append(InOrExClass(self._root_path / section_path
-                                                / path))
+                path_filters.append(InOrExClass(root_path / path))
 
         return path_filters

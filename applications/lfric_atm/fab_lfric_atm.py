@@ -136,8 +136,7 @@ class FabLFRicAtm(LFRicBase):
         path_flags = [AddFlags(match="$source/science/jules/*",
                                flags=['-DUM_JULES', '-I$output']),
                       AddFlags(match="$source/science/shumlib/*",
-                               flags=['-DSHUMLIB_LIBNAME=libshum',
-                                      '-I$output',
+                               flags=['-I$output',
                                       '-I$source/science/shumlib/common/src',
                                       '-I$source/science/shumlib/\
                                         shum_thread_utils/src',
@@ -262,8 +261,10 @@ class FabLFRicAtm(LFRicBase):
         science_root = self.config.source_root / 'science'
         path_filters = []
         for extract_cfg in fcm_config_list:
-            for section, source_file_info in extract_cfg.items():
-                path_filters.extend(extract_cfg.get_include_exclude_list(section))
+            for section in extract_cfg.get_all_sections():
+                in_ex_list = extract_cfg.get_include_exclude_list(
+                    section, science_root / section)
+                path_filters.extend(in_ex_list)
 
         super().find_source_files_step(path_filters=path_filters)
 
