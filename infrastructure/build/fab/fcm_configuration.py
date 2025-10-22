@@ -4,18 +4,18 @@
 This module contains a class that reads in fcm extract specifications.
 '''
 
+from collections import defaultdict
 import logging
 from pathlib import Path
 import re
-import sys
-from typing import Union
+from typing import Dict, List, Union
 
 from fab.steps.find_source_files import Include, Exclude
 
 logger = logging.getLogger(__name__)
 
 
-class FcmConfiguration(dict):
+class FcmConfiguration():
     '''
     A simple class that reads in an fcm extract.cfg file and stores
     the information about excluded and included file to be used in FAB.
@@ -62,8 +62,10 @@ class FcmConfiguration(dict):
     def __init__(self,
                  filename: Path,
                  root_path: Path) -> None:
-        # pylint: disable=too-many-branches, too-many-statements
-        # pylint: disable=too-many-locals
+        # py#lint: disable=too-many-branches, too-many-statements
+        # py#lint: disable=too-many-locals
+        self._sections: Dict[str, List[Union[Exclude, Include]]]
+        self._sections = defaultdict(list)
         super().__init__()
         self._root_path = root_path
         # Read the files, remove comments and empty lines, and handle '\'
@@ -102,10 +104,8 @@ class FcmConfiguration(dict):
                 if grp:
                     section = grp.group(1).lower()
                     list_of_paths = grp.group(2).split(" ")
-                    if section in self:
-                        self[section].append(("include", list_of_paths))
-                    else:
-                        self[section] = [("include", list_of_paths)]
+                    self._sections[section].append(("include",
+                                                    list_of_paths))
                     continue
                 grp = FcmConfiguration.re_excl.match(line)
                 if grp:
@@ -118,10 +118,7 @@ class FcmConfiguration(dict):
                     line_type = "include"
                 section = grp.group(1).lower()
                 list_of_paths = grp.group(2).split(" ")
-                if section in self:
-                    self[section].append((line_type, list_of_paths))
-                else:
-                    self[section] = [(line_type, list_of_paths)]
+                self._sections[section].append((line_type, list_of_paths))
 
     def get_include_exclude_list(
             self,
@@ -134,7 +131,7 @@ class FcmConfiguration(dict):
         '''
 
         path_filters: list[Union[Exclude, Include]] = []
-        source_file_info = self[section]
+        source_file_info = self._sections[section]
         section_path = Path(section)
         InOrExClass: Union[Exclude, Include]
         for (list_type, list_of_paths) in source_file_info:
@@ -151,20 +148,3 @@ class FcmConfiguration(dict):
                                                 / path))
 
         return path_filters
-
-
-# ============================================================================
-def main():
-    '''
-    Simple wrapper to avoid pylint errors.
-    '''
-    fe = FcmConfiguration(Path(sys.argv[1]), root_path=Path())
-    print("Sections", fe.keys())
-    for section, list_of_paths in fe.items():
-        print("SECTION:", section, list_of_paths)
-
-
-# ============================================================================
-if __name__ == "__main__":
-    # Avoid pylint errors about redefinition from outer scope
-    main()
