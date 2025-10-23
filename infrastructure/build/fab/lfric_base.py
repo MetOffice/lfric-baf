@@ -354,9 +354,10 @@ class LFRicBase(FabBase):
         return None
 
     def analyse_step(
-        self,
-        ignore_dependencies: Optional[Iterable[str]] = None
-        ) -> None:
+            self,
+            ignore_dependencies: Optional[Iterable[str]] = None,
+            find_programs: bool = False
+            ) -> None:
         '''
         The method overwrites the base class analyse_step.
         For LFRic, it first runs the preprocess_x90_step and then runs
@@ -376,7 +377,8 @@ class LFRicBase(FabBase):
         if self.args.vernier:
             ignore_dependencies.append('vernier_mod')
         analyse(self.config, root_symbol=self.root_symbol,
-                ignore_dependencies=ignore_dependencies)
+                ignore_dependencies=ignore_dependencies,
+                find_programs=find_programs)
 
     def preprocess_x90_step(self) -> None:
         """
