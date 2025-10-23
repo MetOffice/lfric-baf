@@ -10,7 +10,7 @@ contained in the infrastructure directory.
 '''
 
 import logging
-from typing import List
+from typing import List, Tuple
 
 from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
@@ -191,21 +191,11 @@ class FabLFRicAtm(LFRicBase):
                 'interfaces/jules_interface/source/',
                 'interfaces/physics_schemes_interface/source/',
                 'interfaces/socrates_interface/source/',
-                # for backward compatibility
-                'science/coupled_interface/source/',
-                'science/um_physics_interface/source/',
-                'science/socrates_interface/source/',
-                'science/jules_interface/source/',
                 ]
-        # pylint: disable=redefined-builtin
-        for dir in dirs:
-            try:
-                grab_folder(self.config,
-                            src=self.lfric_apps_root / dir,
-                            dst_label='')
-            except:
-                # for backward compatibility
-                continue
+        for directory in dirs:
+            grab_folder(self.config,
+                        src=self.lfric_apps_root / directory,
+                        dst_label='')
 
         gr = GetRevision("../../dependencies.sh")
         for lib, revision in gr.items():
@@ -214,7 +204,7 @@ class FabLFRicAtm(LFRicBase):
             logger.info(f"Extracting {fcm_src} to 'science/{lib}/src', "
                         f"revision {revision}")
             fcm_export(self.config, src=fcm_src,
-                    dst_label=f'science/{lib}/src', revision=revision)
+                       dst_label=f'science/{lib}/src', revision=revision)
 
         # Copy the optimisation scripts into a separate directory
         dir = 'applications/lfric_atm/optimisation'
@@ -224,25 +214,21 @@ class FabLFRicAtm(LFRicBase):
     def find_source_files_step(self):
         """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
 
-        science_root = self.config.source_root / 'science'
         fcm_config_list: List[Tuple[str, FcmConfiguration]]
         fcm_config_list = [FcmConfiguration(self.lfric_apps_root / "build" /
-                                            "extract" / "extract.cfg",
-                                            science_root)]
+                                            "extract" / "extract.cfg")]
 
         socrates_extract_cfg = (self.lfric_apps_root / "interfaces" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
         if socrates_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(socrates_extract_cfg,
-                                                    science_root))
+            fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "interfaces" /
                              "jules_interface" / "build" /
                              "extract.cfg")
         if jules_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(jules_extract_cfg,
-                                                    science_root))
+            fcm_config_list.append(FcmConfiguration(jules_extract_cfg))
 
         # for backward compatibility
         socrates_extract_cfg = (self.lfric_apps_root / "science" /
@@ -255,8 +241,7 @@ class FabLFRicAtm(LFRicBase):
                              "jules_interface" / "build" /
                              "extract.cfg")
         if jules_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(jules_extract_cfg,
-                                                    science_root))
+            fcm_config_list.append(FcmConfiguration(jules_extract_cfg))
 
         science_root = self.config.source_root / 'science'
         path_filters = []

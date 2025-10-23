@@ -141,17 +141,17 @@ class FcmConfiguration():
 
         path_filters: list[Union[Exclude, Include]] = []
         source_file_info = self._sections[section]
-        InOrExClass: Union[Exclude, Include]
+        in_or_ex_class: Union[Exclude, Include]
         for (list_type, list_of_paths) in source_file_info:
             if list_type == "exclude":
-                InOrExClass = Exclude
+                in_or_ex_class = Exclude
             else:
-                InOrExClass = Include
+                in_or_ex_class = Include
             for path in list_of_paths:
                 if path == "/":
                     # Appending Path("something") and  "/" using Path results
                     # in just "/", so instead add an empty string
                     path = ""
-                path_filters.append(InOrExClass(root_path / path))
+                path_filters.append(in_or_ex_class(root_path / path))
 
         return path_filters
