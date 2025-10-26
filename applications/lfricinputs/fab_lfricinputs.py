@@ -62,6 +62,10 @@ class FabLFRicInputs(LFRicBase):
         return libs + super().get_linker_flags()
 
     def grab_files_step(self):
+        """
+        This method overwrites the base class grab_files_step. It includes
+        all source files required for LFRicInputs
+        """
         super().grab_files_step()
         dirs = ['applications/lfricinputs/source/',
                 'science/gungho/source',
