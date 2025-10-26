@@ -250,28 +250,14 @@ class FabLFRicAtm(LFRicBase):
         socrates_extract_cfg = (self.lfric_apps_root / "interfaces" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
-        if socrates_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
+        fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
 
         jules_extract_cfg = (self.lfric_apps_root / "interfaces" /
                              "jules_interface" / "build" /
                              "extract.cfg")
-        if jules_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(jules_extract_cfg))
+        fcm_config_list.append(FcmConfiguration(jules_extract_cfg))
 
-        # for backward compatibility
-        socrates_extract_cfg = (self.lfric_apps_root / "science" /
-                                "socrates_interface" / "build" /
-                                "extract.cfg")
-        if socrates_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
-
-        jules_extract_cfg = (self.lfric_apps_root / "science" /
-                             "jules_interface" / "build" /
-                             "extract.cfg")
-        if jules_extract_cfg.exists():
-            fcm_config_list.append(FcmConfiguration(jules_extract_cfg))
-
+        # The sources are checked out under the 'science' directory:
         science_root = self.config.source_root / 'science'
         new_path_filters = []
         for extract_cfg in fcm_config_list:
@@ -321,7 +307,7 @@ class FabLFRicAtm(LFRicBase):
             ) -> None:
         """
         Query site-specific settings.
-        #TODO can be replaced once #313 is in Fab.
+        # TODO can be replaced once #313 is in Fab.
         """
         fc = self.config.tool_box.get_tool(Category.FORTRAN_COMPILER)
         fc = cast(Compiler, fc)
