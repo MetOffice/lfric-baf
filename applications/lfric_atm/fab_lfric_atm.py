@@ -301,6 +301,8 @@ class FabLFRicAtm(LFRicBase):
 
         :param ignore_dependencies: Third party Fortran module names in
             USE statements, 'DEPENDS ON' files and modules to be ignored.
+        :param find_programs: if the analyse step should try to automatically
+            find all program units to build.
         '''
         lfric_atm_ignore_dependencies = [
             'c_shum_byteswap.o', 'f_shum_is_nan_mod', 'f_shum_field_mod',

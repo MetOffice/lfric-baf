@@ -11,6 +11,7 @@ contained in the infrastructure directory.
 
 import logging
 import os
+from pathlib import Path
 from typing import Iterable, List, Optional, Union
 
 from fab.steps.grab.folder import grab_folder
@@ -80,23 +81,36 @@ class FabLFRicInputs(LFRicBase):
             grab_folder(self.config, src=optimisation_dir,
                         dst_label='optimisation')
 
-    def get_rose_meta(self):
+    def get_rose_meta(self) -> Path:
+        """
+        :returns: The path to the rose meta data config file.
+        """
         return (self.lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
 
     def analyse_step(self,
-                     ignore_dependencies: Optional[Iterable[str]] = None
-                     ):
+                     ignore_dependencies: Optional[Iterable[str]] = None,
+                     find_programs: bool = False
+                     ) -> None:
         '''
         The method adds lfric_inputs specific list of dependencies to ignore.
+
+        :param ignore_dependencies: Third party Fortran module names in
+            USE statements, 'DEPENDS ON' files and modules to be ignored.
+        :param find_programs: if the analyse step should try to automatically
+            find all program units to build.
+
         '''
-        inputs_ignore_dependencies = ['c_shum_byteswap.o', 'f_shum_ff_status_mod',
-                                      'f_shum_field_mod', 'f_shum_fieldsfile_mod',
-                                      'f_shum_file_mod', 'f_shum_fixed_length_header_indices_mod',
-                                      'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod']
+        inputs_ignore_dependencies = [
+            'c_shum_byteswap.o', 'f_shum_ff_status_mod', 'f_shum_field_mod',
+            'f_shum_fieldsfile_mod', 'f_shum_file_mod',
+            'f_shum_fixed_length_header_indices_mod',
+            'f_shum_lookup_indices_mod', 'f_shum_stashmaster_mod'
+            ]
         if ignore_dependencies:
             inputs_ignore_dependencies.extend(ignore_dependencies)
-        super().analyse_step(ignore_dependencies=inputs_ignore_dependencies)
+        super().analyse_step(ignore_dependencies=inputs_ignore_dependencies,
+                             find_programs=find_programs)
 
 
 # -----------------------------------------------------------------------------
