@@ -14,8 +14,10 @@ from typing import cast, Optional
 
 from fab.build_config import BuildConfig
 from fab.steps.find_source_files import find_source_files
-from fab.tools import Category, Tool
+from fab.tools import Category
 from fab.tools.shell import Shell
+
+from rose_picker_tool import RosePicker
 
 logger = logging.getLogger('fab')
 
@@ -24,25 +26,19 @@ def configurator(config: BuildConfig,
                  lfric_core_source: Path,
                  lfric_apps_source: Path,
                  rose_meta_conf: Path,
-                 rose_picker: Tool,
+                 rose_picker: RosePicker,
                  config_dir: Optional[Path] = None) -> None:
-    '''
+    """
     This method implements the LFRic configurator tool.
 
     :param config: the Fab build config instance
-    :type config: :py:class:`fab.BuildConfig`
     :param lfric_core_source: the path to the LFRic core directory
-    :type lfric_core_source: Path
     :param lfric_apps_source: the path to the LFRic apps directory
-    :type lfric_apps_source: Path
     :param rose_meta_conf: the path to the rose-meta configuration file
-    :type rose_meta_conf: Path
     :param rose_picker: the rose picker tool
-    :type rose_picker: Tool
     :param config_dir: the directory for the generated configuration files
-    :type config_dir: Optional[Path]
-    '''
-    # pylint: disable=too-many-arguments
+    """
+
     tools = lfric_core_source / 'infrastructure' / 'build' / 'tools'
     config_dir = config_dir or config.build_output / 'configuration'
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +49,7 @@ def configurator(config: BuildConfig,
     # gungho/build
     logger.info('rose_picker')
 
-    rose_picker.run(additional_parameters=[
+    rose_picker.execute(additional_parameters=[
         rose_meta_conf,
         '-directory', config_dir,
         '-include_dirs', lfric_apps_source,
