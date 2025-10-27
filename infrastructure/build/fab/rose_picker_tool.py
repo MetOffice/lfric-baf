@@ -9,6 +9,7 @@ If required, a version of rose_picker will be checked out.
 import logging
 import os
 from pathlib import Path
+import shutil
 from typing import cast, List, Union
 
 from fab.tools import Category, Tool, ToolRepository
@@ -74,9 +75,10 @@ def get_rose_picker(tag: str = "v2.0.0") -> RosePicker:
 
     if tag.lower() == "system":
         # 'system' means to use a rose_picker installed in the system
-        # (i.e. available without any path or adjustment of PYTHONPATH)
-        rp = cast(RosePicker, Tool("rose_picker", exec_name="rose_picker"))
-        return rp
+        which_rose_picker = shutil.which("rose_picker")
+        if not which_rose_picker:
+            raise RuntimeError("Cannot find system rose_picker tool.")
+        return RosePicker(Path(which_rose_picker))
 
     # Otherwise use rose_picker from the default Fab workspace. It will
     # create a instance of the class above, which will add its path to
