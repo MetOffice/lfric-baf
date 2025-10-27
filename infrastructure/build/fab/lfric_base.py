@@ -340,8 +340,8 @@ class LFRicBase(FabBase):
             templ_i32 = {"kind": "int32", "type": "integer"}
             for key_values in [templ_r32, templ_r64, templ_i32]:
                 out_file = out_dir / f"field_{key_values['kind']}_mod.f90"
-                templaterator.run(template_file, out_file,
-                                  key_values=key_values)
+                templaterator.process(template_file, out_file,
+                                      key_values=key_values)
                 config.artefact_store.add(ArtefactSet.FORTRAN_BUILD_FILES,
                                           out_file)
 
