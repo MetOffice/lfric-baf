@@ -1,34 +1,24 @@
+##############################################################################
+# (c) Crown copyright Met Office. All rights reserved.
+# For further details please refer to the file COPYRIGHT
+# which you should have received as part of this distribution
+##############################################################################
+
+"""
+This file contains the configurator script sequence for LFRic.
+"""
+
 import logging
-import shutil
 from pathlib import Path
-from typing import Optional
+from typing import cast, Optional
 
 from fab.build_config import BuildConfig
-from fab.artefacts import ArtefactSet
 from fab.steps import step
 from fab.steps.find_source_files import find_source_files
 from fab.tools import Category, Tool
+from fab.tools.shell import Shell
 
 logger = logging.getLogger('fab')
-
-
-class Script(Tool):
-    '''
-    A simple wrapper that runs a shell script.
-
-    :param name: the path to the script to run.
-    :type name: Path
-    '''
-    def __init__(self, name: Path):
-        super().__init__(name=name.name, exec_name=str(name),
-                         category=Category.MISC)
-
-    def check_available(self) -> bool:
-        '''
-        This method overrides the base class check_available to simply
-        mark the script tool as available. 
-        '''
-        return True
 
 
 @step
@@ -74,32 +64,32 @@ def configurator(config: BuildConfig,
         '-include_dirs', lfric_apps_source / 'rose-meta'])
     rose_meta = config_dir / 'rose-meta.json'
 
+    tb = config.tool_box
+    shell = tb.get_tool(Category.SHELL)
+    shell = cast(Shell, shell)
+
     # build_config_loaders
     # --------------------
     # builds a bunch of f90s from the json
     logger.info('GenerateNamelist')
-    gen_namelist = Script(tools / 'GenerateNamelist')
-    gen_namelist.run(additional_parameters=['-verbose', rose_meta,
-                                            '-directory', config_dir],
-                     cwd=config_dir)
+    shell.exec(command=(f"{tools / 'GenerateNamelist'} -verbose {rose_meta} "
+                        f"-directory {config_dir}"))
 
     # create configuration_mod.f90 in source root
     # -------------------------------------------
     logger.info('GenerateLoader')
-    names = [name.strip() for name in
-             open(config_dir / 'config_namelists.txt').readlines()]
+    with open(config_dir / 'config_namelists.txt', encoding="utf8") as f_in:
+        names = [name.strip() for name in f_in.readlines()]
+
     configuration_mod_fpath = config_dir / 'configuration_mod.f90'
-    gen_loader = Script(tools / 'GenerateLoader')
-    gen_loader.run(additional_parameters=[configuration_mod_fpath,
-                                          *names])
+    shell.exec(f"{tools / 'GenerateLoader'} {configuration_mod_fpath} "
+               f"{' '.join(names)}")
 
     # create feign_config_mod.f90 in source root
     # ------------------------------------------
     logger.info('GenerateFeigns')
     feign_config_mod_fpath = config_dir / 'feign_config_mod.f90'
-    gft = Tool("GenerateFeignsTool", exec_name=str(tools / 'GenerateFeigns'),
-               category=Category.MISC)
-    gft.run(additional_parameters=[rose_meta,
-                                   '-output', feign_config_mod_fpath])
+    shell.exec(f"{tools / 'GenerateFeigns'} {rose_meta} "
+               f"-output {feign_config_mod_fpath}")
 
     find_source_files(config, source_root=config_dir)
