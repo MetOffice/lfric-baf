@@ -29,7 +29,7 @@ from fab.steps.grab.folder import grab_folder
 from fab.tools import Category
 from fab.util import input_to_output_fpath
 
-from lfric_common import configurator
+from configurator import configurator
 from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
 
@@ -311,7 +311,9 @@ class LFRicBase(FabBase):
             rp = get_rose_picker(self.args.rose_picker)
             # Ideally we would want to get all source files created in
             # the build directory, but then we need to know the list of
-            # files to add them to the list of files to process
+            # files to add them to the list of files to process. Instead,
+            # we create the files in the source directory, and find them
+            # there later.
             configurator(self.config, lfric_core_source=self.lfric_core_root,
                          lfric_apps_source=self.lfric_apps_root,
                          rose_meta_conf=rose_meta,

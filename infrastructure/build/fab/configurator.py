@@ -5,7 +5,7 @@
 ##############################################################################
 
 """
-This file contains the configurator script sequence for LFRic.
+This file defines the configurator script sequence for LFRic.
 """
 
 import logging
@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import cast, Optional
 
 from fab.build_config import BuildConfig
-from fab.steps import step
 from fab.steps.find_source_files import find_source_files
 from fab.tools import Category, Tool
 from fab.tools.shell import Shell
@@ -21,7 +20,6 @@ from fab.tools.shell import Shell
 logger = logging.getLogger('fab')
 
 
-@step
 def configurator(config: BuildConfig,
                  lfric_core_source: Path,
                  lfric_apps_source: Path,
