@@ -432,11 +432,3 @@ class LFRicBase(FabBase):
         if global_transformation_script.exists():
             return global_transformation_script
         return ""
-
-
-# ==========================================================================
-if __name__ == "__main__":
-    # This tests the LFRicBase class using the command line.
-    logger = logging.getLogger('fab')
-    logger.setLevel(logging.DEBUG)
-    lfric_base = LFRicBase(name="command-line-test")
