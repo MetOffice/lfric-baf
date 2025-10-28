@@ -55,7 +55,7 @@ class RosePicker(Tool):
         env["PYTHONPATH"] = (f"{env.get('PYTHONPATH', '')}:"
                              f"{self._pythonpath}")
 
-        super().run(additional_parameters=additional_parameters, env=env)
+        self.run(additional_parameters=additional_parameters, env=env)
 
 
 # =============================================================================
