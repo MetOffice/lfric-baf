@@ -33,12 +33,12 @@ class Tauf90(CompilerWrapper):
     def compile_file(self, input_file: Path,
                      output_file: Path,
                      config: BuildConfig,
-                     add_flags:Union[None, List[str]] = None,
+                     add_flags: Union[None, List[str]] = None,
                      syntax_only: Optional[bool] = None) -> None:
         '''
         This method overrides the Fab CompilerWrapper class compile_file
-        method to fall back to the wrapped compiler for certain Fortran files and
-        use the tau_f90.sh wrapper to compile the rest.
+        method to fall back to the wrapped compiler for certain Fortran files
+        and use the tau_f90.sh wrapper to compile the rest.
 
         :param Path input_file: the path of the input file to compile
         :param Path output_file: the path of the output file to create
@@ -50,9 +50,9 @@ class Tauf90(CompilerWrapper):
         :type syntax_only: Optional[bool]
         '''
         if ('psy.f90' in str(input_file)) or \
-          ('/kernel/' in str(input_file)) or \
-          ('leaf_jls_mod' in str(input_file)) or \
-          ('/science/' in str(input_file)):
+           ('/kernel/' in str(input_file)) or \
+           ('leaf_jls_mod' in str(input_file)) or \
+           ('/science/' in str(input_file)):
             self.compiler.compile_file(input_file, output_file,
                                        config, add_flags, syntax_only)
         else:
@@ -108,7 +108,8 @@ class Config(DefaultConfig):
         linker.add_lib_flags("xios", ["-lxios"])
         linker.add_lib_flags("hdf5", ["-lhdf5"])
         linker.add_lib_flags("shumlib", ["-lshum"])
-        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c", "-lvernier"])
+        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c",
+                                         "-lvernier"])
 
         # Always link with C++ libs
         linker.add_post_lib_flags(["-lstdc++"])

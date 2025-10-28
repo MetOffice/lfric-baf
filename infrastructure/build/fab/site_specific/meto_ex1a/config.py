@@ -31,7 +31,6 @@ class Config(DefaultConfig):
         '''
         super().setup_cray(build_config)
         tr = ToolRepository()
-        ftn = tr.get_tool(Category.FORTRAN_COMPILER, "crayftn-ftn")
 
         # Update the linker. This is what the default sets up
         # (except NetCDF, which is normally defined using nf-config)
