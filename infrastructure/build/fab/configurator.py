@@ -66,8 +66,8 @@ def configurator(config: BuildConfig,
     # --------------------
     # builds a bunch of f90s from the json
     logger.info('GenerateNamelist')
-    shell.exec(command=(f"{tools / 'GenerateNamelist'} -verbose {rose_meta} "
-                        f"-directory {config_dir}"))
+    shell.exec(f"{tools / 'GenerateNamelist'} -verbose {rose_meta} "
+               f"-directory {config_dir}")
 
     # create configuration_mod.f90 in source root
     # -------------------------------------------
