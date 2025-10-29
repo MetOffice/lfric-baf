@@ -96,7 +96,7 @@ def test_get_rose_picker_local_checkout_fails() -> None:
     mock_repo.assert_called_with(Category.FCM)
 
 
-def test_get_rose_picker_check_available():
+def test_get_rose_picker_check_available() -> None:
     """
     Test RosePicker's check_available.
     """
@@ -110,15 +110,15 @@ def test_get_rose_picker_check_available():
     mock_run.assert_called_once_with(additional_parameters="-help")
 
 
-def test_get_rose_picker_execute():
+def test_get_rose_picker_execute() -> None:
     """
     Test RosePicker's check_available.
     """
     rose_picker = RosePicker(Path("/usr/bin/rose_picker"))
     with patch.object(RosePicker, "run", return_value=0) as mock_run, \
          patch.object(os, "environ", {}):
-        rose_picker.execute("arg")
+        rose_picker.execute(["arg"])
     # Rose picker prepends the existing python path, separated by ":".
     # Since python path is not set, there will be a leading ":""
-    mock_run.assert_called_once_with(additional_parameters="arg",
+    mock_run.assert_called_once_with(additional_parameters=["arg"],
                                      env={'PYTHONPATH': ':/usr/lib/python'})
