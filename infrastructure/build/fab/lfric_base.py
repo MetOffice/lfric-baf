@@ -113,8 +113,8 @@ class LFRicBase(FabBase):
             ) -> argparse.ArgumentParser:
         '''
         This adds LFRic specific command line options to the base class
-        define_command_line_option. Currently, --rose_picker, --vernier
-        and --precision options are added.
+        define_command_line_option. Currently, --rose_picker and --precision
+        options are added.
 
         :param parser: optional a pre-defined argument parser.
         :returns: the argument parser with the LFRic specific options added.
@@ -125,8 +125,6 @@ class LFRicBase(FabBase):
             '--rose_picker', '-rp', type=str, default="system",
             help="Version of rose_picker. Use 'system' to use an installed "
                  "version.")
-        parser.add_argument("--vernier", action="store_true", default=False,
-                            help="Support profiling with Vernier.")
         parser.add_argument(
             '--precision', '-pre', type=str, default=None,
             help="Precision for reals, choose from '64', '32', \
@@ -209,9 +207,6 @@ class LFRicBase(FabBase):
 
         # core/components/lfric-xios/build/import.mk
         preprocessor_flags = precision_flags+['-DUSE_XIOS']
-        
-        if self.args.vernier:
-            preprocessor_flags += ['-DTIMING_ON','-DVERNIER']
 
         self.add_preprocessor_flags(preprocessor_flags)
         # -DUSE_XIOS is not found in makefile but in fab run_config and
@@ -221,14 +216,12 @@ class LFRicBase(FabBase):
         '''
         This method overwrites the base class get_liner_flags. It passes the
         libraries that LFRic uses to the linker. Currently, these libraries
-        include yaxt, xios, netcdf, hdf5 and vernier
+        include yaxt, xios, netcdf and hdf5.
 
         :returns: list of flags for the linker.
         :rtype: List[str]
         '''
         libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
-        if self.args.vernier:
-            libs.append("vernier")
         return libs + super().get_linker_flags()
 
     def grab_files_step(self) -> None:
@@ -254,21 +247,6 @@ class LFRicBase(FabBase):
         dir = "etc"
         grab_folder(self.config, src=self.lfric_core_root / dir,
                     dst_label='psyclone_config')
-
-        compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
-        linker = self.config.tool_box.get_tool(Category.LINKER,
-                                               mpi=self.config.mpi,
-                                               openmp=self.config.openmp)
-        if (self.args.vernier or
-                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
-            # Profiling. Grab the required psydata directory as well:
-            if self.args.vernier:
-                dir = "vernier"
-            else:
-                dir = "tau"
-            grab_folder(self.config, src=self.lfric_core_root /
-                        "infrastructure" / "build" / "psyclone" / "psydata"
-                        / dir, dst_label='psydata')
 
     def find_source_files_step(
             self,
@@ -376,8 +354,6 @@ class LFRicBase(FabBase):
                                 'yaxt', 'mod_oasis']
         # core/components/lfric-xios/build/import.mk
         ignore_dependencies += ['xios', 'icontext', 'mod_wait']
-        if self.args.vernier:
-            ignore_dependencies.append('vernier_mod')
         analyse(self.config, root_symbol=self.root_symbol,
                 ignore_dependencies=ignore_dependencies,
                 find_programs=find_programs)
@@ -420,20 +396,8 @@ class LFRicBase(FabBase):
 
     def get_additional_psyclone_options(self) -> List[str]:
         '''
-        :returns: Additional PSyclone command line options. This
-            basic version checks if profiling using Tau or Vernier is enabled,
-            and if so, adds the kernel profiling flags to PSyclone.
-        :rtype: List[str]
+        A placeholder for additional PSyclone comand line options.
         '''
-        compiler = self.config.tool_box[Category.FORTRAN_COMPILER]
-        linker = self.config.tool_box.get_tool(Category.LINKER,
-                                               mpi=self.config.mpi)
-        #Turned off psyclone profiling for vernier for vernier error:
-        #character buffer exhausted.
-#        if (self.args.vernier or
-#                "tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
-        if ("tau_f90.sh" in [compiler.exec_name, linker.exec_name]):
-            return ["--profile", "kernels"]
         return []
 
     def get_transformation_script(self, fpath: Path,
@@ -470,11 +434,3 @@ class LFRicBase(FabBase):
         if global_transformation_script.exists():
             return global_transformation_script
         return ""
-
-
-# ==========================================================================
-if __name__ == "__main__":
-    # This tests the LFRicBase class using the command line.
-    logger = logging.getLogger('fab')
-    logger.setLevel(logging.DEBUG)
-    lfric_base = LFRicBase(name="command-line-test")
