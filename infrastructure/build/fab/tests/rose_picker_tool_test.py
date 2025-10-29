@@ -1,11 +1,23 @@
+# ##############################################################################
+#  (c) Crown copyright Met Office. All rights reserved.
+#  For further details please refer to the file COPYRIGHT
+#  which you should have received as part of this distribution
+# ##############################################################################
+
+"""
+This module tests rose_picker_tool.
+"""
+
 import os
-import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock, PropertyMock
 
+import pytest
+
+from fab.tools.category import Category
+from fab.tools.tool import Tool
 from rose_picker_tool import get_rose_picker, RosePicker
 
-from fab.tools.tool import Tool
 
 def test_get_rose_picker_system_found() -> None:
     """
@@ -28,6 +40,10 @@ def test_get_rose_picker_system_not_found() -> None:
 
 
 def test_get_rose_picker_local_checkout(tmp_path) -> None:
+    """
+    Tests that we will invoke rose picker from a local checkout
+    (mocked, so we don't need an actual checkout)
+    """
     tag = "v2.0.0"
     fake_workspace = tmp_path / "fab-workspace"
     gpl_utils = fake_workspace / f"gpl-utils-{tag}" / "source"
@@ -36,11 +52,11 @@ def test_get_rose_picker_local_checkout(tmp_path) -> None:
 
     # Patch get_fab_workspace to return our tmp_path
     pm = PropertyMock("is_available", side_effect=[False, True])
-    with patch("rose_picker_tool.get_fab_workspace", return_value=fake_workspace), \
+    with patch("rose_picker_tool.get_fab_workspace",
+               return_value=fake_workspace), \
          patch("rose_picker_tool.ToolRepository") as mock_repo_class, \
          patch.object(Tool, "is_available", pm):
 
-        Tool.is_available = pm
         mock_fcm = MagicMock()
         mock_repo = MagicMock()
         mock_repo.get_default.return_value = mock_fcm
@@ -59,30 +75,25 @@ def test_get_rose_picker_local_checkout(tmp_path) -> None:
         assert Path(rp.exec_path) == rose_picker_path
 
 
-def test_get_rose_picker_local_checkout_fails(tmp_path) -> None:
+def test_get_rose_picker_local_checkout_fails() -> None:
+    """
+    This functions tests the behaviour if a local checkout fails,
+    i.e. rose_picker cannot be executed. This test patches the
+    ToolRepository (so that FCM is not actually called), and makes
+    sure RosePicker is always not available:
+    """
+
     tag = "v2.0.0"
-    fake_workspace = tmp_path / "fab-workspace"
-    gpl_utils = fake_workspace / f"gpl-utils-{tag}" / "source"
-    rose_picker_bin = gpl_utils / "bin"
-    rose_picker_path = rose_picker_bin / "rose_picker"
 
-    # Patch get_fab_workspace to return our tmp_path
-    pm = PropertyMock("is_available", side_effect=[False, False])
-    with patch("rose_picker_tool.get_fab_workspace", return_value=fake_workspace), \
-         patch("rose_picker_tool.ToolRepository") as mock_repo_class, \
-         patch.object(Tool, "is_available", pm):
+    # Make sure rose_picker will always return to be not available:
+    with patch("rose_picker_tool.ToolRepository.get_default") as mock_repo, \
+         patch.object(RosePicker, "check_available", return_value=False), \
+         pytest.raises(RuntimeError) as err:
+        get_rose_picker(tag)
 
-        Tool.is_available = pm
-        mock_fcm = MagicMock()
-        mock_repo = MagicMock()
-        mock_repo.get_default.return_value = mock_fcm
-        mock_repo_class.return_value = mock_repo
-
-        with pytest.raises(RuntimeError) as err:
-            get_rose_picker(tag)
-
-        assert "Cannot run rose_picker tag 'v2.0.0'." == str(err.value)
-
+        assert f"Cannot run rose_picker tag '{tag}'." == str(err.value)
+    # Also make sure that we indeed got FCM :)
+    mock_repo.assert_called_with(Category.FCM)
 
 
 def test_get_rose_picker_check_available():
