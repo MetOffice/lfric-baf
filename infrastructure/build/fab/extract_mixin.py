@@ -7,7 +7,7 @@
 
 '''
 This module contains an ExtractMixin class to add support for all extration
-scripts. 
+scripts.
 '''
 
 import logging
@@ -84,7 +84,7 @@ class ExtractMixin:
     def grab_files_step(self):
         '''
         This method overwrites the grab_files_step in the base class by also
-        including the psydata extract folder in LFRic core repo for extraction. 
+        including the psydata extract folder in LFRic core repo for extraction.
         '''
         super().grab_files_step()
         grab_folder(self.config, src=self.lfric_core_root /
@@ -101,7 +101,9 @@ class ExtractMixin:
         self.remove_private_step()
         super().psyclone_step()
 
-    def get_transformation_script(self, fpath: Path, config: BuildConfig) -> Path:
+    def get_transformation_script(self,
+                                  fpath: Path,
+                                  config: BuildConfig) -> Path:
         '''
         This method overwrites the base class get_transformation_script by
         returning the path to the transformation script that PSyclone will

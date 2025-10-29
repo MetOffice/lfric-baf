@@ -7,7 +7,7 @@
 
 """
 This script is used on NCI GADI to export the LFRic core and apps codes
-into the FAB workspace with FCM for rose stem tests. 
+into the FAB workspace with FCM for rose stem tests.
 """
 
 import os

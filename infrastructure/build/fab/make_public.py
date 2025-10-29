@@ -81,7 +81,8 @@ def remove_private(filename: str) -> ParserFactory:
     # be listed additionally:
     for node in walk(
         parse_tree,
-        (Access_Stmt, Protected_Stmt, Private_Components_Stmt, Binding_Private_Stmt),
+        (Access_Stmt, Protected_Stmt, Private_Components_Stmt,
+         Binding_Private_Stmt),
     ):
         # A Private_Components_Stms has no items:
         if isinstance(
@@ -115,7 +116,8 @@ def remove_private(filename: str) -> ParserFactory:
     for node in all_nodes:
         if str(node) == "PROTECTED":
             # This is a tuple, so we can't simply remove the attribute
-            node.parent.items = tuple(i for i in node.parent.items if i is not node)
+            node.parent.items = tuple(i for i in node.parent.items
+                                      if i is not node)
             # If all items in the Attr_Spec are removed, we need to replace the
             # Attr_Spec in the parent-parent (Type_Declaration) with None,
             # otherwise fparser will create e.g. `real, :: a`
@@ -123,7 +125,8 @@ def remove_private(filename: str) -> ParserFactory:
                 # Again all tuples, which we can't modify, so we need to
                 # recreate the tuple but replace the attr_spec with None
                 type_decl = node.parent.parent
-                type_decl.items = (type_decl.items[0], None, type_decl.items[2])
+                type_decl.items = (type_decl.items[0], None,
+                                   type_decl.items[2])
 
     return parse_tree
 

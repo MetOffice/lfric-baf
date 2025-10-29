@@ -7,7 +7,7 @@
 
 """
 This script is used on NCI GADI to export the LFRic core and apps codes
-into the FAB workspace with FCM for Gitlab pipeline tests. 
+into the FAB workspace with FCM for Gitlab pipeline tests.
 """
 
 import sys

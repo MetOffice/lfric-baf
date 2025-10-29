@@ -241,8 +241,8 @@ class BafBase:
             # path, so it doesn't need to be added), so site-specific
             # will be added below.
             dir_caller = Path(".")
-            self.logger.warning(f"Could not find caller directory, "
-                                f"defaulting to '.'.")
+            self.logger.warning("Could not find caller directory, "
+                                "defaulting to '.'.")
 
         # We need to add the 'site_specific' directory to the path, so
         # each config can import from 'default' (instead of having to
