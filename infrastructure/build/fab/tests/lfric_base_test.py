@@ -15,7 +15,7 @@ import sys
 import argparse
 import inspect
 from unittest import mock
-from typing import cast, List
+from typing import cast, List, Optional
 
 import pytest
 
@@ -32,19 +32,19 @@ class MockSiteConfig:
     """
     Creates a mock site config class.
     """
-    def __init__(self):
-        self.args = None
+    def __init__(self) -> None:
+        self.args: Optional[argparse.Namespace] = None
 
-    def get_valid_profiles(self):
+    def get_valid_profiles(self) -> List[str]:
         return ["default-profile"]
 
-    def update_toolbox(self, build_config: BuildConfig):
+    def update_toolbox(self, build_config: BuildConfig) -> None:
         pass
 
-    def handle_command_line_options(self, args: argparse.Namespace):
+    def handle_command_line_options(self, args: argparse.Namespace) -> None:
         self.args = args
 
-    def get_path_flags(self, build_config: BuildConfig):
+    def get_path_flags(self, build_config: BuildConfig) -> List[str]:
         return []
 
 
