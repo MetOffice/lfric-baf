@@ -13,7 +13,6 @@ script.
 
 import argparse
 import inspect
-import logging
 import os
 from pathlib import Path
 import sys
@@ -26,7 +25,6 @@ from fab.steps.analyse import analyse
 from fab.steps.find_source_files import Exclude, Include
 from fab.steps.psyclone import psyclone, preprocess_x90
 from fab.steps.grab.folder import grab_folder
-from fab.tools import Category
 from fab.util import input_to_output_fpath
 
 from configurator import configurator
@@ -202,9 +200,6 @@ class LFRicBase(FabBase):
             else:
                 precision_flags += ['-DR_BL_PRECISION=64']
 
-        # build/tests.mk - for mpi unit tests, not used atm
-        mpi_tests_flags = ['-DUSE_MPI=YES']
-
         # core/components/lfric-xios/build/import.mk
         preprocessor_flags = precision_flags+['-DUSE_XIOS']
 
@@ -265,9 +260,11 @@ class LFRicBase(FabBase):
         self.configurator_step()
 
         if path_filters is None:
-            path_filters = []
-        path_filters.append(Exclude('unit-test', '/test/'))
-        super().find_source_files_step(path_filters=path_filters)
+            path_filter_list = []
+        else:
+            path_filter_list = list(path_filters)
+        path_filter_list.append(Exclude('unit-test', '/test/'))
+        super().find_source_files_step(path_filters=path_filter_list)
 
         self.templaterator_step(self.config)
 
@@ -350,12 +347,12 @@ class LFRicBase(FabBase):
         if ignore_dependencies is None:
             ignore_dependencies = []
         # core/infrastructure/build/import.mk
-        ignore_dependencies += ['netcdf', 'mpi', 'mpi_f08',
-                                'yaxt', 'mod_oasis']
-        # core/components/lfric-xios/build/import.mk
-        ignore_dependencies += ['xios', 'icontext', 'mod_wait']
+        ignore_dep_list = list(ignore_dependencies)
+        ignore_dep_list += ['netcdf', 'mpi', 'mpi_f08', 'yaxt', 'mod_oasis']
+        # From core/components/lfric-xios/build/import.mk
+        ignore_dep_list += ['xios', 'icontext', 'mod_wait']
         analyse(self.config, root_symbol=self.root_symbol,
-                ignore_dependencies=ignore_dependencies,
+                ignore_dependencies=ignore_dep_list,
                 find_programs=find_programs)
 
     def preprocess_x90_step(self) -> None:
@@ -381,7 +378,8 @@ class LFRicBase(FabBase):
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
 
-        psyclone(self.config, kernel_roots=[(self.config.build_output / "kernel")],
+        psyclone(self.config, kernel_roots=[(self.config.build_output /
+                                             "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args)
@@ -401,7 +399,7 @@ class LFRicBase(FabBase):
         return []
 
     def get_transformation_script(self, fpath: Path,
-                                  config: BuildConfig) -> Path:
+                                  config: BuildConfig) -> Optional[Path]:
         '''
         This method returns the path to the transformation script that PSyclone
         will use for each x90 file. It first checks if there is a specific
@@ -433,4 +431,4 @@ class LFRicBase(FabBase):
         global_transformation_script = optimisation_path / 'global.py'
         if global_transformation_script.exists():
             return global_transformation_script
-        return ""
+        return None
