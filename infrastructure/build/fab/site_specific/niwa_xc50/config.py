@@ -28,7 +28,7 @@ class Config(DefaultConfig):
         First call the base class to get all default options.
         See the file ../default/setup_cray.py for the current
         default. Then the NIWA's XC-50 specific flags are added.
-        The linker is also updated. 
+        The linker is also updated.
 
         :param build_config: the Fab build config instance from which
             required parameters can be taken.
@@ -58,4 +58,5 @@ class Config(DefaultConfig):
         linker.add_lib_flags("xios", ["-lxios"])
         linker.add_lib_flags("hdf5", ["-lhdf5"])
         linker.add_lib_flags("shumlib", ["-lshum"])
-        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c", "-lvernier"])
+        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c",
+                                         "-lvernier"])

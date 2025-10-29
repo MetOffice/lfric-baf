@@ -226,6 +226,10 @@ class FabLFRicAtm(LFRicBase):
 
         gr = GetRevision("../../dependencies.sh")
         for lib, revision in gr.items():
+            if lib == "lfric_core":
+                # We don't support checking out lfric core, it will
+                # be taken from an already checked out directory
+                continue
             # We only need the src directories for the build
             fcm_src = f'fcm:{lib}.xm_tr/src'
             logger.info(f"Extracting {fcm_src} to 'science/{lib}/src', "

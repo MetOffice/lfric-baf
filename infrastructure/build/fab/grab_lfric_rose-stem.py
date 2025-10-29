@@ -7,7 +7,7 @@
 
 """
 This script is used on NCI GADI to export the LFRic core and apps codes
-into the FAB workspace with FCM for rose stem tests. 
+into the FAB workspace with FCM for rose stem tests.
 """
 
 import os
@@ -18,7 +18,7 @@ from fab.build_config import BuildConfig
 from fab.steps.grab.fcm import fcm_export
 from fab.tools import ToolBox
 
-fab_workspace = Path(os.getenv("SOURCE_ROOT"))
+fab_workspace = Path(os.getenv("SOURCE_ROOT", ""))
 
 lfric_core_source_config = BuildConfig(
     project_label='grab_lfric_source', tool_box=ToolBox(),
@@ -31,10 +31,10 @@ if __name__ == '__main__':
 
     with lfric_core_source_config:
         fcm_export(
-            lfric_core_source_config, src=os.getenv("SOURCE_LFRIC_CORE"),
+            lfric_core_source_config, src=os.getenv("SOURCE_LFRIC_CORE", ""),
             dst_label='core')
 
     with lfric_apps_source_config:
         fcm_export(
-            lfric_apps_source_config, src=os.getenv("SOURCE_LFRIC_APPS"),
+            lfric_apps_source_config, src=os.getenv("SOURCE_LFRIC_APPS", ""),
             dst_label='apps')
