@@ -792,10 +792,10 @@ def test_get_transformation_script(monkeypatch, tmpdir) -> None:
 
     # Test case 1: x90 file not in source or build directories
     outside_file = tmp_path.parent / "outside.x90"
-    assert lfric_base.get_transformation_script(outside_file, config) == ""
+    assert lfric_base.get_transformation_script(outside_file, config) is None
 
     # Test case 2: No optimisation directory, no transformation script
-    assert lfric_base.get_transformation_script(test_file, config) == ""
+    assert lfric_base.get_transformation_script(test_file, config) is None
 
     # Test case 3: No PSykal but optimisation directory
     optimisation_folder_path = tmp_path / "optimisation/default-default"
