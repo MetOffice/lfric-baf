@@ -577,8 +577,8 @@ def test_templaterator_step(monkeypatch, tmpdir) -> None:
             mock.call(template_file, out_file, key_values=template)
         )
     
-    assert mock_templaterator_instance.run.call_count == 3
-    mock_templaterator_instance.run.assert_has_calls(expected_calls)
+    assert mock_templaterator_instance.process.call_count == 3
+    mock_templaterator_instance.process.assert_has_calls(expected_calls)
     
     # Verify artefact store add calls
     expected_add_calls = []
@@ -595,7 +595,7 @@ def test_templaterator_step(monkeypatch, tmpdir) -> None:
     mock_filter.return_value = set()
     lfric_base.templaterator_step(config)
     # Call count should remain the same since no new files processed
-    assert mock_templaterator_instance.run.call_count == 3
+    assert mock_templaterator_instance.process.call_count == 3
 
 
 def test_get_rose_meta(monkeypatch) -> None:
