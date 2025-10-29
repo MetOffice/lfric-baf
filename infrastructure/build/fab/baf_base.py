@@ -43,7 +43,7 @@ class BafBase:
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
                  name: str,
-                 link_target: Optional[str] = "executable"):
+                 link_target: str = "executable"):
         link_target = link_target.lower()
         valid_targets = ["executable", "static-library", "shared-library"]
         if link_target not in valid_targets:
