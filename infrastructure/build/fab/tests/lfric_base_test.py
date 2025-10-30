@@ -19,11 +19,11 @@ from typing import cast, List, Optional
 
 import pytest
 
+from fab.artefacts import ArtefactSet
 from fab.build_config import BuildConfig
 from fab.tools import Category, ToolRepository
 from fab.tools.compiler import CCompiler, FortranCompiler
 from fab.tools.linker import Linker
-from fab.artefacts import ArtefactSet
 
 from lfric_base import LFRicBase
 
@@ -357,13 +357,24 @@ def test_precision_definition_with_default(monkeypatch) -> None:
     assert '-DR_BL_PRECISION=64' in flags
 
 
-def test_preprocessor_flags(monkeypatch) -> None:
+@pytest.mark.parametrize('no_xios', [True, False])
+@pytest.mark.parametrize('mpi', [True, False])
+def test_preprocessor_flags(monkeypatch, no_xios, mpi) -> None:
     """
     Tests setting of preprocessor flags, and also that we get
     the expected defaults for the precision variables.
     """
+    argv = ["fab_script", "--no-openmp"]
+    if no_xios:
+        argv.append("--no-xios")
+    if not mpi:
+        argv.append("--no-mpi")
+    monkeypatch.setattr(sys, "argv", argv)
 
-    monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
+    # Mark the compiler to have MPI or not, depending on what is needed
+    tr = ToolRepository()
+    fc = tr.get_tool(Category.FORTRAN_COMPILER, "sfc")
+    monkeypatch.setattr(fc, "_mpi", mpi)
 
     lfric_base = LFRicBase(name="test")
     lfric_base.define_preprocessor_flags_step()
@@ -372,9 +383,12 @@ def test_preprocessor_flags(monkeypatch) -> None:
         '-DRDEF_PRECISION=64',
         '-DR_SOLVER_PRECISION=32',
         '-DR_TRAN_PRECISION=64',
-        '-DR_BL_PRECISION=64',
-        '-DUSE_XIOS'
+        '-DR_BL_PRECISION=64'
     ]
+    if not no_xios:
+        expected_flags.append("-DUSE_XIOS")
+    if not mpi:
+        expected_flags.append("-DNO_MPI")
     assert set(lfric_base.preprocess_flags_common) == set(expected_flags)
 
 

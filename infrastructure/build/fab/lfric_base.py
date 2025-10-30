@@ -134,6 +134,10 @@ class LFRicBase(FabBase):
             help="Version of rose_picker. Use 'system' to use an installed "
                  "version.")
 
+        parser.add_argument(
+            '--no-xios', action="store_true", default=False,
+            help="Disable compilation with XIOS.")
+
         # Precision related command line arguments
         # ----------------------------------------
         group = parser.add_argument_group(
@@ -203,8 +207,10 @@ class LFRicBase(FabBase):
         '''
         This method overwrites the base class define_preprocessor_flags.
         It uses add_preprocessor_flags to set up preprocessing flags for LFRic
-        applications. Currently, the precision flags with precision level set
-        in the command line option and the '-DUSE_XIOS' flag are set here.
+        applications. This includes:
+        - various floating point precision related directives
+        - Use of XIOS (if not disabled using --no-xios command line option)
+        - Disabling MPI (if disabled using --no-mpi)
         '''
         preprocessor_flags: List[str] = []
 
@@ -234,7 +240,11 @@ class LFRicBase(FabBase):
                 preprocessor_flags.append(f"-D{prec_name}={prec_default}")
 
         # core/components/lfric-xios/build/import.mk
-        preprocessor_flags.append('-DUSE_XIOS')
+        if not self.args.no_xios:
+            preprocessor_flags.append('-DUSE_XIOS')
+
+        if not self.config.mpi:
+            preprocessor_flags.append("-DNO_MPI")
 
         self.add_preprocessor_flags(preprocessor_flags)
 
@@ -290,10 +300,7 @@ class LFRicBase(FabBase):
         '''
         self.configurator_step()
 
-        if path_filters is None:
-            path_filter_list = []
-        else:
-            path_filter_list = list(path_filters)
+        path_filter_list = list(path_filters) if path_filters else []
         path_filter_list.append(Exclude('unit-test', '/test/'))
         super().find_source_files_step(path_filters=path_filter_list)
 
@@ -356,8 +363,8 @@ class LFRicBase(FabBase):
     def get_rose_meta(self) -> Union[Path, None]:
         '''
         This method returns the path to the rose meta data config file.
-        Currently, it returns none for the LFRic applications to overwrite
-        if required.
+        Currently, it returns none. It's up to the LFRic applications to
+        overwrite if required.
         '''
         return None
 
