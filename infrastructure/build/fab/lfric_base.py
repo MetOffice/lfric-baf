@@ -46,7 +46,16 @@ class LFRicBase(FabBase):
     def __init__(self, name: str,
                  root_symbol: Optional[Union[List[str], str]] = None):
 
+        # List of all precision preprocessor symbols and their default.
+        # Used to add corresponding command line options, and then to define
+        # the preprocessor definitions.
+        self._all_precisions = [("RDEF_PRECISION", "64"),
+                                ("R_SOLVER_PRECISION", "32"),
+                                ("R_TRAN_PRECISION", "64"),
+                                ("R_BL_PRECISION", "64")]
+
         super().__init__(name)
+
         # If the user wants to overwrite the default root symbol (which
         # is `name`):
         if root_symbol:
@@ -111,10 +120,11 @@ class LFRicBase(FabBase):
             ) -> argparse.ArgumentParser:
         '''
         This adds LFRic specific command line options to the base class
-        define_command_line_option. Currently, --rose_picker and --precision
-        options are added.
+        define_command_line_option. Currently, --rose_picker and
+        precision-related options are added.
 
         :param parser: optional a pre-defined argument parser.
+
         :returns: the argument parser with the LFRic specific options added.
         '''
         parser = super().define_command_line_options()
@@ -123,10 +133,38 @@ class LFRicBase(FabBase):
             '--rose_picker', '-rp', type=str, default="system",
             help="Version of rose_picker. Use 'system' to use an installed "
                  "version.")
-        parser.add_argument(
-            '--precision', '-pre', type=str, default=None,
-            help="Precision for reals, choose from '64', '32', \
-                default is R_SOLVER_PRECISION=32 while others are 64")
+
+        # Precision related command line arguments
+        # ----------------------------------------
+        group = parser.add_argument_group(
+            title="Precisions",
+            description="Arguments related to setting the floating "
+                        "point precision.")
+
+        group.add_argument(
+            '--precision-default', type=str, default=None,
+            choices=['32', '64'], help="Default precision for reals.")
+
+        # We need to distinguish if a user specified a value (even if it is
+        # the default), or not. Use the following action for argparse:
+        class StoreWithFlag(argparse.Action):
+            """
+            Helper class to add a `XX_specified` entry for command line
+            options that the user has explicitly specified.
+            """
+            def __call__(self, parser, namespace, values, option_string=None):
+                setattr(namespace, self.dest, values)
+                setattr(namespace, f"{self.dest}_specified", True)
+
+        for prec_name, default in self._all_precisions:
+            lower_name = prec_name.lower()
+            group.add_argument(
+                f'--{lower_name}', type=str, choices=['32', '64'],
+                default=default, action=StoreWithFlag,
+                help=f"Precision for '{prec_name}'. Default will be "
+                     f"overwritten by ${prec_name} or --precision-default "
+                     f"in this order.")
+
         return parser
 
     @property
@@ -168,44 +206,37 @@ class LFRicBase(FabBase):
         applications. Currently, the precision flags with precision level set
         in the command line option and the '-DUSE_XIOS' flag are set here.
         '''
-        if self.args.precision:
-            precision_flags = ['-DRDEF_PRECISION=' + self.args.precision,
-                               '-DR_SOLVER_PRECISION=' + self.args.precision,
-                               '-DR_TRAN_PRECISION=' + self.args.precision,
-                               '-DR_BL_PRECISION=' + self.args.precision]
-        else:
-            precision_flags = []
-            r_def_precision = os.environ.get("RDEF_PRECISION")
-            r_solver_precision = os.environ.get("R_SOLVER_PRECISION")
-            r_tran_precision = os.environ.get("R_TRAN_PRECISION")
-            r_bl_precision = os.environ.get("R_BL_PRECISION")
+        preprocessor_flags: List[str] = []
 
-            if r_def_precision:
-                precision_flags += ['-DRDEF_PRECISION='+r_def_precision]
-            else:
-                precision_flags += ['-DRDEF_PRECISION=64']
+        # Take the value of --precision-default (or None if not specified):
+        generic_default = self.args.precision_default
 
-            if r_solver_precision:
-                precision_flags += ['-DR_SOLVER_PRECISION='+r_solver_precision]
-            else:
-                precision_flags += ['-DR_SOLVER_PRECISION=32']
+        # Check all required precision defines
+        for prec_name, prec_default in self._all_precisions:
+            # Check if a value was specified on the command line:
+            if getattr(self.args, f"{prec_name.lower()}_specified", False):
+                value = getattr(self.args, prec_name.lower())
+                preprocessor_flags.append(f"-D{prec_name}={value}")
+                continue
+            # Check for environment variable which can overwrite the default:
+            env_precision = os.environ.get(prec_name)
+            if env_precision:
+                preprocessor_flags.append(f"-D{prec_name}={env_precision}")
+                continue
 
-            if r_tran_precision:
-                precision_flags += ['-DR_TRAN_PRECISION='+r_tran_precision]
+            # No command line option for the current precision name.
+            # Check if a default was set (--precision-default)
+            if generic_default:
+                preprocessor_flags.append(f"-D{prec_name}="
+                                          f"{generic_default}")
             else:
-                precision_flags += ['-DR_TRAN_PRECISION=64']
-
-            if r_bl_precision:
-                precision_flags += ['-DR_BL_PRECISION='+r_bl_precision]
-            else:
-                precision_flags += ['-DR_BL_PRECISION=64']
+                # Otherwise, use the default for this precision
+                preprocessor_flags.append(f"-D{prec_name}={prec_default}")
 
         # core/components/lfric-xios/build/import.mk
-        preprocessor_flags = precision_flags+['-DUSE_XIOS']
+        preprocessor_flags.append('-DUSE_XIOS')
 
         self.add_preprocessor_flags(preprocessor_flags)
-        # -DUSE_XIOS is not found in makefile but in fab run_config and
-        # driver_io_mod.F90
 
     def get_linker_flags(self) -> List[str]:
         '''

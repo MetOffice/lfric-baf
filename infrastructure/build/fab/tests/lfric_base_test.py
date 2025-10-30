@@ -298,12 +298,84 @@ def test_command_line_options(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py",
                                       "--rose_picker", "custom",
-                                      "--precision", "32"])
+                                      "--precision-default", "32"])
 
     lfric_base = LFRicBase(name="test")
 
     assert lfric_base.args.rose_picker == "custom"
-    assert lfric_base.args.precision == "32"
+    assert lfric_base.args.precision_default == "32"
+
+
+def test_precision_definition_without_default(monkeypatch) -> None:
+    '''
+    Tests specification of precision if no default precision is
+    specified on the command line (--precision-default). Tests all
+    other ways a precision can be specified: default command line,
+    explicit command line, environment variable, and the per
+    R_*PRECISION default.
+    '''
+    monkeypatch.setattr(sys, "argv", ["lfric_base.py",
+                                      "--rdef_precision", "32"])
+    monkeypatch.setattr(os, 'environ', {"R_BL_PRECISION": "64"})
+
+    lfric_base = LFRicBase(name="test")
+    lfric_base.define_preprocessor_flags_step()
+    flags = lfric_base.preprocess_flags_common
+
+    # Explicitly set on command line:
+    assert '-DRDEF_PRECISION=32' in flags
+    # Original default of this precision
+    assert '-DR_SOLVER_PRECISION=32' in flags
+    # Original default of this precision
+    assert '-DR_TRAN_PRECISION=64' in flags
+    # From environment variable
+    assert '-DR_BL_PRECISION=64' in flags
+
+
+def test_precision_definition_with_default(monkeypatch) -> None:
+    '''
+    Tests specification of precision. Test all ways a precision
+    can be specified: default command line, explicit command
+    line, environment variable, and the per R_*PRECISION default.
+    '''
+    monkeypatch.setattr(sys, "argv", ["lfric_base.py",
+                                      "--precision-default", "32",
+                                      "--rdef_precision", "64"])
+    monkeypatch.setattr(os, 'environ', {"R_BL_PRECISION": "64"})
+
+    lfric_base = LFRicBase(name="test")
+    lfric_base.define_preprocessor_flags_step()
+
+    flags = lfric_base.preprocess_flags_common
+    # Explicitly set on command line:
+    assert '-DRDEF_PRECISION=64' in flags
+    # Specified default of any precision
+    assert '-DR_SOLVER_PRECISION=32' in flags
+    # Specified default of any precision
+    assert '-DR_TRAN_PRECISION=32' in flags
+    # From environment variable
+    assert '-DR_BL_PRECISION=64' in flags
+
+
+def test_preprocessor_flags(monkeypatch) -> None:
+    """
+    Tests setting of preprocessor flags, and also that we get
+    the expected defaults for the precision variables.
+    """
+
+    monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
+
+    lfric_base = LFRicBase(name="test")
+    lfric_base.define_preprocessor_flags_step()
+
+    expected_flags = [
+        '-DRDEF_PRECISION=64',
+        '-DR_SOLVER_PRECISION=32',
+        '-DR_TRAN_PRECISION=64',
+        '-DR_BL_PRECISION=64',
+        '-DUSE_XIOS'
+    ]
+    assert set(lfric_base.preprocess_flags_common) == set(expected_flags)
 
 
 def test_setup_site_specific_location(monkeypatch) -> None:
@@ -323,86 +395,6 @@ def test_setup_site_specific_location(monkeypatch) -> None:
 
     # Restore path
     sys.path = old_path
-
-
-def test_preprocessor_flags(monkeypatch) -> None:
-    """
-    Tests setting of preprocessor flags with both command line and
-    environment variables.
-    """
-
-    # Test case 1: Command line precision
-    monkeypatch.setattr(sys, "argv", ["lfric_base.py", "--precision", "32"])
-
-    lfric_base = LFRicBase(name="test")
-    lfric_base.define_preprocessor_flags_step()
-
-    expected_flags = [
-        '-DRDEF_PRECISION=32',
-        '-DR_SOLVER_PRECISION=32',
-        '-DR_TRAN_PRECISION=32',
-        '-DR_BL_PRECISION=32',
-        '-DUSE_XIOS'
-    ]
-    assert set(lfric_base.preprocess_flags_common) == set(expected_flags)
-
-    # Test case 2: Environment variables set
-    # No command line precision
-    monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-    env_vars = {
-        'RDEF_PRECISION': '32',
-        'R_SOLVER_PRECISION': '64',
-        'R_TRAN_PRECISION': '32',
-        'R_BL_PRECISION': '64'
-    }
-    monkeypatch.setattr(os, 'environ', env_vars)
-
-    lfric_base = LFRicBase(name="test")
-    lfric_base.define_preprocessor_flags_step()
-
-    expected_flags = [
-        '-DRDEF_PRECISION=32',
-        '-DR_SOLVER_PRECISION=64',
-        '-DR_TRAN_PRECISION=32',
-        '-DR_BL_PRECISION=64',
-        '-DUSE_XIOS'
-    ]
-    assert set(lfric_base.preprocess_flags_common) == set(expected_flags)
-
-    # Test case 3: Some environment variables missing (default values)
-    env_vars = {
-        'RDEF_PRECISION': '32',    # Set
-        'R_TRAN_PRECISION': '32'   # Set
-        # R_SOLVER_PRECISION and R_BL_PRECISION missing - should use defaults
-    }
-    monkeypatch.setattr(os, 'environ', env_vars)
-
-    lfric_base = LFRicBase(name="test")
-    lfric_base.define_preprocessor_flags_step()
-
-    expected_flags = [
-        '-DRDEF_PRECISION=32',      # From env var
-        '-DR_SOLVER_PRECISION=32',  # Default
-        '-DR_TRAN_PRECISION=32',    # From env var
-        '-DR_BL_PRECISION=64',      # Default
-        '-DUSE_XIOS'
-    ]
-    assert set(lfric_base.preprocess_flags_common) == set(expected_flags)
-
-    # Test case 4: No environment variables set (all defaults)
-    monkeypatch.setattr(os, 'environ', {})
-
-    lfric_base = LFRicBase(name="test")
-    lfric_base.define_preprocessor_flags_step()
-
-    expected_flags = [
-        '-DRDEF_PRECISION=64',      # Default
-        '-DR_SOLVER_PRECISION=32',  # Default
-        '-DR_TRAN_PRECISION=64',    # Default
-        '-DR_BL_PRECISION=64',      # Default
-        '-DUSE_XIOS'
-    ]
-    assert set(lfric_base.preprocess_flags_common) == set(expected_flags)
 
 
 def test_get_linker_flags(monkeypatch) -> None:
@@ -652,7 +644,7 @@ def test_analyse_step(monkeypatch) -> None:
     mock_psyclone.assert_called_once()
 
     # Verify analyse called with correct default ignore_dependencies
-    expected_ignore = ['netcdf', 'mpi', 'mpi_f08', 'yaxt', 'mod_oasis',
+    expected_ignore = ['netcdf', 'mpi', 'mpi_f08', 'yaxt',
                        'xios', 'icontext', 'mod_wait']
     mock_analyse.assert_called_once_with(
         lfric_base.config,
@@ -680,7 +672,7 @@ def test_analyse_step(monkeypatch) -> None:
 
     # Verify analyse called with custom_ignore added to ignore list
     expected_ignore = ['custom_dep1', 'custom_dep2', 'netcdf', 'mpi',
-                       'mpi_f08', 'yaxt', 'mod_oasis', 'xios', 'icontext',
+                       'mpi_f08', 'yaxt', 'xios', 'icontext',
                        'mod_wait']
     mock_analyse.assert_called_once_with(
         lfric_base.config,
