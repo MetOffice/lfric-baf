@@ -348,7 +348,7 @@ class LFRicBase(FabBase):
             ignore_dependencies = []
         # core/infrastructure/build/import.mk
         ignore_dep_list = list(ignore_dependencies)
-        ignore_dep_list += ['netcdf', 'mpi', 'mpi_f08', 'yaxt', 'mod_oasis']
+        ignore_dep_list += ['netcdf', 'mpi', 'mpi_f08', 'yaxt']
         # From core/components/lfric-xios/build/import.mk
         ignore_dep_list += ['xios', 'icontext', 'mod_wait']
         analyse(self.config, root_symbol=self.root_symbol,
