@@ -19,7 +19,7 @@ class Config(DefaultConfig):
     It makes gnu the default suite, and adds support for Vernier.
     '''
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         tr = ToolRepository()
         tr.set_default_compiler_suite("gnu")
@@ -49,6 +49,7 @@ class Config(DefaultConfig):
         tr = ToolRepository()
         gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
         linker = tr.get_tool(Category.LINKER, "linker-gfortran")
+        linker = cast(Linker, linker)
         # Define the new compilation profile `memory-debug`
         gfortran.add_flags(["-fsanitize=address"], "memory-debug")
         linker.add_post_lib_flags(["-static-libasan"], "memory-debug")
@@ -65,7 +66,7 @@ class Config(DefaultConfig):
 
         super().handle_command_line_options(args)
 
-        if args.vernier:
+        if getattr(args, "vernier", False):
             tr = ToolRepository()
             gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
             gfortran.add_flags(
