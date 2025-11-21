@@ -32,10 +32,16 @@ class FabLFRicInputs(LFRicBase):
     '''
 
     def __init__(self, name: str, root_symbol: Union[str, List[str]]):
-        super().__init__(name)
+        this_file = Path(__file__).resolve()
+        # Store the root of this apps for later
+        self._this_root = this_file.parent
+        super().__init__(name, apps_root=this_file.parents[2])
         self.set_root_symbol(root_symbol)
 
     def define_preprocessor_flags_step(self):
+        """
+        Defines the preprocessor flags.
+        """
         super().define_preprocessor_flags_step()
 
         # for backward compatibility of building shumlib from source
@@ -56,7 +62,6 @@ class FabLFRicInputs(LFRicBase):
         return.
 
         :returns: list of flags for the linker.
-        :rtype: List[str]
         '''
         libs = ['shumlib', ]
         return libs + super().get_linker_flags()
@@ -79,8 +84,7 @@ class FabLFRicInputs(LFRicBase):
                         dst_label='')
 
         # Copy the optimisation scripts into a separate directory if it exists
-        optimisation_dir = (self.lfric_apps_root / "applications" /
-                            "lfricinputs" / "optimisation")
+        optimisation_dir = self._this_root / "optimisation"
         if optimisation_dir.exists():
             grab_folder(self.config, src=optimisation_dir,
                         dst_label='optimisation')

@@ -140,7 +140,22 @@ class FabLFRicAtm(LFRicBase):
     This class implements a build system for LFRic atm. It relies on
     LFRicBase for LFRic-specific functionality (e.g. common source file,
     running PSyclone etc).
+
+    :param name: The name of the application.
+    :param root_symbol: the symbol (or list of symbols) of the main
+        programs. Defaults to the parameter `name` if not specified.
     """
+
+    def __init__(self,
+                 name: str,
+                 root_symbol: Optional[Union[list[str], str]] = None) -> None:
+
+        this_file = Path(__file__).resolve()
+        super().__init__(name=name,
+                         apps_root=this_file.parents[2],
+                         root_symbol=root_symbol)
+        # Store the root of this apps for later
+        self._this_root = this_file.parent
 
     def define_preprocessor_flags_step(self):
         """
@@ -238,15 +253,16 @@ class FabLFRicAtm(LFRicBase):
                        dst_label=f'science/{lib}/src', revision=revision)
 
         # Copy the optimisation scripts into a separate directory
-        directory = 'applications/lfric_atm/optimisation'
-        grab_folder(self.config, src=self.lfric_apps_root / directory,
+        grab_folder(self.config, src=self._this_root / 'optimisation',
                     dst_label='optimisation')
 
     def find_source_files_step(
             self,
             path_filters: Optional[Iterable[Union[Exclude, Include]]] = None
             ) -> None:
-        """Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg"""
+        """
+        Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg.
+        """
 
         fcm_config_list = [FcmConfiguration(self.lfric_apps_root / "build" /
                                             "extract" / "extract.cfg")]
@@ -278,8 +294,8 @@ class FabLFRicAtm(LFRicBase):
         """
         :returns: The path to the rose meta data config file.
         """
-        return (self.lfric_apps_root / 'applications/lfric_atm' / 'rose-meta' /
-                'lfric-lfric_atm' / 'HEAD' / 'rose-meta.conf')
+        return (self._this_root / 'rose-meta' / 'lfric-lfric_atm' / 'HEAD' /
+                'rose-meta.conf')
 
     def analyse_step(
             self,

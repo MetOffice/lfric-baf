@@ -12,7 +12,6 @@ script.
 '''
 
 import argparse
-import inspect
 import os
 from pathlib import Path
 import sys
@@ -36,7 +35,7 @@ class LFRicBase(FabBase):
     '''
     This is the base class for all LFRic FAB scripts.
 
-    :param str name: the name to be used for the workspace. Note that
+    :param name: the name to be used for the workspace. Note that
         the name of the compiler will be added to it.
     :param root_symbol: the symbol (or list of symbols) of the main
         programs. Defaults to the parameter `name` if not specified.
@@ -44,7 +43,9 @@ class LFRicBase(FabBase):
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self, name: str,
-                 root_symbol: Optional[Union[List[str], str]] = None):
+                 apps_root: Path,
+                 root_symbol: Optional[Union[List[str], str]] = None
+                 ):
 
         # List of all precision preprocessor symbols and their default.
         # Used to add corresponding command line options, and then to define
@@ -56,63 +57,18 @@ class LFRicBase(FabBase):
 
         super().__init__(name)
 
+        this_file = Path(__file__)
+        # The root directory of the LFRic Core
+        self._lfric_core_root = this_file.parents[3]
+        self._lfric_apps_root = apps_root
+
         # If the user wants to overwrite the default root symbol (which
         # is `name`):
         if root_symbol:
             self.set_root_symbol(root_symbol)
 
-        this_file = Path(__file__)
-        # The root directory of the LFRic Core
-        self._lfric_core_root = this_file.parents[3]
-
-        # We need to find the apps directory (it will be required when
-        # finding source files in the build scripts). We shouldn't assume
-        # that it is 'next' to the core directory, nor should we assume
-        # that the name is 'apps'. In order to avoid reliance on any
-        # environment variable, we analyse the call tree to find the first
-        # call that is not in our parent directory (in case that we ever
-        # add another layer of base class).
-        my_base_dir = this_file.parent
-        for caller in inspect.stack():
-            abs_path_caller = Path(caller[1])
-            if not my_base_dir.samefile(abs_path_caller.parent):
-                self.logger.debug(f"lfric_base: found caller: {caller[1]}")
-                self._lfric_apps_root = self.get_apps_root_dir(abs_path_caller)
-                break
-            self.logger.debug(f"lfric_base: searching caller: {caller[1]}")
-        else:
-            # All callers are in this directory? Issue warning, and assume
-            # that lfric_apps is 'next' to lfric_core
-            self._lfric_apps_root = self.lfric_core_root.parent / 'apps'
-            self.logger.warning(f"Could not find apps directory, defaulting "
-                                f"to '{self._lfric_apps_root}'.")
-
         self._psyclone_config = (self.config.source_root / 'psyclone_config' /
                                  'psyclone.cfg')
-
-    def get_apps_root_dir(self, path: Path) -> Path:
-        '''
-        This identifies the root directory of the LFRic apps directory,
-        given a file in the apps directory. This is done by looking for a
-        file `dependencies.sh` in the directory, and searching up in the
-        directory tree till it is found.
-
-        param path: the path to a file in the apps directory.
-        '''
-        dep_name = "dependencies.sh"
-        # path.anchor gives us the root as string:
-        while path.anchor != str(path) and not (path/dep_name).exists():
-            self.logger.debug(f"lfric_base: no '{dep_name}' in '{path}'.")
-            path = path.parent
-        # If we found the file, return the path
-        if path.anchor != str(path):
-            self.logger.info(f"lfric_base: lfric_apps dir = '{path}'.")
-            return path
-
-        # It is possible that we are building an application in the core
-        # repository, so to support this we use the core root also
-        # as the apps root:
-        return self._lfric_core_root
 
     def define_command_line_options(
             self,
@@ -175,7 +131,6 @@ class LFRicBase(FabBase):
     def lfric_core_root(self) -> Path:
         '''
         :returns: the root directory of the LFRic core repository.
-        :rtype: Path
         '''
         return self._lfric_core_root
 
@@ -183,7 +138,6 @@ class LFRicBase(FabBase):
     def lfric_apps_root(self) -> Path:
         '''
         :returns: the root directory of the LFRic apps repository.
-        :rtype: Path
         '''
         return self._lfric_apps_root
 
@@ -255,7 +209,6 @@ class LFRicBase(FabBase):
         include yaxt, xios, netcdf and hdf5.
 
         :returns: list of flags for the linker.
-        :rtype: List[str]
         '''
         libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
         return libs + super().get_linker_flags()
@@ -389,6 +342,10 @@ class LFRicBase(FabBase):
         ignore_dep_list += ['netcdf', 'mpi', 'mpi_f08', 'yaxt']
         # From core/components/lfric-xios/build/import.mk
         ignore_dep_list += ['xios', 'icontext', 'mod_wait']
+
+        # TODO: once we have an updated Fab release, we can
+        # call the analyse_step base class, but atm it does not
+        # accept the ignore_dependencies parameter :(
         analyse(self.config, root_symbol=self.root_symbol,
                 ignore_dependencies=ignore_dep_list,
                 find_programs=find_programs)
@@ -426,7 +383,6 @@ class LFRicBase(FabBase):
         '''
         :returns: the command line options to pick the right
             PSyclone config file.
-        :rtype: List[str]
         '''
         return ["--config", str(self._psyclone_config)]
 

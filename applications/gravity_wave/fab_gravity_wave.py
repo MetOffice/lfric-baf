@@ -10,6 +10,8 @@ class contained in the infrastructure directory.
 '''
 
 import logging
+from pathlib import Path
+from typing import Optional, Union
 
 from fab.steps.grab.folder import grab_folder
 
@@ -17,8 +19,31 @@ from lfric_base import LFRicBase
 
 
 class FabGravityWave(LFRicBase):
+    """
+    A Fab-based build script for GravityWave. It relies on the LFRicBase class
+    to implement the actual functionality, and only provides the required
+    source files.
 
-    def grab_files_step(self):
+    :param name: The name of the application.
+    :param root_symbol: the symbol (or list of symbols) of the main
+        programs. Defaults to the parameter `name` if not specified.
+    """
+
+    def __init__(self,
+                 name: str,
+                 root_symbol: Optional[Union[list[str], str]] = None) -> None:
+
+        this_file = Path(__file__).resolve()
+        super().__init__(name=name,
+                         apps_root=this_file.parents[2],
+                         root_symbol=root_symbol)
+        # Store the root of this apps for later
+        self._this_root = this_file.parent
+
+    def grab_files_step(self) -> None:
+        """
+        Grabs the required source files and optimisation scripts.
+        """
         super().grab_files_step()
         dirs = ['applications/gravity_wave/source/',
                 'science/gungho/source',
@@ -31,13 +56,14 @@ class FabGravityWave(LFRicBase):
                         dst_label='')
 
         # Copy the optimisation scripts into a separate directory
-        dir = 'applications/gravity_wave/optimisation'
-        grab_folder(self.config, src=self.lfric_apps_root / dir,
+        grab_folder(self.config, src=self._this_root / "optimisation",
                     dst_label='optimisation')
 
-    def get_rose_meta(self):
-        return (self.lfric_apps_root / 'applications' / 'gravity_wave'
-                / 'rose-meta' / 'lfric-gravity_wave' / 'HEAD'
+    def get_rose_meta(self) -> Path:
+        """
+        :returns: the rose-meta.conf path.
+        """
+        return (self._this_root / 'rose-meta' / 'lfric-gravity_wave' / 'HEAD'
                 / 'rose-meta.conf')
 
 

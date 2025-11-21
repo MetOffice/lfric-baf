@@ -149,24 +149,25 @@ def test_constructor(monkeypatch) -> None:
     Tests constructor.
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-    lfric_base = LFRicBase(name="test_name")
+    lfric_base = LFRicBase(name="test_name", apps_root=Path())
 
     # Check root symbol defaults to name if not specified
     assert lfric_base.root_symbol == ["test_name"]
 
     # Check root symbol can be specified
-    lfric_base = LFRicBase(name="test_name", root_symbol="root1")
+    lfric_base = LFRicBase(name="test_name", apps_root=Path(),
+                           root_symbol="root1")
     assert lfric_base.root_symbol == ["root1"]
 
     # Check root symbol list
-    lfric_base = LFRicBase(name="test_name", root_symbol=["root1", "root2"])
+    lfric_base = LFRicBase(name="test_name", apps_root=Path(),
+                           root_symbol=["root1", "root2"])
     assert lfric_base.root_symbol == ["root1", "root2"]
 
 
 def test_get_directory(monkeypatch, tmpdir) -> None:
     '''
-    Tests the correct setup of lfric_core_root and lfric_apps_root
-    based on different calling scenarios.
+    Tests the correct setup of lfric_core_root and lfric_apps_root.
     '''
     # Convert tmpdir to Path object for mkdir
     tmp_path = Path(tmpdir)
@@ -184,7 +185,6 @@ def test_get_directory(monkeypatch, tmpdir) -> None:
     # Mock __file__ attribute
     monkeypatch.setattr('lfric_base.__file__', str(mock_base_file))
 
-    # Test scenario 1: Caller from apps directory with dependencies.sh
     mock_apps = tmp_path / "apps"
     mock_apps.mkdir()
     deps_file = mock_apps / "dependencies.sh"
@@ -213,83 +213,14 @@ def test_get_directory(monkeypatch, tmpdir) -> None:
     monkeypatch.setattr('inspect.stack', lambda: mock_stack)
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path("/some/path"))
 
     # Verify core root is set correctly
     assert lfric_base._lfric_core_root == mock_core
     assert lfric_base.lfric_core_root == mock_core
     # Verify apps root found via dependencies.sh
-    assert lfric_base._lfric_apps_root == mock_apps
-    assert lfric_base.lfric_apps_root == mock_apps
-
-    # Test scenario 2: All callers in lfric_base directory (mock_base_file)
-    mock_stack = [
-        create_frame_info(str(mock_base_file)),  # All calls in base dir
-        create_frame_info(str(mock_base_file))
-    ]
-    monkeypatch.setattr('inspect.stack', lambda: mock_stack)
-
-    # Create a mock logger
-    mock_logger = mock.MagicMock()
-
-    # Patch the logger at instance level after creation
-    with mock.patch.object(LFRicBase, 'logger',
-                           new_callable=mock.PropertyMock) as mock_logger_prop:
-        mock_logger_prop.return_value = mock_logger
-        lfric_base = LFRicBase(name="test")
-
-        # Verify core root is still correct
-        assert lfric_base._lfric_core_root == mock_core
-        assert lfric_base.lfric_core_root == mock_core
-        # Verify apps root defaults to core.parent/apps
-        assert lfric_base._lfric_apps_root == mock_core.parent / 'apps'
-        assert lfric_base.lfric_apps_root == mock_core.parent / 'apps'
-        # Verify warning was logged
-        mock_logger.warning.assert_called_once()
-        assert ("Could not find apps directory" in
-                mock_logger.warning.call_args[0][0])
-
-    # Test scenario 3: Caller outside core but no dependencies.sh
-    other_dir = tmp_path / "other"
-    other_dir.mkdir()
-    mock_caller = other_dir / "build.py"
-    mock_caller.write_text("", encoding='utf-8')
-
-    mock_stack = [
-        create_frame_info(str(mock_base_file)),
-        create_frame_info(str(mock_caller))
-    ]
-    monkeypatch.setattr('inspect.stack', lambda: mock_stack)
-
-    lfric_base = LFRicBase(name="test")
-
-    # Verify core root is correct
-    assert lfric_base._lfric_core_root == mock_core
-    assert lfric_base.lfric_core_root == mock_core
-    # Verify apps root defaults to core root when no dependencies.sh found
-    assert lfric_base._lfric_apps_root == mock_core
-    assert lfric_base.lfric_apps_root == mock_core
-
-    # Test scenario 4: Multiple nested callers
-    nested_dir = mock_apps / "deep" / "nested" / "dir"
-    nested_dir.mkdir(parents=True)
-    mock_caller = nested_dir / "build.py"
-    mock_caller.write_text("", encoding='utf-8')
-
-    mock_stack = [
-        create_frame_info(str(mock_base_file)),
-        create_frame_info(str(mock_base_file)),
-        create_frame_info(str(mock_caller))
-    ]
-    monkeypatch.setattr('inspect.stack', lambda: mock_stack)
-
-    lfric_base = LFRicBase(name="test")
-
-    # Verify paths with nested caller
-    assert lfric_base._lfric_core_root == mock_core
-    assert lfric_base.lfric_core_root == mock_core
-    assert lfric_base._lfric_apps_root == mock_apps
-    assert lfric_base.lfric_apps_root == mock_apps
+    assert lfric_base._lfric_apps_root == Path("/some/path")
+    assert lfric_base.lfric_apps_root == Path("/some/path")
 
 
 def test_command_line_options(monkeypatch) -> None:
@@ -300,7 +231,7 @@ def test_command_line_options(monkeypatch) -> None:
                                       "--rose_picker", "custom",
                                       "--precision-default", "32"])
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
 
     assert lfric_base.args.rose_picker == "custom"
     assert lfric_base.args.precision_default == "32"
@@ -318,7 +249,7 @@ def test_precision_definition_without_default(monkeypatch) -> None:
                                       "--rdef_precision", "32"])
     monkeypatch.setattr(os, 'environ', {"R_BL_PRECISION": "64"})
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     lfric_base.define_preprocessor_flags_step()
     flags = lfric_base.preprocess_flags_common
 
@@ -343,7 +274,7 @@ def test_precision_definition_with_default(monkeypatch) -> None:
                                       "--rdef_precision", "64"])
     monkeypatch.setattr(os, 'environ', {"R_BL_PRECISION": "64"})
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     lfric_base.define_preprocessor_flags_step()
 
     flags = lfric_base.preprocess_flags_common
@@ -376,7 +307,7 @@ def test_preprocessor_flags(monkeypatch, no_xios, mpi) -> None:
     fc = tr.get_tool(Category.FORTRAN_COMPILER, "sfc")
     monkeypatch.setattr(fc, "_mpi", mpi)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     lfric_base.define_preprocessor_flags_step()
 
     expected_flags = [
@@ -397,7 +328,7 @@ def test_setup_site_specific_location(monkeypatch) -> None:
     Tests site specific path setup for LFRicBase.
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
 
     old_path = sys.path.copy()
     lfric_base.setup_site_specific_location()
@@ -417,7 +348,7 @@ def test_get_linker_flags(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     flags = lfric_base.get_linker_flags()
 
     expected_libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
@@ -437,7 +368,7 @@ def test_grab_files_step(monkeypatch) -> None:
     # Setup mocks
     monkeypatch.setattr('lfric_base.grab_folder', mock_grab)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     monkeypatch.setattr(lfric_base, '_lfric_core_root', mock_core)
 
     # Call method under test
@@ -484,7 +415,7 @@ def test_find_source_files_step(monkeypatch) -> None:
 
     monkeypatch.setattr('lfric_base.Exclude', mock_exclude)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     monkeypatch.setattr(lfric_base, 'configurator_step', mock.MagicMock())
     monkeypatch.setattr(lfric_base, 'templaterator_step', mock.MagicMock())
 
@@ -520,7 +451,7 @@ def test_configurator_step(monkeypatch) -> None:
     monkeypatch.setattr('lfric_base.configurator', mock_config)
     monkeypatch.setattr('lfric_base.get_rose_picker', mock_picker)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     monkeypatch.setattr(lfric_base, 'get_rose_meta', mock_meta)
 
     lfric_base.configurator_step()
@@ -574,7 +505,7 @@ def test_templaterator_step(monkeypatch, tmpdir) -> None:
     config.build_output = tmp_path
 
     # Create LFRicBase instance
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     monkeypatch.setattr(lfric_base, '_lfric_core_root', tmp_path)
 
     # Run templaterator step
@@ -626,7 +557,7 @@ def test_get_rose_meta(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     assert lfric_base.get_rose_meta() is None
 
 
@@ -644,7 +575,7 @@ def test_analyse_step(monkeypatch) -> None:
     # Setup mocks
     monkeypatch.setattr('lfric_base.analyse', mock_analyse)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
 
     # Mock instance methods
     monkeypatch.setattr(lfric_base, 'preprocess_x90_step', mock_preprocess)
@@ -673,7 +604,7 @@ def test_analyse_step(monkeypatch) -> None:
     mock_preprocess.reset_mock()
     mock_psyclone.reset_mock()
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     monkeypatch.setattr(lfric_base, 'preprocess_x90_step', mock_preprocess)
     monkeypatch.setattr(lfric_base, 'psyclone_step', mock_psyclone)
 
@@ -705,7 +636,7 @@ def test_preprocess_x90_step(monkeypatch) -> None:
     mock_preproc = mock.MagicMock()
     monkeypatch.setattr('lfric_base.preprocess_x90', mock_preproc)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     lfric_base.add_preprocessor_flags(["-flag1", "-flag2"])
     lfric_base.preprocess_x90_step()
 
@@ -729,7 +660,7 @@ def test_psyclone_step(monkeypatch) -> None:
     # Set up monkeypatch for module level import
     monkeypatch.setattr('lfric_base.psyclone', mock_psy)
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
 
     # Patch instance methods
     monkeypatch.setattr(lfric_base, 'get_psyclone_config',
@@ -756,7 +687,7 @@ def test_get_psyclone_config(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     config_args = lfric_base.get_psyclone_config()
 
     assert config_args == ["--config",
@@ -770,7 +701,7 @@ def test_get_additional_psyclone_options(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=Path())
     assert lfric_base.get_additional_psyclone_options() == []
 
 
@@ -782,7 +713,7 @@ def test_get_transformation_script(monkeypatch, tmpdir) -> None:
     tmp_path = Path(tmpdir)
 
     # Create LFRicBase instance with mocked site/platform
-    lfric_base = LFRicBase(name="test")
+    lfric_base = LFRicBase(name="test", apps_root=tmpdir)
 
     # Create mock config
     config = mock.MagicMock()
