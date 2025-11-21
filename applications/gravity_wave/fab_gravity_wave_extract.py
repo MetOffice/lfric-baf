@@ -33,5 +33,5 @@ class FabGravityWaveExtract(ExtractMixin, FabGravityWave):
 if __name__ == '__main__':
 
     fab_gravity_wave = FabGravityWaveExtract(name="gravity_wave_extract",
-                                 root_symbol="gravity_wave")
+                                             root_symbol="gravity_wave")
     fab_gravity_wave.build()

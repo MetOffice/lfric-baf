@@ -220,7 +220,6 @@ def test_get_directory(monkeypatch, tmpdir) -> None:
     assert lfric_base.lfric_core_root == mock_core
     # Verify apps root found via dependencies.sh
     assert lfric_base._lfric_apps_root == Path("/some/path")
-    assert lfric_base.lfric_apps_root == Path("/some/path")
 
 
 def test_command_line_options(monkeypatch) -> None:
@@ -460,7 +459,7 @@ def test_configurator_step(monkeypatch) -> None:
     mock_config.assert_called_once_with(
         lfric_base.config,
         lfric_core_source=lfric_base.lfric_core_root,
-        lfric_apps_source=lfric_base.lfric_apps_root,
+        lfric_apps_source=lfric_base._lfric_apps_root,
         rose_meta_conf="rose_meta.conf",
         rose_picker="rose_picker_tool"
     )

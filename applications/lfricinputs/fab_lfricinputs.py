@@ -78,10 +78,9 @@ class FabLFRicInputs(LFRicBase):
                 ]
 
         # pylint: disable=redefined-builtin
+        lfric_apps_root = self._this_root.parents[1]
         for dir in dirs:
-            grab_folder(self.config,
-                        src=self.lfric_apps_root / dir,
-                        dst_label='')
+            grab_folder(self.config, src=lfric_apps_root / dir, dst_label='')
 
         # Copy the optimisation scripts into a separate directory if it exists
         optimisation_dir = self._this_root / "optimisation"
@@ -93,7 +92,8 @@ class FabLFRicInputs(LFRicBase):
         """
         :returns: The path to the rose meta data config file.
         """
-        return (self.lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
+        lfric_apps_root = self._this_root.parents[1]
+        return (lfric_apps_root / 'science' / 'gungho' / 'rose-meta' /
                 'lfric-gungho' / 'HEAD' / 'rose-meta.conf')
 
     def analyse_step(self,

@@ -151,8 +151,9 @@ class FabLFRicAtm(LFRicBase):
                  root_symbol: Optional[Union[list[str], str]] = None) -> None:
 
         this_file = Path(__file__).resolve()
+        self._lfric_apps_root = this_file.parents[2]
         super().__init__(name=name,
-                         apps_root=this_file.parents[2],
+                         apps_root=self._lfric_apps_root,
                          root_symbol=root_symbol)
         # Store the root of this apps for later
         self._this_root = this_file.parent
@@ -236,7 +237,7 @@ class FabLFRicAtm(LFRicBase):
                 ]
         for directory in dirs:
             grab_folder(self.config,
-                        src=self.lfric_apps_root / directory,
+                        src=self._lfric_apps_root / directory,
                         dst_label='')
 
         gr = GetRevision("../../dependencies.sh")
@@ -264,15 +265,15 @@ class FabLFRicAtm(LFRicBase):
         Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg.
         """
 
-        fcm_config_list = [FcmConfiguration(self.lfric_apps_root / "build" /
+        fcm_config_list = [FcmConfiguration(self._lfric_apps_root / "build" /
                                             "extract" / "extract.cfg")]
 
-        socrates_extract_cfg = (self.lfric_apps_root / "interfaces" /
+        socrates_extract_cfg = (self._lfric_apps_root / "interfaces" /
                                 "socrates_interface" / "build" /
                                 "extract.cfg")
         fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
 
-        jules_extract_cfg = (self.lfric_apps_root / "interfaces" /
+        jules_extract_cfg = (self._lfric_apps_root / "interfaces" /
                              "jules_interface" / "build" /
                              "extract.cfg")
         fcm_config_list.append(FcmConfiguration(jules_extract_cfg))

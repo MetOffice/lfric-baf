@@ -134,13 +134,6 @@ class LFRicBase(FabBase):
         '''
         return self._lfric_core_root
 
-    @property
-    def lfric_apps_root(self) -> Path:
-        '''
-        :returns: the root directory of the LFRic apps repository.
-        '''
-        return self._lfric_apps_root
-
     def setup_site_specific_location(self):
         '''
         This method adds the required directories for site-specific
@@ -281,7 +274,7 @@ class LFRicBase(FabBase):
             # we create the files in the source directory, and find them
             # there later.
             configurator(self.config, lfric_core_source=self.lfric_core_root,
-                         lfric_apps_source=self.lfric_apps_root,
+                         lfric_apps_source=self._lfric_apps_root,
                          rose_meta_conf=rose_meta,
                          rose_picker=rp)
 
