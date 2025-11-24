@@ -8,7 +8,7 @@ from collections import defaultdict
 import logging
 from pathlib import Path
 import re
-from typing import Dict, Iterable, List, Union
+from typing import Dict, Iterable, List, Type, Union
 
 from fab.steps.find_source_files import Include, Exclude
 
@@ -48,9 +48,7 @@ class FcmConfiguration():
 
     def __init__(self,
                  filename: Path) -> None:
-        # py#lint: disable=too-many-branches, too-many-statements
-        # py#lint: disable=too-many-locals
-        self._sections: Dict[str, List[Union[Exclude, Include]]]
+        self._sections: Dict[str, List[tuple[str, List[str]]]]
         self._sections = defaultdict(list)
         super().__init__()
         # Read the files, remove comments and empty lines, and handle '\'
@@ -141,7 +139,7 @@ class FcmConfiguration():
 
         path_filters: list[Union[Exclude, Include]] = []
         source_file_info = self._sections[section]
-        in_or_ex_class: Union[Exclude, Include]
+        in_or_ex_class: Union[Type[Exclude], Type[Include]]
         for (list_type, list_of_paths) in source_file_info:
             if list_type == "exclude":
                 in_or_ex_class = Exclude
