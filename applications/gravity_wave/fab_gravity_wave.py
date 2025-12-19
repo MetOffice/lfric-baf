@@ -9,16 +9,20 @@
 class contained in the infrastructure directory.
 '''
 
+import sys
+
 import logging
 from pathlib import Path
 from typing import Optional, Union
 
+# We need to import the Apps base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
+
+from lfric_apps_base import LFRicAppsBase
+
 from fab.steps.grab.folder import grab_folder
 
-from lfric_base import LFRicBase
-
-
-class FabGravityWave(LFRicBase):
+class FabGravityWave(LFRicAppsBase):
     """
     A Fab-based build script for GravityWave. It relies on the LFRicBase class
     to implement the actual functionality, and only provides the required
