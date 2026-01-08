@@ -34,7 +34,9 @@ sys.path.insert(0, str(core_path / "infrastructure" / "build" / "fab"))
 try:
     from lfric_base import LFRicBase
 except ModuleNotFoundError as mnfe:
-    msg = f"Cannot import `lfric_base` from '{core_path}'."
+    msg = (f"Cannot import `lfric_base` from '{core_path}'. Specify a valid "
+           f"location of the LFRic core repository using the --core command "
+           f"line option.")
     logger.error(msg)
     raise RuntimeError(msg) from mnfe
 
