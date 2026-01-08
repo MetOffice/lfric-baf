@@ -32,6 +32,11 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace) -> None:
         if not gfortran.is_available:
             return
 
+    if gfortran.get_version() < (4,9):
+        raise RuntimeError(f"GFortran is too old to build dynamo. "
+                           f"Must be at least 4.9.0, it is "
+                           f"'{gfortran.get_version_string()}'.")
+
     # The base flags
     # ==============
     gfortran.add_flags(
@@ -45,6 +50,13 @@ def setup_gnu(build_config: BuildConfig, args: argparse.Namespace) -> None:
          '-fdefault-double-8',
          ],
         "base")
+
+    # TODO - Remove the -fallow-arguments-mismatch flag when MPICH no longer
+    #        fails to build as a result of its mismatched arguments (see
+    #        ticket summary for #2549 for reasoning).
+    if gfortran.get_version() >= (10,0):
+        gfortran.add_flags("-fallow-argument-mismatch", "base")
+
 
     runtime = ["-fcheck=all", "-ffpe-trap=invalid,zero,overflow"]
     init = ["-finit-integer=31173",  "-finit-real=snan",
