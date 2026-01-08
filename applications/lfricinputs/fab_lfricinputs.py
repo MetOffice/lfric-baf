@@ -12,15 +12,19 @@ contained in the infrastructure directory.
 import logging
 import os
 from pathlib import Path
+import sys
 from typing import Iterable, List, Optional, Union
+
+# We need to import the Apps base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
+
+from lfric_apps_base import LFRicAppsBase
 
 from fab.steps.grab.folder import grab_folder
 from fab.build_config import AddFlags
 
-from lfric_base import LFRicBase
 
-
-class FabLFRicInputs(LFRicBase):
+class FabLFRicInputs(LFRicAppsBase):
     '''
     This class builds LFRic inputs. Since LFRic inputs builds
     different binaries in the same tree, it explicitly adds

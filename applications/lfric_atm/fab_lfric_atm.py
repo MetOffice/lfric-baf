@@ -11,7 +11,13 @@ contained in the infrastructure directory.
 
 import logging
 from pathlib import Path
+import sys
 from typing import cast, Iterable, List, Optional, Union
+
+# We need to import the Apps base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
+
+from lfric_apps_base import LFRicAppsBase
 
 from fab.build_config import AddFlags
 from fab.steps.find_source_files import Exclude, Include
@@ -19,7 +25,6 @@ from fab.steps.grab.fcm import fcm_export
 from fab.steps.grab.folder import grab_folder
 from fab.tools import Category, Compiler
 
-from lfric_base import LFRicBase
 from get_revision import GetRevision
 
 from fcm_configuration import FcmConfiguration
@@ -135,11 +140,11 @@ def get_lfric_atm_compile_fortran_specific_flags(
     return path_flags
 
 
-class FabLFRicAtm(LFRicBase):
+class FabLFRicAtm(LFRicAppsBase):
     """
     This class implements a build system for LFRic atm. It relies on
-    LFRicBase for LFRic-specific functionality (e.g. common source file,
-    running PSyclone etc).
+    LFRicAppsBase for LFRic-specific functionality (e.g. common source
+    files, running PSyclone etc).
 
     :param name: The name of the application.
     :param root_symbol: the symbol (or list of symbols) of the main

@@ -11,15 +11,19 @@ contained in the infrastructure directory.
 
 import logging
 from pathlib import Path
+import sys
+
+# We need to import the Apps base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
 
 from fab.steps.grab.folder import grab_folder
 
-from lfric_base import LFRicBase
+from lfric_apps_base import LFRicAppsBase
 
 
-class FabGungho(LFRicBase):
+class FabGungho(LFRicAppsBase):
     """
-    A Fab-based build script for Gungho. It relies on the LFRicBase class
+    A Fab-based build script for Gungho. It relies on the LFRicAppsBase class
     to implement the actual functionality, and only provides the required
     source files.
 

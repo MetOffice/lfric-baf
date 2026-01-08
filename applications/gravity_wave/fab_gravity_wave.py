@@ -9,10 +9,9 @@
 class contained in the infrastructure directory.
 '''
 
-import sys
-
 import logging
 from pathlib import Path
+import sys
 from typing import Optional, Union
 
 # We need to import the Apps base class:
@@ -24,7 +23,7 @@ from fab.steps.grab.folder import grab_folder
 
 class FabGravityWave(LFRicAppsBase):
     """
-    A Fab-based build script for GravityWave. It relies on the LFRicBase class
+    A Fab-based build script for GravityWave. It relies on the LFRicAppsBase class
     to implement the actual functionality, and only provides the required
     source files.
 

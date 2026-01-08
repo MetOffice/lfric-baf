@@ -11,8 +11,13 @@ the LFRicBase class contained in the infrastructure directory.
 
 import logging
 from pathlib import Path
+import sys
 
 from fab.steps.grab.folder import grab_folder
+
+# We need to import the base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "infrastructure" /
+                       "build" / "fab"))
 
 from lfric_base import LFRicBase
 
