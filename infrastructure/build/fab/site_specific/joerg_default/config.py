@@ -50,9 +50,12 @@ class Config(DefaultConfig):
         gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
         linker = tr.get_tool(Category.LINKER, "linker-gfortran")
         linker = cast(Linker, linker)
+
         # Define the new compilation profile `memory-debug`
         gfortran.add_flags(["-fsanitize=address"], "memory-debug")
         linker.add_post_lib_flags(["-static-libasan"], "memory-debug")
+
+        gfortran.add_flags("-Wno-error=conversion", "base")
 
     def handle_command_line_options(self, args: argparse.Namespace) -> None:
         '''
