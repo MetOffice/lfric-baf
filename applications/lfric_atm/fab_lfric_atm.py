@@ -21,13 +21,13 @@ from lfric_apps_base import LFRicAppsBase
 
 from fab.build_config import AddFlags
 from fab.steps.find_source_files import Exclude, Include
-from fab.steps.grab.fcm import fcm_export
+from fab.steps.grab.git import git_checkout
 from fab.steps.grab.folder import grab_folder
 from fab.tools import Category, Compiler
 
 from get_revision import GetRevision
 
-from fcm_configuration import FcmConfiguration
+from extract_list import ExtractList
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,10 @@ def get_lfric_atm_compile_fortran_specific_flags(
             ]
     else:
         no_omp = ["-fno-openmp"]
-        um_physics = ["-fdefault-real-8"]
+        # Most lfric_atm dependencies contain code with implicit lossy
+        # conversions and unused variables.
+
+        um_physics = ["-fdefault-real-8", "-Wno-error=conversion"]
     path_flags += [
         AddFlags(match='$output/science/um/atmosphere/'
                        'large_scale_precipitation/*',
@@ -245,18 +248,28 @@ class FabLFRicAtm(LFRicAppsBase):
                         src=self._lfric_apps_root / directory,
                         dst_label='')
 
-        gr = GetRevision("../../dependencies.sh")
-        for lib, revision in gr.items():
-            if lib == "lfric_core":
+        gr = GetRevision("../../dependencies.yaml")
+        for repo in gr.keys():
+            if repo == "lfric_apps":
+                # For now don't support checking out the apps repo
+                continue
+            if repo == "lfric_core":
                 # We don't support checking out lfric core, it will
                 # be taken from an already checked out directory
                 continue
-            # We only need the src directories for the build
-            fcm_src = f'fcm:{lib}.xm_tr/src'
-            logger.info(f"Extracting {fcm_src} to 'science/{lib}/src', "
-                        f"revision {revision}")
-            fcm_export(self.config, src=fcm_src,
-                       dst_label=f'science/{lib}/src', revision=revision)
+            logger.info(f"Extracting '{repo}' from '{gr.get_source(repo)}' "
+                        f" to 'science/{repo}', "
+                        f"revision {gr.get_ref(repo)}")
+            try:
+                git_checkout(self.config,
+                             gr.get_source(repo),
+                             dst_label=f'science/{repo}',
+                             revision=gr.get_ref(repo))
+            except RuntimeError as error:
+                logger.error(f"Cannot checkout '{repo}' from "
+                             f"'{gr.get_source(repo)}' revision "
+                             f"'{gr.get_ref(repo)}': {error}. ")
+                sys.exit(-1)
 
         # Copy the optimisation scripts into a separate directory
         grab_folder(self.config, src=self._this_root / 'optimisation',
@@ -270,23 +283,23 @@ class FabLFRicAtm(LFRicAppsBase):
         Based on $LFRIC_APPS_ROOT/build/extract/extract.cfg.
         """
 
-        fcm_config_list = [FcmConfiguration(self._lfric_apps_root / "build" /
-                                            "extract" / "extract.cfg")]
+        extract_list = [ExtractList(self._lfric_apps_root / "build" /
+                                    "extract" / "extract.yaml")]
 
         socrates_extract_cfg = (self._lfric_apps_root / "interfaces" /
                                 "socrates_interface" / "build" /
-                                "extract.cfg")
-        fcm_config_list.append(FcmConfiguration(socrates_extract_cfg))
+                                "extract.yaml")
+        extract_list.append(ExtractList(socrates_extract_cfg))
 
         jules_extract_cfg = (self._lfric_apps_root / "interfaces" /
                              "jules_interface" / "build" /
-                             "extract.cfg")
-        fcm_config_list.append(FcmConfiguration(jules_extract_cfg))
+                             "extract.yaml")
+        extract_list.append(ExtractList(jules_extract_cfg))
 
         # The sources are checked out under the 'science' directory:
         science_root = self.config.source_root / 'science'
         new_path_filters = []
-        for extract_cfg in fcm_config_list:
+        for extract_cfg in extract_list:
             for section in extract_cfg.get_all_sections():
                 in_ex_list = extract_cfg.get_include_exclude_list(
                     section, science_root / section)
