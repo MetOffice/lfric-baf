@@ -55,8 +55,6 @@ class Config(DefaultConfig):
         gfortran.add_flags(["-fsanitize=address"], "memory-debug")
         linker.add_post_lib_flags(["-static-libasan"], "memory-debug")
 
-        gfortran.add_flags("-Wno-error=conversion", "base")
-
     def handle_command_line_options(self, args: argparse.Namespace) -> None:
         '''
         Called with the user's command line options. It checks if
