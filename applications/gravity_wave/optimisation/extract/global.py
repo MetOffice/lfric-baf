@@ -12,10 +12,9 @@ the initialisation built-ins generically.
 
 '''
 
-from psyclone_tools import (redundant_computation_setval, colour_loops,
-                            openmp_parallelise_loops,
+from psyclone_tools import (redundant_computation_setval,
                             view_transformed_schedule)
-from psyclone.domain.lfric import LFRicConstants, LFRicLoop
+from psyclone.domain.lfric import LFRicLoop
 from psyclone.domain.lfric.transformations import LFRicExtractTrans
 
 
@@ -27,8 +26,6 @@ def trans(psy):
     '''
     extract = LFRicExtractTrans()
     redundant_computation_setval(psy)
-    # colour_loops(psy)
-    # openmp_parallelise_loops(psy)
     view_transformed_schedule(psy)
     for invoke in psy.invokes.invoke_list:
         schedule = invoke.schedule
