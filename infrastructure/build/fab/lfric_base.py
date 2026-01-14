@@ -326,8 +326,6 @@ class LFRicBase(FabBase):
         analysis, ignoring the third party modules that are commonly
         used by LFRic.
         '''
-        self.preprocess_x90_step()
-        self.psyclone_step()
         if ignore_dependencies is None:
             ignore_dependencies = []
         # core/infrastructure/build/import.mk
@@ -336,6 +334,8 @@ class LFRicBase(FabBase):
         # From core/components/lfric-xios/build/import.mk
         ignore_dep_list += ['xios', 'icontext', 'mod_wait']
 
+        self.preprocess_x90_step()
+        self.psyclone_step(ignore_dependencies=ignore_dep_list)
         # TODO: once we have an updated Fab release, we can
         # call the analyse_step base class, but atm it does not
         # accept the ignore_dependencies parameter :(
@@ -351,7 +351,9 @@ class LFRicBase(FabBase):
         preprocess_x90(self.config,
                        common_flags=self.preprocess_flags_common)
 
-    def psyclone_step(self) -> None:
+    def psyclone_step(
+            self,
+            ignore_dependencies: Optional[Iterable[str]] = None) -> None:
         '''
         This method runs Fab's psyclone. It first sets the additional psyclone
         command line arguments by calling get_psyclone_config to get the
@@ -366,11 +368,11 @@ class LFRicBase(FabBase):
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
 
-        psyclone(self.config, kernel_roots=[(self.config.build_output /
-                                             "kernel")],
+        psyclone(self.config, kernel_roots=[(self.config.build_output)],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
-                 cli_args=psyclone_cli_args)
+                 cli_args=psyclone_cli_args,
+                 ignore_dependencies=ignore_dependencies)
 
     def get_psyclone_config(self) -> List[str]:
         '''
