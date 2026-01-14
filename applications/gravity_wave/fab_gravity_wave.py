@@ -14,18 +14,19 @@ from pathlib import Path
 import sys
 from typing import Optional, Union
 
+from fab.api import grab_folder
+
 # We need to import the Apps base class:
 sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
 
-from lfric_apps_base import LFRicAppsBase
+from lfric_apps_base import LFRicAppsBase  # noqa: E402
 
-from fab.steps.grab.folder import grab_folder
 
 class FabGravityWave(LFRicAppsBase):
     """
-    A Fab-based build script for GravityWave. It relies on the LFRicAppsBase class
-    to implement the actual functionality, and only provides the required
-    source files.
+    A Fab-based build script for GravityWave. It relies on the LFRicAppsBase
+    class to implement the actual functionality, and only provides the
+    required source files.
 
     :param name: The name of the application.
     :param root_symbol: the symbol (or list of symbols) of the main
@@ -38,7 +39,6 @@ class FabGravityWave(LFRicAppsBase):
 
         this_file = Path(__file__).resolve()
         super().__init__(name=name,
-                         apps_root=this_file.parents[2],
                          root_symbol=root_symbol)
         # Store the root of this apps for later
         self._this_root = this_file.parent

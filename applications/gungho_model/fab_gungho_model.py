@@ -14,12 +14,11 @@ from pathlib import Path
 import sys
 from typing import Optional, Union
 
-# We need to import the Apps base class:
-sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
-
 from fab.steps.grab.folder import grab_folder
 
-from lfric_apps_base import LFRicAppsBase
+# We need to import the Apps base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
+from lfric_apps_base import LFRicAppsBase  # noqa: E402
 
 
 class FabGungho(LFRicAppsBase):
@@ -38,7 +37,7 @@ class FabGungho(LFRicAppsBase):
                  root_symbol: Optional[Union[list[str], str]] = None) -> None:
         this_file = Path(__file__).resolve()
         super().__init__(name=name,
-                         apps_root=this_file.parents[2])
+                         root_symbol=root_symbol)
         # Store the root of this apps for later
         self._this_root = this_file.parent
 

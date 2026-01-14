@@ -43,7 +43,6 @@ class LFRicBase(FabBase):
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self, name: str,
-                 apps_root: Path,
                  root_symbol: Optional[Union[List[str], str]] = None
                  ):
 
@@ -60,7 +59,6 @@ class LFRicBase(FabBase):
         this_file = Path(__file__)
         # The root directory of the LFRic Core
         self._lfric_core_root = this_file.parents[3]
-        self._lfric_apps_root = apps_root
 
         # If the user wants to overwrite the default root symbol (which
         # is `name`):
@@ -252,13 +250,17 @@ class LFRicBase(FabBase):
 
         self.templaterator_step(self.config)
 
-    def configurator_step(self) -> None:
+    def configurator_step(
+            self,
+            include_paths: Optional[list[Path]] = None) -> None:
         '''
         This method first gets the rose meta data information by calling
         get_rose_meta. If the rose meta data is available, it then get the
         rose picker tool by calling the get_rose_picker. Finally, it runs
         the LFRic configurator with the LFRic core and apps sources by calling
         configurator.
+
+        :param include_paths: optional additional include paths
         '''
         rose_meta = self.get_rose_meta()
         if rose_meta:
@@ -273,9 +275,10 @@ class LFRicBase(FabBase):
             # files to add them to the list of files to process. Instead,
             # we create the files in the source directory, and find them
             # there later.
+            include_paths = include_paths or []
             configurator(self.config, lfric_core_source=self.lfric_core_root,
                          rose_meta_conf=rose_meta,
-                         include_paths=[self._lfric_apps_root],
+                         include_paths=include_paths,
                          rose_picker=rp)
 
     def templaterator_step(self, config: BuildConfig) -> None:

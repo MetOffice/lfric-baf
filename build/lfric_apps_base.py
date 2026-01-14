@@ -53,10 +53,9 @@ class LFRicAppsBase(LFRicBase):
     '''
     # pylint: disable=too-many-instance-attributes
     def __init__(self, name: str,
-                 apps_root: Path,
                  root_symbol: Optional[Union[list[str], str]] = None
                  ):
-        super().__init__(name=name, apps_root=apps_root,
+        super().__init__(name=name,
                          root_symbol=root_symbol)
 
     def define_command_line_options(
@@ -80,3 +79,11 @@ class LFRicAppsBase(LFRicBase):
                             help="Root of the LFRic core repository",
                             default="$LFRIC_CORE")
         return parser
+
+    def configurator_step(self) -> None:
+        """
+        Overwrite the configurator step of the base class to
+        provide an additional include directory.
+        """
+        apps_root = Path(__file__).parents[1]
+        super().configurator_step(include_paths=[apps_root])

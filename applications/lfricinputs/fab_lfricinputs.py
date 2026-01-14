@@ -15,13 +15,13 @@ from pathlib import Path
 import sys
 from typing import Iterable, List, Optional, Union
 
-# We need to import the Apps base class:
-sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
-
-from lfric_apps_base import LFRicAppsBase
 
 from fab.steps.grab.folder import grab_folder
 from fab.build_config import AddFlags
+
+# We need to import the Apps base class:
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
+from lfric_apps_base import LFRicAppsBase  # noqa: E402
 
 
 class FabLFRicInputs(LFRicAppsBase):
@@ -39,7 +39,7 @@ class FabLFRicInputs(LFRicAppsBase):
         this_file = Path(__file__).resolve()
         # Store the root of this apps for later
         self._this_root = this_file.parent
-        super().__init__(name, apps_root=this_file.parents[2])
+        super().__init__(name)
         self.set_root_symbol(root_symbol)
 
     def define_preprocessor_flags_step(self):

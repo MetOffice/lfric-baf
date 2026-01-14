@@ -14,20 +14,17 @@ from pathlib import Path
 import sys
 from typing import cast, Iterable, List, Optional, Union
 
+from fab.api import (AddFlags, Category, Compiler, Exclude, git_checkout,
+                     grab_folder, Include)
+
+from get_revision import GetRevision
+from extract_list import ExtractList
+
 # We need to import the Apps base class:
 sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
 
-from lfric_apps_base import LFRicAppsBase
+from lfric_apps_base import LFRicAppsBase  # noqa: E402
 
-from fab.build_config import AddFlags
-from fab.steps.find_source_files import Exclude, Include
-from fab.steps.grab.git import git_checkout
-from fab.steps.grab.folder import grab_folder
-from fab.tools import Category, Compiler
-
-from get_revision import GetRevision
-
-from extract_list import ExtractList
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +158,6 @@ class FabLFRicAtm(LFRicAppsBase):
         this_file = Path(__file__).resolve()
         self._lfric_apps_root = this_file.parents[2]
         super().__init__(name=name,
-                         apps_root=self._lfric_apps_root,
                          root_symbol=root_symbol)
         # Store the root of this apps for later
         self._this_root = this_file.parent

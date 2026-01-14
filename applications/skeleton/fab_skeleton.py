@@ -19,7 +19,7 @@ from fab.steps.grab.folder import grab_folder
 sys.path.insert(0, str(Path(__file__).parents[2] / "infrastructure" /
                        "build" / "fab"))
 
-from lfric_base import LFRicBase
+from lfric_base import LFRicBase  # noqa: E402
 
 
 class FabSkeleton(LFRicBase):
@@ -32,10 +32,9 @@ class FabSkeleton(LFRicBase):
     """
 
     def __init__(self, name: str) -> None:
-        this_file = Path(__file__).resolve()
-        super().__init__(name=name,
-                         apps_root=this_file.parents[2])
+        super().__init__(name=name)
         # Store the root of this apps for later
+        this_file = Path(__file__).resolve()
         self._this_root = this_file.parent
 
     def grab_files_step(self) -> None:
