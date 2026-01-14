@@ -52,7 +52,6 @@ class Config:
         that are supported.
 
         :param build_config: the Fab build configuration instance
-        :type build_config: :py:class:`fab.BuildConfig`
         '''
         # First create the default compiler profiles for all available
         # compilers. While we have a tool box with exactly one compiler
