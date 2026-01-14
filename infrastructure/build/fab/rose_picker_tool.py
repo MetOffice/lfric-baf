@@ -44,7 +44,7 @@ class RosePicker(Tool):
 
         return True
 
-    def execute(self, additional_parameters: List[Union[Path, str]]) -> None:
+    def execute(self, parameters: List[Union[Path, str]]) -> None:
         '''
         This wrapper adds the required PYTHONPATH, and passes all
         parameters through to the tool's run function.
@@ -55,7 +55,7 @@ class RosePicker(Tool):
         env["PYTHONPATH"] = (f"{env.get('PYTHONPATH', '')}:"
                              f"{self._pythonpath}")
 
-        self.run(additional_parameters=additional_parameters, env=env)
+        self.run(additional_parameters=parameters, env=env)
 
 
 # =============================================================================

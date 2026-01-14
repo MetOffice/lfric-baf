@@ -22,18 +22,19 @@ logger = logging.getLogger('fab')
 
 def configurator(config: BuildConfig,
                  lfric_core_source: Path,
-                 lfric_apps_source: Path,
                  rose_meta_conf: Path,
                  rose_picker: RosePicker,
+                 include_paths: Optional[list[Path]] = None,
                  config_dir: Optional[Path] = None) -> None:
     """
     This method implements the LFRic configurator tool.
 
     :param config: the Fab build config instance
     :param lfric_core_source: the path to the LFRic core directory
-    :param lfric_apps_source: the path to the LFRic apps directory
     :param rose_meta_conf: the path to the rose-meta configuration file
     :param rose_picker: the rose picker tool
+    :param include_paths: additional include paths (each path will be added,
+        as well as the path with /'rose-meta')
     :param config_dir: the directory for the generated configuration files
     """
 
@@ -47,17 +48,19 @@ def configurator(config: BuildConfig,
     # gungho/build
     logger.info('rose_picker')
 
-    rose_picker.execute(additional_parameters=[
-        rose_meta_conf,
-        '-directory', config_dir,
-        '-include_dirs', lfric_apps_source,
-        '-include_dirs', lfric_core_source,
-        '-include_dirs', lfric_core_source / 'rose-meta',
-        '-include_dirs', lfric_apps_source / 'rose-meta'])
+    include_dirs = [lfric_core_source, lfric_core_source / 'rose-meta']
+    if include_paths:
+        for path in include_paths:
+            include_dirs.extend([path, path / 'rose-meta'])
+
+    parameters = [rose_meta_conf, '-directory', config_dir]
+    for incl_dir in include_dirs:
+        parameters.extend(['-include_dirs', incl_dir])
+
+    rose_picker.execute(parameters=parameters)
     rose_meta = config_dir / 'rose-meta.json'
 
-    tb = config.tool_box
-    shell = tb.get_tool(Category.SHELL)
+    shell = config.tool_box.get_tool(Category.SHELL)
     shell = cast(Shell, shell)
 
     # build_config_loaders

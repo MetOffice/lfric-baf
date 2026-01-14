@@ -274,8 +274,8 @@ class LFRicBase(FabBase):
             # we create the files in the source directory, and find them
             # there later.
             configurator(self.config, lfric_core_source=self.lfric_core_root,
-                         lfric_apps_source=self._lfric_apps_root,
                          rose_meta_conf=rose_meta,
+                         include_paths=[self._lfric_apps_root],
                          rose_picker=rp)
 
     def templaterator_step(self, config: BuildConfig) -> None:

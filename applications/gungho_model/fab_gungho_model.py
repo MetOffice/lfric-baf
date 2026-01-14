@@ -12,6 +12,7 @@ contained in the infrastructure directory.
 import logging
 from pathlib import Path
 import sys
+from typing import Optional, Union
 
 # We need to import the Apps base class:
 sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
@@ -28,9 +29,13 @@ class FabGungho(LFRicAppsBase):
     source files.
 
     :param name: The name of the application.
+    :param root_symbol: the symbol (or list of symbols) of the main
+        programs. Defaults to the parameter `name` if not specified.
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self,
+                 name: str,
+                 root_symbol: Optional[Union[list[str], str]] = None) -> None:
         this_file = Path(__file__).resolve()
         super().__init__(name=name,
                          apps_root=this_file.parents[2])
