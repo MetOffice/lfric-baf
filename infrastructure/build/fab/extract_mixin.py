@@ -13,6 +13,7 @@ scripts.
 import logging
 import shutil
 from pathlib import Path
+from typing import Optional, Iterable
 
 from fab.build_config import BuildConfig
 from fab.artefacts import ArtefactSet
@@ -72,7 +73,7 @@ class ExtractMixin:
         paths and also the config to remove_one_private.
         '''
         state = self.config
-        input_files = state.artefact_store[ArtefactSet.FORTRAN_BUILD_FILES]
+        input_files = state.artefact_store[ArtefactSet.FORTRAN_COMPILER_FILES]
         args = [(state, filename) for filename in input_files]
         with TimerLogger(f"running remove-private on {len(input_files)} "
                          f"f90 files"):
@@ -91,7 +92,9 @@ class ExtractMixin:
                     "infrastructure" / "build" / "psyclone" / "psydata"
                     / "extract", dst_label='psydata')
 
-    def psyclone_step(self):
+    def psyclone_step(
+            self,
+            ignore_dependencies: Optional[Iterable[str]] = None) -> None:
         '''
         This method overwrites the psyclone_step in the base class by first
         calling the remove_private_step method to remove private attributes
@@ -99,7 +102,7 @@ class ExtractMixin:
         for PSyclone processing.
         '''
         self.remove_private_step()
-        super().psyclone_step()
+        super().psyclone_step(ignore_dependencies=ignore_dependencies)
 
     def get_transformation_script(self,
                                   fpath: Path,
