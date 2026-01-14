@@ -289,7 +289,8 @@ class LFRicBase(FabBase):
 
         templaterator = Templaterator(base_dir/"Templaterator")
         config.artefact_store["template_files"] = set()
-        t90_filter = SuffixFilter(ArtefactSet.INITIAL_SOURCE, [".t90", ".T90"])
+        t90_filter = SuffixFilter(ArtefactSet.INITIAL_SOURCE_FILES,
+                                  [".t90", ".T90"])
         template_files = t90_filter(config.artefact_store)
         # Don't bother with parallelising this, atm there is only one file:
         for template_file in template_files:
@@ -303,7 +304,7 @@ class LFRicBase(FabBase):
                 out_file = out_dir / f"field_{key_values['kind']}_mod.f90"
                 templaterator.process(template_file, out_file,
                                       key_values=key_values)
-                config.artefact_store.add(ArtefactSet.FORTRAN_BUILD_FILES,
+                config.artefact_store.add(ArtefactSet.FORTRAN_COMPILER_FILES,
                                           out_file)
 
     def get_rose_meta(self) -> Union[Path, None]:

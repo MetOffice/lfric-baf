@@ -12,7 +12,7 @@ from pathlib import Path
 import shutil
 from typing import cast, List, Union
 
-from fab.tools import Category, Tool, ToolRepository
+from fab.api import Category, Tool, ToolRepository
 from fab.tools.versioning import Fcm
 from fab.util import get_fab_workspace
 

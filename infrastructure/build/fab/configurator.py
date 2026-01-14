@@ -12,9 +12,7 @@ import logging
 from pathlib import Path
 from typing import cast, Optional
 
-from fab.build_config import BuildConfig
-from fab.steps.find_source_files import find_source_files
-from fab.tools import Category
+from fab.api import BuildConfig, find_source_files, Category
 from fab.tools.shell import Shell
 
 from rose_picker_tool import RosePicker

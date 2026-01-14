@@ -5,8 +5,7 @@
 
 from typing import cast
 
-from fab.tools import Category, Linker, ToolRepository
-from fab.build_config import BuildConfig
+from fab.api import BuildConfig, Category, Linker, ToolRepository
 
 from default.config import Config as DefaultConfig
 

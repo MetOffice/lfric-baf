@@ -10,9 +10,8 @@ by the Baf scripts. This script:
 from pathlib import Path
 from typing import List, Union, Optional
 
-from fab.build_config import BuildConfig
-from fab.tools import (Category, Compiler, CompilerWrapper,
-                       ToolRepository)
+from fab.api import (BuildConfig, Category, Compiler, CompilerWrapper,
+                     ToolRepository)
 
 from default.config import Config as DefaultConfig
 

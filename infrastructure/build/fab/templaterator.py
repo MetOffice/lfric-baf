@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Union
 
-from fab.tools import Tool
+from fab.api import Tool
 
 logger = logging.getLogger('fab')
 

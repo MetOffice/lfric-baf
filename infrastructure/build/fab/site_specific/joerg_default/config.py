@@ -7,8 +7,7 @@ This module contains a setup for Joerg's laptop :)
 import argparse
 from typing import cast, List
 
-from fab.build_config import BuildConfig
-from fab.tools import Category, Linker, ToolRepository
+from fab.api import BuildConfig, Category, Linker, ToolRepository
 
 from default.config import Config as DefaultConfig
 
