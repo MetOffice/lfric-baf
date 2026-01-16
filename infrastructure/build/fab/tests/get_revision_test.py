@@ -8,8 +8,10 @@
 Tests the get_revision script.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from get_revision import GetRevision
 
 
@@ -21,40 +23,75 @@ def sample_dependencies_file(tmp_path: Path) -> Path:
     parsing the new format, this will save time later.
     """
     content = """\
-export lfric_core_rev=53676
-export lfric_core_sources=
-# Comment, and an empty line
+casim:
+    source: git@github.com:MetOffice/casim.git
+    ref: 2025.12.1
 
-export casim_rev=apps2.2
-export casim_sources=
-export socrates_rev=1483
+lfric_apps:
+    source:
+    ref:
+
+lfric_core:
+    source: git@github.com:MetOffice/lfric_core.git
+    ref: 2025.12.1
 """
-    file_path = tmp_path / "dependencies.sh"
+    file_path = tmp_path / "dependencies.yaml"
     file_path.write_text(content, encoding="utf8")
     return file_path
 
 
-def test_get_revision_parses_revisions_correctly(sample_dependencies_file):
+def test_get_revision_parses_revisions_correctly(tmp_path):
     """
     Tests the parsing of a dependencies.sh file
     """
-    gr = GetRevision(sample_dependencies_file)
+    content = """\
+casim:
+    source: git@github.com:MetOffice/casim.git
+    ref: 2025.12.1
 
-    assert gr["lfric_core"] == "53676"
-    assert gr["casim"] == "apps2.2"
-    assert gr["socrates"] == "1483"
-    assert "lfric_core_sources" not in gr
-    assert "casim_sources" not in gr
+lfric_apps:
+    source:
+    ref:
+
+lfric_core:
+    source: git@github.com:MetOffice/lfric_core.git
+    ref: 2025.12.1
+"""
+    file_path = tmp_path / "dependencies.yaml"
+    file_path.write_text(content, encoding="utf8")
+
+    gr = GetRevision(file_path)
+
+    assert gr["lfric_core"]["ref"] == "2025.12.1"
+    assert (gr["lfric_core"]["source"] ==
+            "git@github.com:MetOffice/lfric_core.git")
+    assert gr.get_ref("casim") == "2025.12.1"
+    assert gr.get_source("casim") == "git@github.com:MetOffice/casim.git"
+    assert gr.get_ref("lfric_apps") is None
+    assert gr.get_source("lfric_apps") is None
 
 
-def test_get_revision_error_handling(sample_dependencies_file):
+@pytest.mark.parametrize('key_names', [("NO-source", "ref"),
+                                       ("source", "NO-ref")])
+def test_get_revision_error_handling(tmp_path, key_names):
     """
-    Tests asking for a non-existing section, which should raise a
-    KeyError:
+    Tests sections that have either no source or no ref
+    specified. The key_names parameter tests both
+    options, using one valid and one invalid name.
     """
-    gr = GetRevision(sample_dependencies_file)
+    content = f"""\
+casim:
+    {key_names[0]}: git@github.com:MetOffice/casim.git
+    {key_names[1]}: 2025.12.1
 
-    with pytest.raises(KeyError) as err:
-        gr["does-not-exist"]
+"""
+    file_path = tmp_path / "dependencies.yaml"
+    file_path.write_text(content, encoding="utf8")
 
-    assert "'does-not-exist'" == str(err.value)
+    with pytest.raises(RuntimeError) as err:
+        GetRevision(file_path)
+
+    if key_names[0] == "NO-source":
+        assert "does not contain a 'source'" in str(err.value)
+    else:
+        assert "does not contain a 'ref'" in str(err.value)

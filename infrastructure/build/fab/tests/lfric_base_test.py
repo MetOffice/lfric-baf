@@ -19,11 +19,9 @@ from typing import cast, List, Optional
 
 import pytest
 
-from fab.artefacts import ArtefactSet
-from fab.build_config import BuildConfig
-from fab.tools import Category, ToolRepository
+from fab.api import (ArtefactSet, BuildConfig, Category, ToolRepository,
+                     Linker)
 from fab.tools.compiler import CCompiler, FortranCompiler
-from fab.tools.linker import Linker
 
 from lfric_base import LFRicBase
 
@@ -149,18 +147,18 @@ def test_constructor(monkeypatch) -> None:
     Tests constructor.
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-    lfric_base = LFRicBase(name="test_name", apps_root=Path())
+    lfric_base = LFRicBase(name="test_name")
 
     # Check root symbol defaults to name if not specified
     assert lfric_base.root_symbol == ["test_name"]
 
     # Check root symbol can be specified
-    lfric_base = LFRicBase(name="test_name", apps_root=Path(),
+    lfric_base = LFRicBase(name="test_name",
                            root_symbol="root1")
     assert lfric_base.root_symbol == ["root1"]
 
     # Check root symbol list
-    lfric_base = LFRicBase(name="test_name", apps_root=Path(),
+    lfric_base = LFRicBase(name="test_name",
                            root_symbol=["root1", "root2"])
     assert lfric_base.root_symbol == ["root1", "root2"]
 
@@ -213,13 +211,11 @@ def test_get_directory(monkeypatch, tmpdir) -> None:
     monkeypatch.setattr('inspect.stack', lambda: mock_stack)
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test", apps_root=Path("/some/path"))
+    lfric_base = LFRicBase(name="test")
 
     # Verify core root is set correctly
     assert lfric_base._lfric_core_root == mock_core
     assert lfric_base.lfric_core_root == mock_core
-    # Verify apps root found via dependencies.sh
-    assert lfric_base._lfric_apps_root == Path("/some/path")
 
 
 def test_command_line_options(monkeypatch) -> None:
@@ -230,7 +226,7 @@ def test_command_line_options(monkeypatch) -> None:
                                       "--rose_picker", "custom",
                                       "--precision-default", "32"])
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
 
     assert lfric_base.args.rose_picker == "custom"
     assert lfric_base.args.precision_default == "32"
@@ -248,7 +244,7 @@ def test_precision_definition_without_default(monkeypatch) -> None:
                                       "--rdef_precision", "32"])
     monkeypatch.setattr(os, 'environ', {"R_BL_PRECISION": "64"})
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     lfric_base.define_preprocessor_flags_step()
     flags = lfric_base.preprocess_flags_common
 
@@ -273,7 +269,7 @@ def test_precision_definition_with_default(monkeypatch) -> None:
                                       "--rdef_precision", "64"])
     monkeypatch.setattr(os, 'environ', {"R_BL_PRECISION": "64"})
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     lfric_base.define_preprocessor_flags_step()
 
     flags = lfric_base.preprocess_flags_common
@@ -306,7 +302,7 @@ def test_preprocessor_flags(monkeypatch, no_xios, mpi) -> None:
     fc = tr.get_tool(Category.FORTRAN_COMPILER, "sfc")
     monkeypatch.setattr(fc, "_mpi", mpi)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     lfric_base.define_preprocessor_flags_step()
 
     expected_flags = [
@@ -327,7 +323,7 @@ def test_setup_site_specific_location(monkeypatch) -> None:
     Tests site specific path setup for LFRicBase.
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
 
     old_path = sys.path.copy()
     lfric_base.setup_site_specific_location()
@@ -347,7 +343,7 @@ def test_get_linker_flags(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     flags = lfric_base.get_linker_flags()
 
     expected_libs = ['yaxt', 'xios', 'netcdf', 'hdf5']
@@ -367,7 +363,7 @@ def test_grab_files_step(monkeypatch) -> None:
     # Setup mocks
     monkeypatch.setattr('lfric_base.grab_folder', mock_grab)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     monkeypatch.setattr(lfric_base, '_lfric_core_root', mock_core)
 
     # Call method under test
@@ -414,7 +410,7 @@ def test_find_source_files_step(monkeypatch) -> None:
 
     monkeypatch.setattr('lfric_base.Exclude', mock_exclude)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     monkeypatch.setattr(lfric_base, 'configurator_step', mock.MagicMock())
     monkeypatch.setattr(lfric_base, 'templaterator_step', mock.MagicMock())
 
@@ -450,7 +446,7 @@ def test_configurator_step(monkeypatch) -> None:
     monkeypatch.setattr('lfric_base.configurator', mock_config)
     monkeypatch.setattr('lfric_base.get_rose_picker', mock_picker)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     monkeypatch.setattr(lfric_base, 'get_rose_meta', mock_meta)
 
     lfric_base.configurator_step()
@@ -459,8 +455,8 @@ def test_configurator_step(monkeypatch) -> None:
     mock_config.assert_called_once_with(
         lfric_base.config,
         lfric_core_source=lfric_base.lfric_core_root,
-        lfric_apps_source=lfric_base._lfric_apps_root,
         rose_meta_conf="rose_meta.conf",
+        include_paths=[],
         rose_picker="rose_picker_tool"
     )
 
@@ -504,7 +500,7 @@ def test_templaterator_step(monkeypatch, tmpdir) -> None:
     config.build_output = tmp_path
 
     # Create LFRicBase instance
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     monkeypatch.setattr(lfric_base, '_lfric_core_root', tmp_path)
 
     # Run templaterator step
@@ -537,7 +533,7 @@ def test_templaterator_step(monkeypatch, tmpdir) -> None:
     for template in templates:
         out_file = mock_output_path / f"field_{template['kind']}_mod.f90"
         expected_add_calls.append(
-            mock.call(ArtefactSet.FORTRAN_BUILD_FILES, out_file)
+            mock.call(ArtefactSet.FORTRAN_COMPILER_FILES, out_file)
         )
 
     assert mock_artefact_store.add.call_count == 3
@@ -556,7 +552,7 @@ def test_get_rose_meta(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     assert lfric_base.get_rose_meta() is None
 
 
@@ -572,9 +568,10 @@ def test_analyse_step(monkeypatch) -> None:
     mock_psyclone = mock.MagicMock()
 
     # Setup mocks
-    monkeypatch.setattr('lfric_base.analyse', mock_analyse)
+    monkeypatch.setattr('fab.fab_base.fab_base.FabBase.analyse_step',
+                        mock_analyse)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
 
     # Mock instance methods
     monkeypatch.setattr(lfric_base, 'preprocess_x90_step', mock_preprocess)
@@ -591,8 +588,6 @@ def test_analyse_step(monkeypatch) -> None:
     expected_ignore = ['netcdf', 'mpi', 'mpi_f08', 'yaxt',
                        'xios', 'icontext', 'mod_wait']
     mock_analyse.assert_called_once_with(
-        lfric_base.config,
-        root_symbol=lfric_base.root_symbol,
         ignore_dependencies=expected_ignore,
         find_programs=False
     )
@@ -603,7 +598,7 @@ def test_analyse_step(monkeypatch) -> None:
     mock_preprocess.reset_mock()
     mock_psyclone.reset_mock()
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     monkeypatch.setattr(lfric_base, 'preprocess_x90_step', mock_preprocess)
     monkeypatch.setattr(lfric_base, 'psyclone_step', mock_psyclone)
 
@@ -619,8 +614,6 @@ def test_analyse_step(monkeypatch) -> None:
                        'mpi_f08', 'yaxt', 'xios', 'icontext',
                        'mod_wait']
     mock_analyse.assert_called_once_with(
-        lfric_base.config,
-        root_symbol=lfric_base.root_symbol,
         ignore_dependencies=expected_ignore,
         find_programs=False
     )
@@ -635,7 +628,7 @@ def test_preprocess_x90_step(monkeypatch) -> None:
     mock_preproc = mock.MagicMock()
     monkeypatch.setattr('lfric_base.preprocess_x90', mock_preproc)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     lfric_base.add_preprocessor_flags(["-flag1", "-flag2"])
     lfric_base.preprocess_x90_step()
 
@@ -659,24 +652,28 @@ def test_psyclone_step(monkeypatch) -> None:
     # Set up monkeypatch for module level import
     monkeypatch.setattr('lfric_base.psyclone', mock_psy)
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
 
-    # Patch instance methods
+    # Patch instance methods. Return a copy to avoid that
+    # PSyclone modified these lists in the lambdas when it modifies the list
     monkeypatch.setattr(lfric_base, 'get_psyclone_config',
-                        lambda: mock_config_opts)
+                        lambda: mock_config_opts[:])
     monkeypatch.setattr(lfric_base, 'get_additional_psyclone_options',
-                        lambda: mock_additional_opts)
+                        lambda: mock_additional_opts[:])
 
     # Call method under test
-    lfric_base.psyclone_step()
+    lfric_base.psyclone_step(additional_parameters=["-additional"])
 
     # Verify psyclone called with correct arguments
+    print(mock_psy.mock_calls)
+    print("UUU", mock_config_opts, mock_additional_opts)
     mock_psy.assert_called_once_with(
         lfric_base.config,
         kernel_roots=[(lfric_base.config.build_output / "kernel")],
         transformation_script=lfric_base.get_transformation_script,
         api="dynamo0.3",
-        cli_args=mock_config_opts + mock_additional_opts
+        cli_args=mock_config_opts + mock_additional_opts + ["-additional"],
+        ignore_dependencies=None
     )
 
 
@@ -686,7 +683,7 @@ def test_get_psyclone_config(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     config_args = lfric_base.get_psyclone_config()
 
     assert config_args == ["--config",
@@ -700,7 +697,7 @@ def test_get_additional_psyclone_options(monkeypatch) -> None:
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
-    lfric_base = LFRicBase(name="test", apps_root=Path())
+    lfric_base = LFRicBase(name="test")
     assert lfric_base.get_additional_psyclone_options() == []
 
 
@@ -712,7 +709,7 @@ def test_get_transformation_script(monkeypatch, tmpdir) -> None:
     tmp_path = Path(tmpdir)
 
     # Create LFRicBase instance with mocked site/platform
-    lfric_base = LFRicBase(name="test", apps_root=tmpdir)
+    lfric_base = LFRicBase(name="test")
 
     # Create mock config
     config = mock.MagicMock()

@@ -8,8 +8,9 @@
 This module tests the configurator.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from configurator import configurator  # Replace with actual module name
 from fab.tools.category import Category
@@ -63,9 +64,9 @@ def test_configurator_runs_expected_sequence(mock_shell, tmp_path):
         configurator(
             config=config,
             lfric_core_source=lfric_core,
-            lfric_apps_source=lfric_apps,
             rose_meta_conf=rose_meta_conf,
             rose_picker=rose_picker,
+            include_paths=[lfric_apps],
             config_dir=config_dir
         )
 
@@ -74,13 +75,12 @@ def test_configurator_runs_expected_sequence(mock_shell, tmp_path):
     # Check rose_picker was called with the expected arguments:
     rose_picker.execute.assert_called_once()
     kwargs = rose_picker.execute.call_args_list[0].kwargs
-    args = kwargs["additional_parameters"]
-    assert args == [
+    assert kwargs["parameters"] == [
         rose_meta_conf,
         '-directory', config_dir,
-        '-include_dirs', lfric_apps,
         '-include_dirs', lfric_core,
         '-include_dirs', lfric_core / "rose-meta",
+        '-include_dirs', lfric_apps,
         '-include_dirs', lfric_apps / "rose-meta"
     ]
 
