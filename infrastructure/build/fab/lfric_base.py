@@ -17,14 +17,10 @@ from pathlib import Path
 import sys
 from typing import List, Optional, Iterable, Union
 
-from fab.artefacts import ArtefactSet, SuffixFilter
-from fab.build_config import BuildConfig
+from fab.api import (ArtefactSet, BuildConfig, Exclude, grab_folder, Include,
+                     input_to_output_fpath, preprocess_x90, psyclone,
+                     SuffixFilter)
 from fab.fab_base.fab_base import FabBase
-from fab.steps.analyse import analyse
-from fab.steps.find_source_files import Exclude, Include
-from fab.steps.psyclone import psyclone, preprocess_x90
-from fab.steps.grab.folder import grab_folder
-from fab.util import input_to_output_fpath
 
 from configurator import configurator
 from rose_picker_tool import get_rose_picker
@@ -340,12 +336,9 @@ class LFRicBase(FabBase):
 
         self.preprocess_x90_step()
         self.psyclone_step(ignore_dependencies=ignore_dep_list)
-        # TODO: once we have an updated Fab release, we can
-        # call the analyse_step base class, but atm it does not
-        # accept the ignore_dependencies parameter :(
-        analyse(self.config, root_symbol=self.root_symbol,
-                ignore_dependencies=ignore_dep_list,
-                find_programs=find_programs)
+        super().analyse_step(
+            ignore_dependencies=ignore_dep_list,
+            find_programs=find_programs)
 
     def preprocess_x90_step(self) -> None:
         """
@@ -357,7 +350,9 @@ class LFRicBase(FabBase):
 
     def psyclone_step(
             self,
-            ignore_dependencies: Optional[Iterable[str]] = None) -> None:
+            ignore_dependencies: Optional[Iterable[str]] = None,
+            additional_parameters: Optional[list[str]] = None
+            ) -> None:
         '''
         This method runs Fab's psyclone. It first sets the additional psyclone
         command line arguments by calling get_psyclone_config to get the
@@ -365,12 +360,18 @@ class LFRicBase(FabBase):
         `get_additional_psyclone_options` to get additional psyclone command
         line set by the user, e.g. for profiling, if any. Finally, Fab's
         psyclone is called with the Fab build configuration, the kernel root
-        directory, the transforamtion script got through calling
+        directory, the transformation script got through calling
         `get_transformation_script`, the api, and the additional psyclone
         command line arguments.
+
+        :param ignore_dependencies:
+        :param additional_parameters: optional additional parameter for the
+            PSyclone.
         '''
         psyclone_cli_args = self.get_psyclone_config()
         psyclone_cli_args.extend(self.get_additional_psyclone_options())
+        if additional_parameters:
+            psyclone_cli_args.extend(additional_parameters)
 
         psyclone(self.config, kernel_roots=[(self.config.build_output)],
                  transformation_script=self.get_transformation_script,
