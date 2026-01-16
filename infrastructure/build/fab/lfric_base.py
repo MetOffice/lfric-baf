@@ -373,7 +373,7 @@ class LFRicBase(FabBase):
         if additional_parameters:
             psyclone_cli_args.extend(additional_parameters)
 
-        psyclone(self.config, kernel_roots=[(self.config.build_output)],
+        psyclone(self.config, kernel_roots=[(self.config.build_output / "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args,

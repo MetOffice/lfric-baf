@@ -20,7 +20,9 @@ from fab.artefacts import ArtefactSet
 from fab.steps import run_mp, step
 from fab.steps.grab.folder import grab_folder
 from fab.util import file_checksum, log_or_dot, TimerLogger
+from psyclone.line_length import FortLineLength
 
+from make_public import remove_private
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -54,13 +56,14 @@ class ExtractMixin:
         else:
             log_or_dot(logger,
                        'Removing private using fparser remove_private')
-            from make_public import remove_private
-            from psyclone.line_length import FortLineLength
+
             fll = FortLineLength()
             tree = remove_private(str(fpath))
             code = fll.process(str(tree))
-            open(fpath, "wt").write(code)
-            open(no_private_fpath, "wt").write(code)
+            with open(fpath, "wt", encoding="utf-8") as f:
+                f.write(code)
+            with open(no_private_fpath, "wt", encoding="utf-8") as f:
+                f.write(code)
 
         return no_private_fpath
 
@@ -102,7 +105,13 @@ class ExtractMixin:
         for PSyclone processing.
         '''
         self.remove_private_step()
-        super().psyclone_step(ignore_dependencies=ignore_dependencies)
+
+        # For extraction, PSyclone must search the whole source tree
+        # (for inlining of all dependencies). Provide the path
+        # to the full source tree:
+        super().psyclone_step(
+            ignore_dependencies=ignore_dependencies,
+            additional_parameters=["-d", self.config.build_output])
 
     def get_transformation_script(self,
                                   fpath: Path,
