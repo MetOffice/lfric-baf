@@ -384,7 +384,8 @@ class LFRicBase(FabBase):
         if additional_parameters:
             psyclone_cli_args.extend(additional_parameters)
 
-        psyclone(self.config, kernel_roots=[(self.config.build_output / "kernel")],
+        psyclone(self.config, kernel_roots=[(self.config.build_output /
+                                             "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args,
@@ -418,9 +419,6 @@ class LFRicBase(FabBase):
         # Newer LFRic versions have a psykal directory
         optimisation_path = (config.source_root / "optimisation" /
                              f"{self.site}-{self.platform}" / "psykal")
-        if not optimisation_path.exists():
-            optimisation_path = (config.source_root / "optimisation" /
-                                 f"{self.site}-{self.platform}")
         relative_path = None
         for base_path in [config.source_root, config.build_output]:
             try:
