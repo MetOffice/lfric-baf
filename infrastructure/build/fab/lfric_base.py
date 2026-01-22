@@ -25,6 +25,7 @@ from fab.fab_base.fab_base import FabBase
 from configurator import configurator
 from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
+from transmute_step import TransmuteStep
 
 
 class LFRicBase(FabBase):
@@ -87,6 +88,10 @@ class LFRicBase(FabBase):
         parser.add_argument(
             '--no-xios', action="store_true", default=False,
             help="Disable compilation with XIOS.")
+
+        parser.add_argument('--transmute', action="append",
+                            help="Specify a transmute file which will trigger"
+                                 "additional PSyclone processing.")
 
         # Precision related command line arguments
         # ----------------------------------------
@@ -335,6 +340,12 @@ class LFRicBase(FabBase):
         ignore_dep_list += ['xios', 'icontext', 'mod_wait']
 
         self.preprocess_x90_step()
+
+        # Do the transmute step - contained in a separate object
+        # to keep the file size smaller.
+        transmute = TransmuteStep(self.config, self.site, self.platform)
+        transmute.transmute_step(self.args.transmute)
+
         self.psyclone_step(ignore_dependencies=ignore_dep_list)
         super().analyse_step(
             ignore_dependencies=ignore_dep_list,
