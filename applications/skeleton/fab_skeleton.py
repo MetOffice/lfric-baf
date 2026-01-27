@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-# ##############################################################################
-#  (c) Crown copyright Met Office. All rights reserved.
-#  For further details please refer to the file COPYRIGHT
-#  which you should have received as part of this distribution
-# ##############################################################################
 
-'''A FAB build script for applications/skeleton. It relies on
+##############################################################################
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+##############################################################################
+# Author: J. Henrichs, Bureau of Meteorology
+# Author: J. Lyu, Bureau of Meteorology
+
+"""
+A FAB build script for applications/skeleton. It relies on
 the LFRicBase class contained in the infrastructure directory.
-'''
+"""
 
 import logging
 from pathlib import Path

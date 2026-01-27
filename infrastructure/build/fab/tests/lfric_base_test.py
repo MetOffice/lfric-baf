@@ -1,12 +1,13 @@
-#!/usr/bin/env python3
-# ##############################################################################
-#  (c) Crown copyright Met Office. All rights reserved.
-#  For further details please refer to the file COPYRIGHT
-#  which you should have received as part of this distribution
-# ##############################################################################
+##############################################################################
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+##############################################################################
+# Author: J. Lyu, Bureau of Meteorology
+# Author: J. Henrichs, Bureau of Meteorology
 
 """
-Tests the LFRicBase class
+Tests the LFRicBase class.
 """
 
 from pathlib import Path
@@ -15,7 +16,7 @@ import sys
 import argparse
 import inspect
 from unittest import mock
-from typing import cast, List, Optional
+from typing import List, Optional
 
 import pytest
 
@@ -34,20 +35,31 @@ class MockSiteConfig:
         self.args: Optional[argparse.Namespace] = None
 
     def get_valid_profiles(self) -> List[str]:
+        """
+        :return: list of valid compilation profiles.
+        """
         return ["default-profile"]
 
     def update_toolbox(self, build_config: BuildConfig) -> None:
-        pass
+        """
+        Dummy function where the tool box could be modified
+        """
 
     def handle_command_line_options(self, args: argparse.Namespace) -> None:
+        """
+        Simple function to handle command line options.
+        """
         self.args = args
 
-    def get_path_flags(self, build_config: BuildConfig) -> List[str]:
+    def get_path_flags(self, _build_config: BuildConfig) -> List[str]:
+        """
+        :returns: list of path-specific flags.
+        """
         return []
 
 
-@pytest.fixture(scope='function')
-def stub_fortran_compiler() -> FortranCompiler:
+@pytest.fixture(name="stub_fortran_compiler", scope='function')
+def stub_fortran_compiler_init() -> FortranCompiler:
     """
     Provides a minimal Fortran compiler.
     """
@@ -57,8 +69,8 @@ def stub_fortran_compiler() -> FortranCompiler:
     return compiler
 
 
-@pytest.fixture(scope='function')
-def stub_c_compiler() -> CCompiler:
+@pytest.fixture(name="stub_c_compiler", scope='function')
+def stub_c_compiler_init() -> CCompiler:
     """
     Provides a minimal C compiler.
     """
@@ -67,8 +79,8 @@ def stub_c_compiler() -> CCompiler:
     return compiler
 
 
-@pytest.fixture(scope='function')
-def stub_linker(stub_c_compiler) -> Linker:
+@pytest.fixture(name="stub_linker", scope='function')
+def stub_linker_init(stub_c_compiler) -> Linker:
     """
     Provides a minimal linker.
     """
@@ -163,12 +175,10 @@ def test_constructor(monkeypatch) -> None:
     assert lfric_base.root_symbol == ["root1", "root2"]
 
 
-def test_get_directory(monkeypatch, tmpdir) -> None:
+def test_get_directory(monkeypatch, tmp_path) -> None:
     '''
     Tests the correct setup of lfric_core_root and lfric_apps_root.
     '''
-    # Convert tmpdir to Path object for mkdir
-    tmp_path = Path(tmpdir)
 
     # Create mock directory structure
     mock_core = tmp_path / "core"
@@ -214,7 +224,6 @@ def test_get_directory(monkeypatch, tmpdir) -> None:
     lfric_base = LFRicBase(name="test")
 
     # Verify core root is set correctly
-    assert lfric_base._lfric_core_root == mock_core
     assert lfric_base.lfric_core_root == mock_core
 
 
@@ -405,29 +414,18 @@ def test_find_source_files_step(monkeypatch) -> None:
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
     # Create mocks
-    mock_exclude = mock.MagicMock()
-    mock_super = mock.MagicMock()
-
-    monkeypatch.setattr('lfric_base.Exclude', mock_exclude)
-
-    lfric_base = LFRicBase(name="test")
-    monkeypatch.setattr(lfric_base, 'configurator_step', mock.MagicMock())
-    monkeypatch.setattr(lfric_base, 'templaterator_step', mock.MagicMock())
-
-    with mock.patch('lfric_base.FabBase.find_source_files_step', mock_super):
+    with (mock.patch('lfric_base.FabBase.find_source_files_step') as find_step,
+          mock.patch('lfric_base.LFRicBase.templaterator_step') as temp_step,
+          mock.patch('lfric_base.LFRicBase.configurator_step') as conf_step,
+          mock.patch('lfric_base.Exclude') as mock_exclude):
+        lfric_base = LFRicBase(name="test")
         lfric_base.find_source_files_step()
 
         # Verify exclusion filter added and super called
         mock_exclude.assert_called_once_with('unit-test', '/test/')
-        mock_super.assert_called_once()
-
+        find_step.assert_called_once()
         # Verify configurator and templaterator called
-        conf_step = lfric_base.configurator_step
-        # mypy needs more info, so cast the mocked types:
-        conf_step = cast(mock.MagicMock, conf_step)
         conf_step.assert_called_once()
-        temp_step = lfric_base.templaterator_step
-        temp_step = cast(mock.MagicMock, temp_step)
         temp_step.assert_called_once_with(lfric_base.config)
 
 
@@ -461,13 +459,11 @@ def test_configurator_step(monkeypatch) -> None:
     )
 
 
-def test_templaterator_step(monkeypatch, tmpdir) -> None:
+def test_templaterator_step(monkeypatch, tmp_path) -> None:
     '''
     Tests the templaterator step processes template files correctly.
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-
-    tmp_path = Path(tmpdir)
 
     # Create mock template file
     template_file = tmp_path / "field.t90"
@@ -507,9 +503,9 @@ def test_templaterator_step(monkeypatch, tmpdir) -> None:
     lfric_base.templaterator_step(config)
 
     # Verify templaterator initialization
-    expected_base_dir = (tmp_path / "infrastructure" / "build" / "tools" /
-                         "Templaterator")
-    mock_templaterator.assert_called_once_with(expected_base_dir)
+    mock_templaterator.assert_called_once_with(tmp_path / "infrastructure" /
+                                               "build" / "tools" /
+                                               "Templaterator")
 
     # Verify template processing
     expected_calls = []
@@ -577,8 +573,12 @@ def test_analyse_step(monkeypatch) -> None:
     monkeypatch.setattr(lfric_base, 'preprocess_x90_step', mock_preprocess)
     monkeypatch.setattr(lfric_base, 'psyclone_step', mock_psyclone)
 
-    # Call analyse_step
+    # The PSyclone step will modify sys.path (to allow import of
+    # psyclone_tools by PSyclone scripts). Make sure sys.path is unchanged:
+    old_sys_path = sys.path[:]
+    # Call analyse_step (which calls PSyclone)
     lfric_base.analyse_step()
+    assert sys.path == old_sys_path
 
     # Verify method calls
     mock_preprocess.assert_called_once()
@@ -698,15 +698,14 @@ def test_get_additional_psyclone_options(monkeypatch) -> None:
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
 
     lfric_base = LFRicBase(name="test")
-    assert lfric_base.get_additional_psyclone_options() == []
+    assert not lfric_base.get_additional_psyclone_options()
 
 
-def test_get_transformation_script(monkeypatch, tmpdir) -> None:
+def test_get_transformation_script(monkeypatch, tmp_path) -> None:
     '''
     Tests finding PSyclone transformation scripts.
     '''
     monkeypatch.setattr(sys, "argv", ["lfric_base.py"])
-    tmp_path = Path(tmpdir)
 
     # Create LFRicBase instance with mocked site/platform
     lfric_base = LFRicBase(name="test")
@@ -731,12 +730,13 @@ def test_get_transformation_script(monkeypatch, tmpdir) -> None:
     assert lfric_base.get_transformation_script(test_file, config) is None
 
     # Test case 3: No PSykal but optimisation directory
-    optimisation_folder_path = tmp_path / "optimisation/default-default"
+    optimisation_folder_path = (tmp_path / "optimisation" / "default-default" /
+                                "psykal")
     global_script = optimisation_folder_path / "global.py"
     global_script.parent.mkdir(parents=True)
     global_script.touch()
 
-    # No file-specific transforamtion script, use global script
+    # No file-specific transformation script, use global script
     other_file = tmp_path / "other/path/test.x90"
     other_file.parent.mkdir(parents=True)
     other_file.touch()
@@ -745,7 +745,6 @@ def test_get_transformation_script(monkeypatch, tmpdir) -> None:
 
     # Test case 4: Psykal directory exists
     psykal_path = tmp_path / "optimisation/default-default/psykal"
-    psykal_path.mkdir(parents=True)
 
     # Create specific transformation script in psykal dir
     specific_script = psykal_path / "some/path/file.py"

@@ -1,4 +1,10 @@
-#!/usr/bin/python3
+##############################################################################
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+##############################################################################
+# Author: J. Henrichs, Bureau of Meteorology
+# Author: J. Lyu, Bureau of Meteorology
 
 '''
 This module contains the Fab Templaterator class.
@@ -21,7 +27,9 @@ class Templaterator(Tool):
     :param Path exec_name: the path to the templaterator binary.
     '''
     def __init__(self, exec_name: Path):
-        super().__init__(exec_name.name, exec_name=str(exec_name))
+        # Remove suffix as a name
+        super().__init__(exec_name.stem,
+                         exec_name=exec_name)
 
     def check_available(self) -> bool:
         '''

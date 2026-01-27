@@ -1,10 +1,17 @@
-#!/usr/bin/python3
+##############################################################################
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+##############################################################################
+# Author J. Henrichs, Bureau of Meteorology
+# Author J. Lyu, Bureau of Meteorology
 
-'''This module contains a function that returns a working version of a
+"""
+This module contains a function that returns a working version of a
 rose_picker tool. It can either be a version installed in the system,
 or otherwise a checked-out version in the fab-workspace will be used.
 If required, a version of rose_picker will be checked out.
-'''
+"""
 
 import logging
 import os

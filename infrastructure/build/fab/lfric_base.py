@@ -1,15 +1,16 @@
-#!/usr/bin/env python3
-# ##############################################################################
-#  (c) Crown copyright Met Office. All rights reserved.
-#  For further details please refer to the file COPYRIGHT
-#  which you should have received as part of this distribution
-# ##############################################################################
+##############################################################################
+# (c) Crown copyright Met Office. All rights reserved.
+# The file LICENCE, distributed with this code, contains details of the terms
+# under which the code may be used.
+##############################################################################
+# Author: J. Henrichs, Bureau of Meteorology
+# Author: J. Lyu, Bureau of Meteorology
 
-'''
+"""
 This is an OO basic interface to FAB. It allows the typical LFRic
 applications to only modify very few settings to have a working FAB build
 script.
-'''
+"""
 
 import argparse
 import os
@@ -64,6 +65,10 @@ class LFRicBase(FabBase):
 
         self._psyclone_config = (self.config.source_root / 'psyclone_config' /
                                  'psyclone.cfg')
+        # Many PSyclone scripts use module(s) from this directory. Additional
+        # paths might need to be added later.
+        self._add_python_paths = [str(self.lfric_core_root / "infrastructure" /
+                                      "build" / "psyclone")]
 
     def define_command_line_options(
             self,
@@ -311,7 +316,7 @@ class LFRicBase(FabBase):
                 config.artefact_store.add(ArtefactSet.FORTRAN_COMPILER_FILES,
                                           out_file)
 
-    def get_rose_meta(self) -> Union[Path, None]:
+    def get_rose_meta(self) -> Optional[Path]:
         '''
         This method returns the path to the rose meta data config file.
         Currently, it returns none. It's up to the LFRic applications to
@@ -384,12 +389,16 @@ class LFRicBase(FabBase):
         if additional_parameters:
             psyclone_cli_args.extend(additional_parameters)
 
+        # To avoid impacting other code, store the original search path
+        old_sys_path = sys.path[:]
+        sys.path.extend(self._add_python_paths)
         psyclone(self.config, kernel_roots=[(self.config.build_output /
                                              "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args,
                  ignore_dependencies=ignore_dependencies)
+        sys.path = old_sys_path
 
     def get_psyclone_config(self) -> List[str]:
         '''
