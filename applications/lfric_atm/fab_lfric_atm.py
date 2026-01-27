@@ -17,13 +17,15 @@ from typing import cast, Iterable, List, Optional, Union
 from fab.api import (AddFlags, Category, Compiler, Exclude, git_checkout,
                      grab_folder, Include)
 
-from get_revision import GetRevision
-from extract_list import ExtractList
-
 # We need to import the Apps base class:
 sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
 
 from lfric_apps_base import LFRicAppsBase  # noqa: E402
+
+# These can only be done after the import of LFRicAppBase (which adds
+# the required directories from the core repo)
+from get_revision import GetRevision  # noqa: E402
+from extract_list import ExtractList  # noqa: E402
 
 
 logger = logging.getLogger(__name__)
