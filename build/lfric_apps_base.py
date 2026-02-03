@@ -58,6 +58,13 @@ class LFRicAppsBase(LFRicBase):
         super().__init__(name=name,
                          root_symbol=root_symbol)
 
+        # Some transmute function will import helper functions from
+        # this path.
+        apps_root = Path(__file__).parents[1]
+        self.add_python_path(apps_root / "interfaces" /
+                             "physics_schemes_interface" / "build" /
+                             "transmute_psytrans")
+
     def define_command_line_options(
             self,
             parser: Optional[argparse.ArgumentParser] = None

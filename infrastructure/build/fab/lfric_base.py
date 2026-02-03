@@ -67,8 +67,22 @@ class LFRicBase(FabBase):
                                  'psyclone.cfg')
         # Many PSyclone scripts use module(s) from this directory. Additional
         # paths might need to be added later.
-        self._add_python_paths = [str(self.lfric_core_root / "infrastructure" /
-                                      "build" / "psyclone")]
+        self._add_python_paths: List[str] = []
+        self.add_python_path(self.lfric_core_root / "infrastructure" /
+                             "build" / "psyclone")
+
+    def add_python_path(self, path: Path) -> None:
+        """
+        Adds a path from which the application will import Python modules from
+        during the PSyclone step. This base class will already add
+        infrastructure/build/psyclone (from which psyclone_tools will be
+        imported).
+
+        :param path: Additional path from which a PSyclone script will import
+            modules from.
+        """
+
+        self._add_python_paths.append(str(path))
 
     def define_command_line_options(
             self,
@@ -346,12 +360,21 @@ class LFRicBase(FabBase):
 
         self.preprocess_x90_step()
 
+        # Update the Python search path for PSyclone sripts.
+        # To avoid impacting other code, store the original search path:
+        old_sys_path = sys.path[:]
+        sys.path.extend(self._add_python_paths)
+
         # Do the transmute step - contained in a separate object
         # to keep the file size smaller.
         transmute = TransmuteStep(self.config, self.site, self.platform)
         transmute.transmute_step(self.args.transmute)
 
         self.psyclone_step(ignore_dependencies=ignore_dep_list)
+
+        # Reset sys.path:
+        sys.path = old_sys_path
+
         super().analyse_step(
             ignore_dependencies=ignore_dep_list,
             find_programs=find_programs)
@@ -389,16 +412,12 @@ class LFRicBase(FabBase):
         if additional_parameters:
             psyclone_cli_args.extend(additional_parameters)
 
-        # To avoid impacting other code, store the original search path
-        old_sys_path = sys.path[:]
-        sys.path.extend(self._add_python_paths)
         psyclone(self.config, kernel_roots=[(self.config.build_output /
                                              "kernel")],
                  transformation_script=self.get_transformation_script,
                  api="dynamo0.3",
                  cli_args=psyclone_cli_args,
                  ignore_dependencies=ignore_dependencies)
-        sys.path = old_sys_path
 
     def get_psyclone_config(self) -> List[str]:
         '''
