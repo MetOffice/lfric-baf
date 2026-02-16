@@ -54,21 +54,32 @@ lfric_apps:
     ref:
 
 lfric_core:
-    source: git@github.com:MetOffice/lfric_core.git
-    ref: 2025.12.1
+    - source: git@github.com:MetOffice/lfric_core.git
+      ref: 2025.12.1
+    - source: git@github.com:my_branch
+      ref: my_branch_name
 """
     file_path = tmp_path / "dependencies.yaml"
     file_path.write_text(content, encoding="utf8")
 
     gr = GetRevision(file_path)
+    assert gr.get_repo_names() == ["casim", "lfric_apps", "lfric_core"]
+    lfric_core = gr.get_repo_info("lfric_core")
+    assert len(lfric_core) == 2
+    assert lfric_core[0].source == "git@github.com:MetOffice/lfric_core.git"
+    assert lfric_core[0].ref == "2025.12.1"
+    assert lfric_core[1].source == "git@github.com:my_branch"
+    assert lfric_core[1].ref == "my_branch_name"
 
-    assert gr["lfric_core"]["ref"] == "2025.12.1"
-    assert (gr["lfric_core"]["source"] ==
-            "git@github.com:MetOffice/lfric_core.git")
-    assert gr.get_ref("casim") == "2025.12.1"
-    assert gr.get_source("casim") == "git@github.com:MetOffice/casim.git"
-    assert gr.get_ref("lfric_apps") is None
-    assert gr.get_source("lfric_apps") is None
+    casim = gr.get_repo_info("casim")
+    assert len(casim) == 1
+    assert casim[0].ref == "2025.12.1"
+    assert casim[0].source == "git@github.com:MetOffice/casim.git"
+
+    lfric_apps = gr.get_repo_info("lfric_apps")
+    assert len(lfric_apps) == 1
+    assert lfric_apps[0].source is None
+    assert lfric_apps[0].ref is None
 
 
 @pytest.mark.parametrize('key_names', [("NO-source", "ref"),

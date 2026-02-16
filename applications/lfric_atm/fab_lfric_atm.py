@@ -247,7 +247,7 @@ class FabLFRicAtm(LFRicAppsBase):
                         dst_label='')
 
         gr = GetRevision("../../dependencies.yaml")
-        for repo in gr.keys():
+        for repo in gr.get_repo_names():
             if repo == "lfric_apps":
                 # For now don't support checking out the apps repo
                 continue
@@ -255,19 +255,22 @@ class FabLFRicAtm(LFRicAppsBase):
                 # We don't support checking out lfric core, it will
                 # be taken from an already checked out directory
                 continue
-            logger.info(f"Extracting '{repo}' from '{gr.get_source(repo)}' "
-                        f" to 'science/{repo}', "
-                        f"revision {gr.get_ref(repo)}")
-            try:
-                git_checkout(self.config,
-                             gr.get_source(repo),
-                             dst_label=f'science/{repo}',
-                             revision=gr.get_ref(repo))
-            except RuntimeError as error:
-                logger.error(f"Cannot checkout '{repo}' from "
-                             f"'{gr.get_source(repo)}' revision "
-                             f"'{gr.get_ref(repo)}': {error}. ")
-                sys.exit(-1)
+            repo_infos = gr.get_repo_info(repo)
+
+            for repo_info in repo_infos:
+                logger.info(f"Extracting '{repo}' from '{repo_info.source}' "
+                            f" to 'science/{repo}', "
+                            f"revisions {repo_info.ref}")
+                try:
+                    git_checkout(self.config,
+                                 repo_info.source,
+                                 dst_label=f'science/{repo}',
+                                 revision=repo_info.ref)
+                except RuntimeError as error:
+                    logger.error(f"Cannot checkout '{repo}' from "
+                                 f"'{repo_info.source}' revision "
+                                 f"'{repo_info.ref}': {error}. ")
+                    sys.exit(-1)
 
         # Copy the optimisation scripts into a separate directory
         grab_folder(self.config, src=self._this_root / 'optimisation',

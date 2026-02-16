@@ -9,12 +9,17 @@
 This module contains a function that extracts the revision numbers
 from a dependencies.yaml file.
 '''
+from collections import namedtuple
 from pathlib import Path
 from typing import Union
 import yaml
 
 
-class GetRevision(dict):
+# A namedtuple to keep track of repository source and references
+RepoInfo = namedtuple("RepoInfo", ["source", "ref"])
+
+
+class GetRevision:
     '''
     A simple dictionary-like class that stores the version information
     from a yaml file:
@@ -39,31 +44,39 @@ class GetRevision(dict):
     '''
 
     def __init__(self, filename: Union[str, Path]) -> None:
-        super().__init__()
+        self._repo_info: dict[str, list[RepoInfo]] = {}
+
         with open(filename, "r", encoding="utf8") as stream:
             dependencies = yaml.safe_load(stream)
 
-        for repo in dependencies:
-            if "source" not in dependencies[repo]:
-                raise RuntimeError(f"'{filename} does not contain a 'source' "
-                                   f"definition for repo '{repo}'.")
-            if "ref" not in dependencies[repo]:
-                raise RuntimeError(f"'{filename} does not contain a 'ref' "
-                                   f"definition for repo '{repo}'.")
-            self[repo] = dependencies[repo]
+        for repo, all_deps in dependencies.items():
+            # A repo can either have a single definition, or a list
+            # Support both:
+            if not isinstance(all_deps, list):
+                all_deps = [all_deps]
 
-    def get_source(self, repo: str) -> str:
+            self._repo_info[repo] = []
+            for dep in all_deps:
+                if "source" not in dep:
+                    raise RuntimeError(f"'{filename} does not contain a "
+                                       f"'source' definition for repo "
+                                       f"'{repo}'.")
+                if "ref" not in dep:
+                    raise RuntimeError(f"'{filename} does not contain a "
+                                       f"'ref' definition for repo '{repo}'.")
+                self._repo_info[repo].append(RepoInfo(dep["source"],
+                                                      dep["ref"]))
+
+    def get_repo_names(self) -> list[str]:
         """
-        :returns: the source URL for the specified repository.
+        :returns: the list of all repositories stored in this object.
+        """
+        return list(self._repo_info.keys())
+
+    def get_repo_info(self, repo: str) -> list[RepoInfo]:
+        """
+        :returns: the list of repository infos for a given dependency.
 
         :raises:KeyError if the repository is not defined.
         """
-        return self[repo]["source"]
-
-    def get_ref(self, repo: str) -> str:
-        """
-        :returns: the reference for the specified repository.
-
-        :raises:KeyError if the repository is not defined.
-        """
-        return self[repo]["ref"]
+        return self._repo_info[repo]
