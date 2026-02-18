@@ -9,7 +9,7 @@
 This module tests the configurator.
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -19,8 +19,8 @@ from fab.tools.tool_box import ToolBox
 from fab.build_config import BuildConfig
 
 
-@pytest.fixture
-def mock_shell():
+@pytest.fixture(name="mock_shell")
+def mock_shell_fixture():
     """
     A simple shell mock to check that all expected calls are executed.
     """
@@ -60,13 +60,19 @@ def test_configurator_runs_expected_sequence(mock_shell, tmp_path):
     config_namelist = config_dir / "config_namelists.txt"
     config_namelist.write_text("namelist1\nnamelist2\n", encoding="utf8")
 
+    # Simulate duplicate_namelist.txt:
+    duplicate_namelist = config_dir / "duplicate_namelists.txt"
+    duplicate_namelist.write_text("duplicate1\nduplicate2\n", encoding="utf8")
+
     # Run configurator
-    with pytest.warns(match="_metric_send_conn not set, cannot send metrics"):
+    with patch("rose_picker.RosePicker.execute",
+               return_value=0) as rose_picker, \
+            pytest.warns(match="_metric_send_conn not set, cannot "
+                               "send metrics"):
         configurator(
             config=config,
             lfric_core_source=lfric_core,
             rose_meta_conf=rose_meta_conf,
-            rose_picker=rose_picker,
             include_paths=[lfric_apps],
             config_dir=config_dir
         )
@@ -74,25 +80,25 @@ def test_configurator_runs_expected_sequence(mock_shell, tmp_path):
     tools_dir = lfric_core / "infrastructure" / "build" / "tools"
 
     # Check rose_picker was called with the expected arguments:
-    rose_picker.execute.assert_called_once()
-    kwargs = rose_picker.execute.call_args_list[0].kwargs
-    assert kwargs["parameters"] == [
-        rose_meta_conf,
-        '-directory', config_dir,
-        '-include_dirs', lfric_core,
-        '-include_dirs', lfric_core / "rose-meta",
-        '-include_dirs', lfric_apps,
-        '-include_dirs', lfric_apps / "rose-meta"
-    ]
+    rose_picker.assert_called_once()
+    rose_picker.assert_called_with(
+        rose_meta_conf, config_dir,
+        include_paths=[lfric_core / "rose-meta",
+                       lfric_apps / "rose-meta"])
 
     # Check shell.exec was called with expected commands
     expected_calls = [
-        ((f"{tools_dir / 'GenerateNamelist'} "
+        ((f"{tools_dir / 'GenerateNamelistLoader'} "
           f"-verbose {config_dir / 'rose-meta.json'} "
           f"-directory {config_dir}"),),
-        ((f"{tools_dir / 'GenerateLoader'} "
-          f"{config_dir / 'configuration_mod.f90'} "
-          f"namelist1 namelist2"),),
+        ((f"{tools_dir / 'GenerateConfigLoader'} "
+          f"namelist1 namelist2 -o {config_dir}"),),
+        ((f"{tools_dir / 'GenerateExtendedNamelistType'} "
+          f"{config_dir / 'rose-meta.json'} "
+          f"-directory {config_dir}"),),
+        ((f"{tools_dir / 'GenerateConfigType'} "
+          f"namelist1 namelist2 -duplicate duplicate1 -duplicate duplicate2 "
+          f"-o {config_dir}"),),
         ((f"{tools_dir / 'GenerateFeigns'} {config_dir / 'rose-meta.json'} "
           f"-output {config_dir / 'feign_config_mod.f90'}"),)
     ]

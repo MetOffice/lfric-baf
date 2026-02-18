@@ -17,7 +17,7 @@ from typing import cast, Optional
 from fab.api import BuildConfig, find_source_files, Category
 from fab.tools.shell import Shell
 
-from rose_picker_tool import RosePicker
+from rose_picker import RosePicker
 
 logger = logging.getLogger('fab')
 
@@ -25,7 +25,6 @@ logger = logging.getLogger('fab')
 def configurator(config: BuildConfig,
                  lfric_core_source: Path,
                  rose_meta_conf: Path,
-                 rose_picker: RosePicker,
                  include_paths: Optional[list[Path]] = None,
                  config_dir: Optional[Path] = None) -> None:
     """
@@ -34,7 +33,6 @@ def configurator(config: BuildConfig,
     :param config: the Fab build config instance
     :param lfric_core_source: the path to the LFRic core directory
     :param rose_meta_conf: the path to the rose-meta configuration file
-    :param rose_picker: the rose picker tool
     :param include_paths: additional include paths (each path will be added,
         as well as the path with /'rose-meta')
     :param config_dir: the directory for the generated configuration files
@@ -50,16 +48,14 @@ def configurator(config: BuildConfig,
     # gungho/build
     logger.info('rose_picker')
 
-    include_dirs = [lfric_core_source, lfric_core_source / 'rose-meta']
+    include_dirs = [lfric_core_source / 'rose-meta']
     if include_paths:
         for path in include_paths:
-            include_dirs.extend([path, path / 'rose-meta'])
+            include_dirs.append(path / 'rose-meta')
 
-    parameters = [rose_meta_conf, '-directory', config_dir]
-    for incl_dir in include_dirs:
-        parameters.extend(['-include_dirs', incl_dir])
-
-    rose_picker.execute(parameters=parameters)
+    rose_picker = RosePicker()
+    rose_picker.execute(rose_meta_conf, config_dir,
+                        include_paths=include_dirs)
     rose_meta = config_dir / 'rose-meta.json'
 
     shell = config.tool_box.get_tool(Category.SHELL)
@@ -68,19 +64,34 @@ def configurator(config: BuildConfig,
     # build_config_loaders
     # --------------------
     # builds a bunch of f90s from the json
-    logger.info('GenerateNamelist')
-    shell.exec(f"{tools / 'GenerateNamelist'} -verbose {rose_meta} "
+    logger.info('GenerateNamelistLoader')
+    shell.exec(f"{tools / 'GenerateNamelistLoader'} -verbose {rose_meta} "
                f"-directory {config_dir}")
 
     # create configuration_mod.f90 in source root
     # -------------------------------------------
-    logger.info('GenerateLoader')
+    logger.info('GenerateConfigLoader')
     with open(config_dir / 'config_namelists.txt', encoding="utf8") as f_in:
         names = [name.strip() for name in f_in.readlines()]
 
-    configuration_mod_fpath = config_dir / 'configuration_mod.f90'
-    shell.exec(f"{tools / 'GenerateLoader'} {configuration_mod_fpath} "
-               f"{' '.join(names)}")
+    shell.exec(f"{tools / 'GenerateConfigLoader'} "
+               f"{' '.join(names)} "
+               f"-o {config_dir}")
+
+    logger.info('GenerateExtendedNamelistType')
+    shell.exec(f"{tools / 'GenerateExtendedNamelistType'} {rose_meta} "
+               f"-directory {config_dir}")
+
+    duplicates: list[str] = []
+    with open(config_dir / 'duplicate_namelists.txt', encoding="utf8") as f_in:
+        for name in f_in.readlines():
+            duplicates.extend(["-duplicate", name.strip()])
+
+    logger.info('GenerateConfigType')
+    shell.exec(f"{tools / 'GenerateConfigType'} "
+               f"{' '.join(names)} "
+               f"{' '.join(duplicates)} "
+               f"-o {config_dir}")
 
     # create feign_config_mod.f90 in source root
     # ------------------------------------------

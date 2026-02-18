@@ -24,7 +24,6 @@ from fab.api import (ArtefactSet, BuildConfig, Exclude, grab_folder, Include,
 from fab.fab_base.fab_base import FabBase
 
 from configurator import configurator
-from rose_picker_tool import get_rose_picker
 from templaterator import Templaterator
 from transmute_step import TransmuteStep
 
@@ -63,8 +62,6 @@ class LFRicBase(FabBase):
         if root_symbol:
             self.set_root_symbol(root_symbol)
 
-        self._psyclone_config = (self.config.source_root / 'psyclone_config' /
-                                 'psyclone.cfg')
         # Many PSyclone scripts use module(s) from this directory. Additional
         # paths might need to be added later.
         self._add_python_paths: List[str] = []
@@ -90,19 +87,14 @@ class LFRicBase(FabBase):
             ) -> argparse.ArgumentParser:
         '''
         This adds LFRic specific command line options to the base class
-        define_command_line_option. Currently, --rose_picker and
-        precision-related options are added.
+        define_command_line_option. Currently,precision-related options
+        are added.
 
         :param parser: optional a pre-defined argument parser.
 
         :returns: the argument parser with the LFRic specific options added.
         '''
         parser = super().define_command_line_options()
-
-        parser.add_argument(
-            '--rose_picker', '-rp', type=str, default="system",
-            help="Version of rose_picker. Use 'system' to use an installed "
-                 "version.")
 
         parser.add_argument(
             '--no-xios', action="store_true", default=False,
@@ -196,13 +188,11 @@ class LFRicBase(FabBase):
                 continue
 
             # No command line option for the current precision name.
-            # Check if a default was set (--precision-default)
-            if generic_default:
-                preprocessor_flags.append(f"-D{prec_name}="
-                                          f"{generic_default}")
-            else:
-                # Otherwise, use the default for this precision
-                preprocessor_flags.append(f"-D{prec_name}={prec_default}")
+            # Check if a default was set (--precision-default), otherwise
+            # use the default for this precision
+            preprocessor_flags.append(
+                f"-D{prec_name}="
+                f"{generic_default if generic_default else prec_default}")
 
         # core/components/lfric-xios/build/import.mk
         if not self.args.no_xios:
@@ -260,7 +250,6 @@ class LFRicBase(FabBase):
 
         :param path_filters: optional list of path filters to be passed to
             Fab find_source_files, default is None.
-        :type path_filters: Optional[Iterable[Exclude, Include]]
         '''
         self.configurator_step()
 
@@ -284,12 +273,6 @@ class LFRicBase(FabBase):
         '''
         rose_meta = self.get_rose_meta()
         if rose_meta:
-            # Get the right version of rose-picker, depending on
-            # command line option (defaulting to v2.0.0)
-            # TODO: Ideally we would just put this into the toolbox,
-            # but atm we can't put several tools of one category in
-            # (so ToolBox will need to support more than one MISC tool)
-            rp = get_rose_picker(self.args.rose_picker)
             # Ideally we would want to get all source files created in
             # the build directory, but then we need to know the list of
             # files to add them to the list of files to process. Instead,
@@ -298,8 +281,7 @@ class LFRicBase(FabBase):
             include_paths = include_paths or []
             configurator(self.config, lfric_core_source=self.lfric_core_root,
                          rose_meta_conf=rose_meta,
-                         include_paths=include_paths,
-                         rose_picker=rp)
+                         include_paths=include_paths)
 
     def templaterator_step(self, config: BuildConfig) -> None:
         '''
@@ -315,18 +297,22 @@ class LFRicBase(FabBase):
         t90_filter = SuffixFilter(ArtefactSet.INITIAL_SOURCE_FILES,
                                   [".t90", ".T90"])
         template_files = t90_filter(config.artefact_store)
+        templ_r32 = {"kind": "real32", "type": "real"}
+        templ_r64 = {"kind": "real64", "type": "real"}
+        templ_i32 = {"kind": "int32", "type": "integer"}
         # Don't bother with parallelising this, atm there is only one file:
         for template_file in template_files:
             out_dir = input_to_output_fpath(config=config,
                                             input_path=template_file).parent
             out_dir.mkdir(parents=True, exist_ok=True)
-            templ_r32 = {"kind": "real32", "type": "real"}
-            templ_r64 = {"kind": "real64", "type": "real"}
-            templ_i32 = {"kind": "int32", "type": "integer"}
+            template_stem = template_file.stem.removesuffix("_mod")
             for key_values in [templ_r32, templ_r64, templ_i32]:
-                out_file = out_dir / f"field_{key_values['kind']}_mod.f90"
+                out_file = (out_dir /
+                            f"{template_stem}_{key_values['kind']}_mod.f90")
                 templaterator.process(template_file, out_file,
                                       key_values=key_values)
+                # Add the newly created file to the set of
+                # Fortran files to compile
                 config.artefact_store.add(ArtefactSet.FORTRAN_COMPILER_FILES,
                                           out_file)
 
@@ -393,44 +379,35 @@ class LFRicBase(FabBase):
             additional_parameters: Optional[list[str]] = None
             ) -> None:
         '''
-        This method runs Fab's psyclone. It first sets the additional psyclone
+        This method runs Fab's psyclone. It first sets the psyclone
         command line arguments by calling get_psyclone_config to get the
-        PSyclone configuration file and by calling
-        `get_additional_psyclone_options` to get additional psyclone command
-        line set by the user, e.g. for profiling, if any. Finally, Fab's
-        psyclone is called with the Fab build configuration, the kernel root
-        directory, the transformation script got through calling
-        `get_transformation_script`, the api, and the additional psyclone
-        command line arguments.
+        PSyclone configuration file. Additional flags can be set in the
+        PSyclone tool. Finally, Fab's psyclone is called with the Fab build
+        configuration, the kernel root directory, the transformation script
+        got through calling `get_transformation_script`, the api, and the
+        additional psyclone command line arguments.
 
         :param ignore_dependencies:
         :param additional_parameters: optional additional parameter for the
             PSyclone.
         '''
-        psyclone_cli_args = self.get_psyclone_config()
-        psyclone_cli_args.extend(self.get_additional_psyclone_options())
+        psyclone_cli_args = ["--config", self.get_psyclone_config()]
         if additional_parameters:
             psyclone_cli_args.extend(additional_parameters)
 
         psyclone(self.config, kernel_roots=[(self.config.build_output /
                                              "kernel")],
                  transformation_script=self.get_transformation_script,
-                 api="dynamo0.3",
+                 api="lfric",
                  cli_args=psyclone_cli_args,
                  ignore_dependencies=ignore_dependencies)
 
-    def get_psyclone_config(self) -> List[str]:
+    def get_psyclone_config(self) -> str:
         '''
-        :returns: the command line options to pick the right
-            PSyclone config file.
+        :returns: the PSyclone config file as string.
         '''
-        return ["--config", str(self._psyclone_config)]
-
-    def get_additional_psyclone_options(self) -> List[str]:
-        '''
-        A placeholder for additional PSyclone comand line options.
-        '''
-        return []
+        return str(self.config.source_root / 'psyclone_config' /
+                   'psyclone.cfg')
 
     def get_transformation_script(self, fpath: Path,
                                   config: BuildConfig) -> Optional[Path]:
