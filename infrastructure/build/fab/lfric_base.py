@@ -109,8 +109,8 @@ class LFRicBase(FabBase):
             help="Disable compilation with XIOS.")
 
         parser.add_argument('--transmute', action="append",
-                            help="Specify a transmute file which will trigger"
-                                 "additional PSyclone processing.")
+                            help="Specify a transmute file which will "
+                                 "trigger additional PSyclone processing.")
 
         # Precision related command line arguments
         # ----------------------------------------
