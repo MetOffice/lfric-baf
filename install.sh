@@ -10,12 +10,14 @@ LFRIC_CORE=$1
 LFRIC_APPS=$2
 
 if [[ ! -d $LFRIC_CORE/infrastructure ]]; then
-	echo "'$LFRIC_CORE' does not seem to be an LFRic_core checkout, can't find infrastructure."
+	echo "'$LFRIC_CORE' does not seem to be an LFRic_core checkout, can't " \
+	     "find infrastructure."
 	exit
 fi
 
-if [[ ! -d $LFRIC_APPS/applications ]]; then
-	echo "'$LFRIC_APPS' does not seem to be an LFRic_apps checkout, can't find applications."
+if [[ ! -f $LFRIC_APPS/dependencies.yaml ]]; then
+	echo "'$LFRIC_APPS' does not seem to be an LFRic_apps checkout, can't " \
+	     "find dependencies.yaml."
 	exit
 fi
 
