@@ -51,7 +51,10 @@ run:
     git submodule init
     git submodule update
 
-to get Fab from the submodule.
+to get Fab from the submodule. Note that this is not required (anymore)
+for any scripts, it's just included for convenience (and to make sure
+the right Fab version is available). You can as well use a stand-alone
+current Fab installation.
 
 You need to have current trunk of PSyclone installed
 (https://github.com/stfc/PSyclone). The API changes significantly in current trunk
