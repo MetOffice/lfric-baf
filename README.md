@@ -119,25 +119,19 @@ as a simple example.
 
 
 ### Building
-In order to use the Fab build system, a wrapper script installed in the LFRic core
-repository needs to be used. You need to start the build from the LFRic apps (or core)
-repo (not from this repo). Example usage (but don't try this now):
+In order to use the Fab build system for any lfric_apps application,
+the location of the core repository must be provided using the
+``--core`` command line option. Example usage (but don't try this now):
 
     cd $LFRIC_APPS/applications/lfric_atm
-    $LFRIC_CORE/build.sh ./fab_lfric_atm.py
-
-The wrapper script `build.sh` makes sure that the build scripts installed into the
-core repository will be found. Even if you are building an application in core,
-you still need to invoke the `build.sh` script to allow BAF to setup the Python
-import infrastructure!
+    ./fab_lfric_atm.py --core $LFRIC_CORE
 
 The new LFRic FAB build system relies on command line options to select compiler etc.
 For building lfric_atm with gfortran (using mpif90 as a compiler wrapper that uses
 gfortran), use:
 
-    $LFRIC_CORE/build.sh ./fab_lfric_atm.py --site YOURSITE --platform YOUR_PLATFORM \
-       --suite gnu \
-       -mpi -fc mpif90-gfortran -ld  linker-mpif90-gfortran
+    ./fab_lfric_atm.py --core $LFRIC_CORE --site YOURSITE --platform YOUR_PLATFORM \
+       --suite gnu -mpi
 
 If you have only one platform and therefore use `default` as name, there is no need
 to specify the `--platform` command line options, it will default to `default`.
@@ -150,20 +144,13 @@ The options in detail:
 - `--fc mpif90-gfortran` selects the Fortran compiler. Here mpif90 as compiler wrapper
   around gfortran will be used. If your mpif90 should not be using gfortran (e.g. 
   it might be using intel), this will be detected and the build will
-  be aborted. It might not be necessary to specify the compiler explicitly,
-  since the default suite and the fact that MPI is enabled should allow Fab to
+  be aborted. In general, it should not be necessary to specify the compiler explicitly,
+  since the default suite and the fact that MPI is enabled allows Fab to
   detect this automatically. But it can be required if different compilers and
   compiler wrappers are available that would all fulfil the requirements.
-- `--ld linkfer-mpif90-gfortran` specifies the linker. This is for now required
-  to ensure that a Fortran compiler is used for linking, since Fab does not know
-  if linking should be done with C or Fortran (e.g. mpicc or mpif90), and it might
-  pick the wrong one. The name of a linker always starts with `linker-`, followed
-  by the name of the compiler to use.
-
-It is not strictly necessary to specify the compiler, selecting gnu as
-compiler suite and specifying `-mpi` will be sufficient. But if your site installs
-additional tools (e.g. we have profiling compiler wrappers), an unexpected compiler
-or linker might be picked, hence it is recommended to be explicit.
+- `--ld linkfer-mpif90-gfortran` specifies the linker, and similar to `-fc` it
+   should not be necessary: Fab assumes that if the main program is in Fortran, the
+   Fortran compiler is used for linking, otherwise the C compiler.
 
 If you have problems with the compiler names, run a build script with the option
 `--available-compilers`, which will list all available compiler and linkers, and also
@@ -184,7 +171,7 @@ Example output:
 
 The build directory will be under `$FAB_WORKSPACE`, with the name containing the application
 and compiler, e.g. `lfric_atm-mpif90-gfortran`. If `$FAB_WORKSPACE` is not defined, it
-defaults to `$HOME/fab-workspace`. The build directory will contain the binary, all
+defaults to `./fab-workspace`. The build directory will contain the binary, all
 original source files will be under `source`, and all files created during build (including
 preprocessed files, PSyclone modified files, object files, ...) under `build_output`.
 
