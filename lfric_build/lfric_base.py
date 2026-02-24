@@ -13,6 +13,7 @@ script.
 """
 
 import argparse
+import os
 from pathlib import Path
 import sys
 from typing import List, Optional, Iterable, Union
@@ -341,10 +342,15 @@ class LFRicBase(FabBase):
 
         self.preprocess_x90_step()
 
-        # Update the Python search path for PSyclone sripts.
-        # To avoid impacting other code, store the original search path:
-        old_sys_path = sys.path[:]
-        sys.path.extend(self._add_python_paths)
+        # Update the Python search path for PSyclone scripts. We have
+        # to modify the environment variable, since PSyclone is started
+        # as a separate process, so modifications to sys.path will not
+        # be passed on. But the child processes do inherit the environment,
+        # so we modify PYTHONPATH.
+        # To avoid impacting other code, store the original env variable:
+        old_python_path = os.environ.get("PYTHONPATH", "")
+        py_path_string = ":".join(self._add_python_paths)
+        os.environ["PYTHONPATH"] = f"{py_path_string}:{old_python_path}"
 
         # Do the transmute step - contained in a separate object
         # to keep the file size smaller.
@@ -353,8 +359,8 @@ class LFRicBase(FabBase):
 
         self.psyclone_step(ignore_dependencies=ignore_dep_list)
 
-        # Reset sys.path:
-        sys.path = old_sys_path
+        # Reset PYTHONPATH
+        os.environ["PYTHONPATH"] = old_python_path
 
         super().analyse_step(
             ignore_dependencies=ignore_dep_list,
