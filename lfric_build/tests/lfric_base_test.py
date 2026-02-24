@@ -185,7 +185,7 @@ def test_get_directory(monkeypatch, tmp_path) -> None:
     mock_core.mkdir(parents=True)
 
     # Create mock LFRic base file location
-    mock_base_dir = mock_core / "infrastructure" / "build" / "fab"
+    mock_base_dir = mock_core / "lfric_build"
     mock_base_dir.mkdir(parents=True)
     mock_base_file = mock_base_dir / "lfric_base.py"
     mock_base_file.write_text("", encoding='utf-8')
@@ -286,8 +286,9 @@ def test_precision_definition_with_default(monkeypatch) -> None:
     assert '-DR_SOLVER_PRECISION=32' in flags
     # Specified default of any precision
     assert '-DR_TRAN_PRECISION=32' in flags
-    # From environment variable
-    assert '-DR_BL_PRECISION=64' in flags
+    # Old style environment variables must be ignored, so R_BL_PRECISION
+    # must still be 32!
+    assert '-DR_BL_PRECISION=32' in flags
 
 
 @pytest.mark.parametrize('no_xios', [True, False])
@@ -443,7 +444,8 @@ def test_configurator_step(monkeypatch) -> None:
     lfric_base = LFRicBase(name="test")
     monkeypatch.setattr(lfric_base, 'get_rose_meta', mock_meta)
 
-    lfric_base.configurator_step()
+    with pytest.warns(match="_metric_send_conn not set, cannot send metrics"):
+        lfric_base.configurator_step()
 
     # Verify configurator called with correct arguments
     mock_config.assert_called_once_with(
@@ -495,7 +497,8 @@ def test_templaterator_step(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(lfric_base, '_lfric_core_root', tmp_path)
 
     # Run templaterator step
-    lfric_base.templaterator_step(config)
+    with pytest.warns(match="_metric_send_conn not set, cannot send metrics"):
+        lfric_base.templaterator_step(config)
 
     # Verify templaterator initialization
     mock_templaterator.assert_called_once_with(tmp_path / "infrastructure" /
@@ -509,7 +512,6 @@ def test_templaterator_step(monkeypatch, tmp_path) -> None:
         {"kind": "real64", "type": "real"},
         {"kind": "int32", "type": "integer"}
     ]
-
     for template in templates:
         out_file = mock_output_path / f"field_{template['kind']}_mod.f90"
         out_file = mock_output_path / f"field_{template['kind']}_mod.f90"
@@ -533,7 +535,9 @@ def test_templaterator_step(monkeypatch, tmp_path) -> None:
 
     # Test empty template files case
     mock_filter.return_value = set()
-    lfric_base.templaterator_step(config)
+
+    with pytest.warns(match="_metric_send_conn not set, cannot send metrics"):
+        lfric_base.templaterator_step(config)
     # Call count should remain the same since no new files processed
     assert mock_templaterator_instance.process.call_count == 3
 
@@ -562,7 +566,6 @@ def test_analyse_step(monkeypatch) -> None:
     # Setup mocks
     monkeypatch.setattr('fab.fab_base.fab_base.FabBase.analyse_step',
                         mock_analyse)
-
     lfric_base = LFRicBase(name="test")
 
     # Mock instance methods
@@ -573,7 +576,9 @@ def test_analyse_step(monkeypatch) -> None:
     # psyclone_tools by PSyclone scripts). Make sure sys.path is unchanged:
     old_sys_path = sys.path[:]
     # Call analyse_step (which calls PSyclone)
-    lfric_base.analyse_step()
+
+    with pytest.warns(match="_metric_send_conn not set, cannot send metrics"):
+        lfric_base.analyse_step()
     assert sys.path == old_sys_path
 
     # Verify method calls
@@ -599,7 +604,8 @@ def test_analyse_step(monkeypatch) -> None:
     monkeypatch.setattr(lfric_base, 'psyclone_step', mock_psyclone)
 
     # Call analyse_step
-    lfric_base.analyse_step(ignore_dependencies=custom_ignore)
+    with pytest.warns(match="_metric_send_conn not set, cannot send metrics"):
+        lfric_base.analyse_step(ignore_dependencies=custom_ignore)
 
     # Verify methods still called
     mock_preprocess.assert_called_once()

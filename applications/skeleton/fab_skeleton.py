@@ -20,8 +20,7 @@ import sys
 from fab.steps.grab.folder import grab_folder
 
 # We need to import the base class:
-sys.path.insert(0, str(Path(__file__).parents[2] / "infrastructure" /
-                       "build" / "fab"))
+sys.path.insert(0, str(Path(__file__).parents[2] / "lfric_build"))
 
 from lfric_base import LFRicBase  # noqa: E402
 

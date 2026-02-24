@@ -25,6 +25,7 @@ cp -r infrastructure $LFRIC_CORE
 # Copy the app build scripts into the applications directory
 rsync -a applications $LFRIC_APPS --exclude applications/skeleton
 cp -r build/ $LFRIC_APPS
+cp -r lfric_build/ $LFRIC_CORE
 cp -r applications/skeleton $LFRIC_CORE/applications
 cp -r mesh_tools $LFRIC_CORE
 cp build.sh $LFRIC_CORE

@@ -13,13 +13,12 @@ script.
 """
 
 import argparse
-import os
 from pathlib import Path
 import sys
 from typing import List, Optional, Iterable, Union
 
 from fab.api import (ArtefactSet, BuildConfig, Exclude, grab_folder, Include,
-                     input_to_output_fpath, preprocess_x90, psyclone,
+                     input_to_output_fpath, preprocess_x90, psyclone, step,
                      SuffixFilter)
 from fab.fab_base.fab_base import FabBase
 
@@ -55,7 +54,7 @@ class LFRicBase(FabBase):
 
         this_file = Path(__file__)
         # The root directory of the LFRic Core
-        self._lfric_core_root = this_file.parents[3]
+        self._lfric_core_root = this_file.parents[1]
 
         # If the user wants to overwrite the default root symbol (which
         # is `name`):
@@ -87,7 +86,7 @@ class LFRicBase(FabBase):
             ) -> argparse.ArgumentParser:
         '''
         This adds LFRic specific command line options to the base class
-        define_command_line_option. Currently,precision-related options
+        define_command_line_option. Currently, precision-related options
         are added.
 
         :param parser: optional a pre-defined argument parser.
@@ -153,7 +152,6 @@ class LFRicBase(FabBase):
         baf base would set up).
         '''
         this_dir = Path(__file__).parent
-        sys.path.insert(0, str(this_dir))
         # We need to add the 'site_specific' directory to the path, so
         # each config can import from 'default' (instead of having to
         # use 'site_specific.default', which would hard-code the name
@@ -180,11 +178,6 @@ class LFRicBase(FabBase):
             if getattr(self.args, f"{prec_name.lower()}_specified", False):
                 value = getattr(self.args, prec_name.lower())
                 preprocessor_flags.append(f"-D{prec_name}={value}")
-                continue
-            # Check for environment variable which can overwrite the default:
-            env_precision = os.environ.get(prec_name)
-            if env_precision:
-                preprocessor_flags.append(f"-D{prec_name}={env_precision}")
                 continue
 
             # No command line option for the current precision name.
@@ -259,6 +252,7 @@ class LFRicBase(FabBase):
 
         self.templaterator_step(self.config)
 
+    @step
     def configurator_step(
             self,
             include_paths: Optional[list[Path]] = None) -> None:
@@ -283,6 +277,7 @@ class LFRicBase(FabBase):
                          rose_meta_conf=rose_meta,
                          include_paths=include_paths)
 
+    @step
     def templaterator_step(self, config: BuildConfig) -> None:
         '''
         This method runs the LFRic templaterator Fab tool.
@@ -300,7 +295,7 @@ class LFRicBase(FabBase):
         templ_r32 = {"kind": "real32", "type": "real"}
         templ_r64 = {"kind": "real64", "type": "real"}
         templ_i32 = {"kind": "int32", "type": "integer"}
-        # Don't bother with parallelising this, atm there is only one file:
+        # Don't bother with parallelising this, it's fast
         for template_file in template_files:
             out_dir = input_to_output_fpath(config=config,
                                             input_path=template_file).parent
@@ -404,7 +399,11 @@ class LFRicBase(FabBase):
 
     def get_psyclone_config(self) -> str:
         '''
-        :returns: the PSyclone config file as string.
+        This method can be overwritten if an application needs to provide
+        a modified psyclone config file (e.g. to enable additional
+        debug options).
+
+        :returns: the PSyclone config file location as string.
         '''
         return str(self.config.source_root / 'psyclone_config' /
                    'psyclone.cfg')
@@ -425,17 +424,26 @@ class LFRicBase(FabBase):
         optimisation_path = (config.source_root / "optimisation" /
                              f"{self.site}-{self.platform}" / "psykal")
         relative_path = None
+        # The source file might be either in build_output (e.g. a preprocessed
+        # .X90 file), or still in source (.x90 file). Check if the file
+        # is in one of the two sub-trees, and use the relative path to
+        # check if there is a file-specific optimisation script
         for base_path in [config.source_root, config.build_output]:
             try:
                 relative_path = fpath.relative_to(base_path)
             except ValueError:
+                # The file is not under the `base_path` - keep on checking
                 pass
+
         if relative_path:
+            # The file was under either source or build. Check if there
+            # is a file-specific optimisation script:
             local_transformation_script = (optimisation_path /
                                            (relative_path.with_suffix('.py')))
             if local_transformation_script.exists():
                 return local_transformation_script
 
+        # No file-specific optimisation script found. Check for global.py:
         global_transformation_script = optimisation_path / 'global.py'
         if global_transformation_script.exists():
             return global_transformation_script
