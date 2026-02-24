@@ -37,10 +37,10 @@ class FabGravityWave(LFRicAppsBase):
                  name: str,
                  root_symbol: Optional[Union[list[str], str]] = None) -> None:
 
-        this_file = Path(__file__).resolve()
         super().__init__(name=name,
                          root_symbol=root_symbol)
         # Store the root of this apps for later
+        this_file = Path(__file__).resolve()
         self._this_root = this_file.parent
 
     def grab_files_step(self) -> None:

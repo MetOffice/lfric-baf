@@ -29,7 +29,7 @@ if args.core == "$LFRIC_CORE":
 else:
     core_path = Path(args.core)
 
-sys.path.insert(0, str(core_path / "infrastructure" / "build" / "fab"))
+sys.path.insert(0, str(core_path / "lfric_build"))
 
 try:
     from lfric_base import LFRicBase

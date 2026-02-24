@@ -9,7 +9,16 @@
 contained in the infrastructure directory.
 '''
 
+import sys
+
 from fab_gungho_model import FabGungho
+
+# We import the Apps base class, even though we don't directly
+# need it. But importing LFRicAppsBase makes the core/lfric_build
+# directory available, from which we import the ExtractMixin
+sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
+
+from lfric_apps_base import LFRicAppsBase  # noqa: E402
 from extract_mixin import ExtractMixin
 
 
