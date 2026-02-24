@@ -197,7 +197,12 @@ Example usage using Cray's CCE (assuming that `core` is next to `apps`:
     ../../../core/build.sh ./fab_gungho.py -fc crayftn-ftn -ld linker-crayftn-ftn
 
 
-### Running PSyclone on UM files
+### Running PSyclone on UM files OUTDATED!!!!!
+
+Support for PSyclone transmutation has been added to LFRic recently, and support
+is officially being added to the Fab scripts. The following section will be removed
+shortly.
+
 This repository contains an additional script that shows how to use PSyclone to
 additionally transform existing Fortran code using PSyclone's transformation ability
 for the `LFRic_atm` apps. The script is called `./fab_lfric_atm_um_transform.py`.
