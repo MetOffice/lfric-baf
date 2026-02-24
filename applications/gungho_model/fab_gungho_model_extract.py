@@ -8,7 +8,7 @@
 '''A FAB build script for gungho_model. It relies on the FabBase class
 contained in the infrastructure directory.
 '''
-
+from pathlib import Path
 import sys
 
 from fab_gungho_model import FabGungho
@@ -18,8 +18,8 @@ from fab_gungho_model import FabGungho
 # directory available, from which we import the ExtractMixin
 sys.path.insert(0, str(Path(__file__).parents[2] / "build"))
 
-from lfric_apps_base import LFRicAppsBase  # noqa: E402
-from extract_mixin import ExtractMixin
+from lfric_apps_base import LFRicAppsBase  # noqa: E402,F401
+from extract_mixin import ExtractMixin   # noqa: E402
 
 
 class FabGunghoExtract(ExtractMixin, FabGungho):
