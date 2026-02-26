@@ -7,7 +7,7 @@ This module contains a setup for Joerg's laptop :)
 import argparse
 from typing import cast, List
 
-from fab.api import BuildConfig, Category, Linker, ToolRepository
+from fab.api import BuildConfig, Category, Compiler, Linker, ToolRepository
 
 from default.config import Config as DefaultConfig
 
@@ -78,3 +78,31 @@ class Config(DefaultConfig):
             linker.add_lib_flags(
                 "vernier", ["-L", "/home/joerg/work/Vernier/local/lib",
                             "-lvernier_f",  "-lvernier_c",  "-lvernier"])
+
+    def setup_gnu(self, build_config: BuildConfig):
+        super().setup_gnu(build_config)
+        tr = ToolRepository()
+        gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
+        self.setup_compiler(gfortran)
+        linker_gfortran = tr.get_tool(Category.LINKER, "linker-gfortran")
+        self.setup_linker(linker_gfortran)
+
+        # Always link with C++ libs
+        linker_gfortran.add_post_lib_flags(["-lstdc++"])
+
+    def setup_compiler(self, compiler: Compiler):
+        tr = ToolRepository()
+        shell = tr.get_default(Category.SHELL)
+        # We must remove the trailing new line, and create a list:
+        nf_flags = shell.run(additional_parameters=["-c",
+                                                    "nf-config --fflags"],
+                             capture_output=True).strip().split()
+        compiler.add_flags(nf_flags)
+
+    def setup_linker(self, linker: Linker):
+        tr = ToolRepository()
+        shell = tr.get_default(Category.SHELL)
+        # We must remove the trailing new line, and create a list:
+        nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
+                             capture_output=True).strip().split()
+        linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)

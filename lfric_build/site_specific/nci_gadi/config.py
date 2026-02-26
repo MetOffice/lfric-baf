@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import List, Union, Optional
 
 from fab.api import (BuildConfig, Category, Compiler, CompilerWrapper,
-                     ToolRepository)
+                     Linker, ToolRepository)
 
 from default.config import Config as DefaultConfig
 
@@ -82,7 +82,14 @@ class Config(DefaultConfig):
         super().__init__()
         tr = ToolRepository()
         tr.set_default_compiler_suite("intel-classic")
+        self.add_tau(self)
 
+    def add_tau(self, build_config: BuildConfig):
+        """
+        Adds the tau compiler and linker wrapper for gfortran and ifort
+        to the tool repository.
+        """
+        tr = ToolRepository()
         # Add the tau wrappers for Fortran and C. Note that add_tool
         # will automatically add them as a linker as well.
         for ftn in ["ifort", "gfortran"]:
@@ -93,22 +100,52 @@ class Config(DefaultConfig):
             compiler = tr.get_tool(Category.C_COMPILER, cc)
             tr.add_tool(Taucc(compiler))
 
-        # ATM we don't use a shell when running a tool, and as such
-        # we can't directly use "$()" as parameter. So query these values using
-        # Fab's shell tool (doesn't really matter which shell we get, so just
-        # ask for the default):
+    def setup_intel_classic(self, build_config: BuildConfig):
+        super().setup_intel_classic(build_config)
+        tr = ToolRepository()
+        ifort = tr.get_tool(Category.FORTRAN_COMPILER, "ifort")
+        self.setup_compiler(ifort)
+        linker_ifort = tr.get_tool(Category.LINKER, "linker-ifort")
+        self.setup_linker(linker_ifort)
+
+        # Always link with C++ libs
+        linker_ifort.add_post_lib_flags(["-lstdc++"])
+
+    def setup_intel_llvm(self, build_config: BuildConfig):
+        super().setup_intel_llvm(build_config)
+        tr = ToolRepository()
+        ifx = tr.get_tool(Category.FORTRAN_COMPILER, "ifx")
+        self.setup_compiler(ifx)
+        linker_ifx = tr.get_tool(Category.LINKER, "linker-ifx")
+        self.setup_linker(linker_ifx)
+
+        # Always link with C++ libs
+        linker_ifx.add_post_lib_flags(["-lstdc++"])
+
+    def setup_gnu(self, build_config: BuildConfig):
+        super().setup_gnu(build_config)
+        tr = ToolRepository()
+        gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "gfortran")
+        self.setup_compiler(gfortran)
+        linker_gfortran = tr.get_tool(Category.LINKER, "linker-gfortran")
+        self.setup_linker(linker_gfortran)
+
+        # Always link with C++ libs
+        linker_gfortran.add_post_lib_flags(["-lstdc++"])
+
+    def setup_compiler(self, compiler: Compiler):
+        tr = ToolRepository()
+        shell = tr.get_default(Category.SHELL)
+        # We must remove the trailing new line, and create a list:
+        nf_flags = shell.run(additional_parameters=["-c",
+                                                    "nf-config --fflags"],
+                             capture_output=True).strip().split()
+        compiler.add_flags(nf_flags)
+
+    def setup_linker(self, linker: Linker):
+        tr = ToolRepository()
         shell = tr.get_default(Category.SHELL)
         # We must remove the trailing new line, and create a list:
         nc_flibs = shell.run(additional_parameters=["-c", "nf-config --flibs"],
                              capture_output=True).strip().split()
-        linker = tr.get_tool(Category.LINKER, "linker-tau-ifort")
-        linker.add_lib_flags("netcdf", nc_flibs)
-        linker.add_lib_flags("yaxt", ["-lyaxt", "-lyaxt_c"])
-        linker.add_lib_flags("xios", ["-lxios"])
-        linker.add_lib_flags("hdf5", ["-lhdf5"])
-        linker.add_lib_flags("shumlib", ["-lshum"])
-        linker.add_lib_flags("vernier", ["-lvernier_f", "-lvernier_c",
-                                         "-lvernier"])
-
-        # Always link with C++ libs
-        linker.add_post_lib_flags(["-lstdc++"])
+        linker.add_lib_flags("netcdf", nc_flibs, silent_replace=True)
