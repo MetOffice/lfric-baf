@@ -10,7 +10,7 @@ This function gets called from the default site-specific config file
 import argparse
 from typing import cast
 
-from fab.api import BuildConfig, Category, Linker, ToolRepository
+from fab.api import BuildConfig, Category, Compiler, Linker, ToolRepository
 
 
 def setup_script_gnu(build_config: BuildConfig,
@@ -31,7 +31,7 @@ def setup_script_gnu(build_config: BuildConfig,
         gfortran = tr.get_tool(Category.FORTRAN_COMPILER, "mpif90-gfortran")
         if not gfortran.is_available:
             return
-
+    assert isinstance(gfortran, Compiler)
     if gfortran.get_version() < (4, 9):
         raise RuntimeError(f"GFortran is too old to build dynamo. "
                            f"Must be at least 4.9.0, it is "
